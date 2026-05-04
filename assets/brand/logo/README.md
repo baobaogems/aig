@@ -64,7 +64,7 @@ rsvg-convert -w 16 aig-favicon.svg -o png/aig-favicon-16.png
 
 ## Usage rules
 
-See `.claude/brand-guidelines.md` Section 2 (Visual Identity) and 2.4 (Logo Usage Rules) for:
+See `docs/brand-guidelines.md` Section 2 (Visual Identity) and 2.4 (Logo Usage Rules) for:
 - Clear space requirements
 - Minimum sizes
 - Approved color combinations

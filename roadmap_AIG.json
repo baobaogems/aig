@@ -91,7 +91,7 @@
       "priority": "P2",
       "endDate": "2026-05-04",
       "deliverables": [
-        ".claude/brand-guidelines.md (v1.1) — Truth/Voice/Pillars/Proof/MoonPay positioning/Messaging",
+        "docs/brand-guidelines.md (v1.1) — Truth/Voice/Pillars/Proof/MoonPay positioning/Messaging",
         "assets/brand/logo/ — 5 SVG variants + 8 PNG exports (rsvg-convert)",
         "Pre-rendered: wordmark horizontal/darkmode/monochrome, icon mark, favicon",
         "Concept: AIG wordmark JetBrains Mono Bold + #FF8400 dot (terminal cursor / payload passthrough)"

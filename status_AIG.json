@@ -78,6 +78,38 @@
         "status_AIG.json"
       ],
       "status": "done"
+    },
+    {
+      "timestamp": "2026-05-04T14:32:00+07:00",
+      "type": "chore",
+      "title": "Enforce anchor convention + commit JSONs",
+      "what": "Added mandatory 'Anchor Context Files' section to CLAUDE.md (after Role/Workflows) instructing read-3-files-first / append-status-after. Committed 3 anchor JSONs into git so future sessions and contributors see them.",
+      "why": "User wants convention enforced across all future AIG sessions. CLAUDE.md auto-loads at session start; memory file + this CLAUDE.md section act as redundant anchors.",
+      "files": [
+        "CLAUDE.md",
+        "architecture_AIG.json",
+        "roadmap_AIG.json",
+        "status_AIG.json"
+      ],
+      "commits": ["03be3b1"],
+      "status": "done",
+      "concerns": "CLAUDE.md is gitignored (per .gitignore line 26), so the anchor instruction lives only on local machine. Memory file at ~/.claude/projects/.../memory/feedback_anchor_context_files.md provides redundant enforcement."
+    },
+    {
+      "timestamp": "2026-05-04T14:42:00+07:00",
+      "type": "docs",
+      "title": "Move brand-guidelines to docs/, anchor convention to CONTRIBUTING.md",
+      "what": "Moved .claude/brand-guidelines.md → docs/brand-guidelines.md so all docs live in single location. Created CONTRIBUTING.md at repo root (git-tracked) hosting the canonical Anchor Context Files convention + entry schema. Slimmed CLAUDE.md section to a one-line pointer at CONTRIBUTING.md. Updated stale path references in roadmap_AIG.json and assets/brand/logo/README.md. Updated memory file to point at CONTRIBUTING.md as canonical source.",
+      "why": "User wants brand docs co-located with other docs/, and the anchor convention reachable by all contributors (CLAUDE.md is gitignored).",
+      "files": [
+        "docs/brand-guidelines.md",
+        "CONTRIBUTING.md",
+        "CLAUDE.md",
+        "roadmap_AIG.json",
+        "assets/brand/logo/README.md",
+        "~/.claude/projects/.../memory/feedback_anchor_context_files.md"
+      ],
+      "status": "done"
     }
   ]
 }
