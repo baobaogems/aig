@@ -1,0 +1,167 @@
+{
+  "$schema": "anchor-context/v1",
+  "project": "ARC Invisible Gateway (AIG)",
+  "version": "1.0.0",
+  "lastUpdated": "2026-05-04",
+  "sourceOfTruth": "docs/development-roadmap.md + plans/",
+
+  "currentState": {
+    "phase": "Post-Phase-1 stabilization + Brand v1",
+    "branch": "main",
+    "production": "Deployed on Vercel",
+    "merchants": 0,
+    "users": 0,
+    "blockerForGrowth": "No traction yet — need first merchant + GTM motion"
+  },
+
+  "phases": [
+    {
+      "id": "phase-1-mvp",
+      "name": "Phase 1 MVP — Core Payment Infrastructure",
+      "status": "complete",
+      "priority": "P0",
+      "startDate": "2026-03-12",
+      "endDate": "2026-03-13",
+      "effort": "24h",
+      "planFile": "plans/260312-1301-aig-phase1-implementation/plan.md",
+      "subPhases": [
+        { "id": 1, "name": "Foundation", "status": "complete", "deliverables": ["smoke test test-cctp-domain7.ts", "fetchSpotPrice", "updateSessionStatus", "route refactor"] },
+        { "id": 2, "name": "ADMIN_RELAY Path", "status": "complete", "deliverables": ["pollSwapCompleted", "adminRelay atomic idempotency", "verifyAdminWalletBalance"] },
+        { "id": 3, "name": "CCTP Path", "status": "complete", "deliverables": ["extractMessageHash", "receiveMessage", "extractRawMessage"] },
+        { "id": 4, "name": "UI", "status": "complete", "deliverables": ["payment page", "merchant dashboard", "5 components", "wagmi v2 setup"] },
+        { "id": 5, "name": "Contract Deployment", "status": "complete", "deliverables": ["Deploy.s.sol", "SwapRouter on BSC Testnet"] }
+      ]
+    },
+
+    {
+      "id": "post-phase-1-dashboard",
+      "name": "Dashboard Real Data — Merchants + Analytics",
+      "status": "complete",
+      "priority": "P1",
+      "startDate": "2026-03-15",
+      "endDate": "2026-03-15",
+      "effort": "3h",
+      "planFile": "plans/260315-1019-dashboard-real-data/plan.md",
+      "subPhases": [
+        { "id": 1, "name": "Schema migration (003_create_merchants_table.sql)", "status": "complete" },
+        { "id": 2, "name": "GET /api/dashboard analytics endpoint", "status": "complete" },
+        { "id": 3, "name": "UI stat cards + merchant auto-register", "status": "complete" }
+      ]
+    },
+
+    {
+      "id": "post-phase-1-pencil-redesign",
+      "name": "Pencil Dashboard UI Redesign",
+      "status": "complete",
+      "priority": "P2",
+      "endDate": "2026-03-15",
+      "report": "plans/reports/fullstack-developer-260315-1240-pencil-dashboard-redesign.md",
+      "deliverables": [
+        "JetBrains Mono via next/font/google",
+        "Pencil layout (3-column)",
+        "5 components updated/created (incl. points-tier-card)",
+        "Color palette: #F2F3F0 bg / #FF8400 orange / #111111 text"
+      ]
+    },
+
+    {
+      "id": "post-phase-1-vercel-stabilization",
+      "name": "Vercel Production Stabilization",
+      "status": "complete",
+      "priority": "P0",
+      "endDate": "2026-03-17",
+      "noFormalPlan": true,
+      "commits": [
+        "46af981 vercel.json + next.config",
+        "728eaee turbopack.root absolute path",
+        "d8a13a2 lightningcss-linux-x64-gnu",
+        "06fa6a4 @tailwindcss/oxide-linux-x64-gnu",
+        "fe5171b production client-side exception",
+        "29a76f8 missing env vars + error boundaries",
+        "e13dd02 Generate QR button wiring",
+        "e7b0cde graceful API 500 handling"
+      ],
+      "note": "Not yet documented in project-changelog.md (last changelog entry: 2026-03-15)"
+    },
+
+    {
+      "id": "brand-identity-v1",
+      "name": "Brand Identity v1 (Guidelines + Logo)",
+      "status": "complete",
+      "priority": "P2",
+      "endDate": "2026-05-04",
+      "deliverables": [
+        ".claude/brand-guidelines.md (v1.1) — Truth/Voice/Pillars/Proof/MoonPay positioning/Messaging",
+        "assets/brand/logo/ — 5 SVG variants + 8 PNG exports (rsvg-convert)",
+        "Pre-rendered: wordmark horizontal/darkmode/monochrome, icon mark, favicon",
+        "Concept: AIG wordmark JetBrains Mono Bold + #FF8400 dot (terminal cursor / payload passthrough)"
+      ],
+      "commits": ["eee8329 feat(brand): add AIG logo assets"],
+      "tools": ["Homebrew: font-jetbrains-mono, librsvg"]
+    },
+
+    {
+      "id": "phase-2-scaling",
+      "name": "Phase 2 — Scaling & Optimization",
+      "status": "planned",
+      "priority": "P1",
+      "targetQuarter": "2026-Q2",
+      "estimatedEffort": "40-60h",
+      "noFormalPlan": true,
+      "keyAreas": [
+        "Multi-chain support (Polygon, Ethereum, Arbitrum)",
+        "Points distribution system (rewards merchants/affiliates)",
+        "Admin dashboard (fee management, settlement)",
+        "Enhanced error recovery (grace period bridge retries)",
+        "Webhook notifications (transaction updates)"
+      ],
+      "blockers": ["No formal plan yet", "No first merchant (no real-world signal)"]
+    },
+
+    {
+      "id": "phase-3-production-hardening",
+      "name": "Phase 3 — Production Hardening",
+      "status": "planned",
+      "priority": "P1",
+      "targetQuarter": "2026-Q3",
+      "estimatedEffort": "80-120h",
+      "keyAreas": [
+        "Smart contract audit (external firm)",
+        "Mainnet deployment preparation",
+        "Rate limiting & abuse prevention",
+        "KYC/AML integration",
+        "Settlement & reconciliation workflows",
+        "Monitoring & alerting system"
+      ],
+      "dependencies": ["Phase 2 complete", "Audit firm engaged"]
+    },
+
+    {
+      "id": "mainnet-launch",
+      "name": "Mainnet Launch",
+      "status": "planned",
+      "priority": "P0",
+      "targetQuarter": "2026-Q4",
+      "dependencies": ["Phase 3 complete", "Audit passed", "Compliance review"]
+    }
+  ],
+
+  "successMetrics": {
+    "phase1": {
+      "smokeTestExit": "0 (CCTP PASS) or 1 (ADMIN_RELAY FALLBACK)",
+      "quoteEndpointLatency": "<500ms",
+      "uxRequirements": ["mobile-friendly", "MetaMask connect", "SSE real-time progress"],
+      "deploymentChain": "BSC Testnet (callable via cast)",
+      "e2eFlow": "QR → payment → sign → swap → bridge → confirmed",
+      "compilation": "no TypeScript errors",
+      "security": "atomic idempotency + input validation + key management"
+    },
+    "phase2_targets_TBD": "Define when first merchant onboarded"
+  },
+
+  "openQuestions": [
+    "When to formalize Phase 2 plan? (waiting for first merchant traction signal)",
+    "Vercel stabilization series + brand v1 still missing from project-changelog.md",
+    "3 deferred items from Pencil redesign report: Generate QR USDC modal, Export CSV, persist targetUSDC in merchant profile"
+  ]
+}

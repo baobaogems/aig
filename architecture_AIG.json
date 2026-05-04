@@ -1,0 +1,164 @@
+{
+  "$schema": "anchor-context/v1",
+  "project": "ARC Invisible Gateway (AIG)",
+  "tagline": "Pay with anything. Receive USDC. Invisibly.",
+  "version": "1.0.0",
+  "lastUpdated": "2026-05-04",
+  "sourceOfTruth": "docs/system-architecture.md",
+
+  "overview": {
+    "domain": "Cross-chain payment infrastructure",
+    "flow": "Customer pays any token on BSC → AIG swaps to USDC → bridges to Arc Network → merchant receives USDC",
+    "uxPromise": "Invisible: customer never sees swap/bridge mechanics"
+  },
+
+  "monorepo": {
+    "frontend": {
+      "stack": ["Next.js 16 App Router", "React 19", "TypeScript ES2020 strict", "Tailwind 4", "wagmi v2", "viem", "@supabase/supabase-js", "@tanstack/react-query", "qrcode.react"],
+      "deployedOn": "Vercel"
+    },
+    "contracts": {
+      "stack": ["Solidity ^0.8.24", "Foundry"],
+      "deployedOn": "BSC Testnet"
+    },
+    "scripts": {
+      "stack": ["TypeScript", "viem", "ts-node"],
+      "purpose": "Standalone validation + smoke tests"
+    }
+  },
+
+  "components": {
+    "smartContracts": {
+      "SwapRouter.sol": {
+        "chain": "BSC Testnet",
+        "entryFn": "swapAndBridge(sessionId, grossUSDC, aigFee, amountInMax, poolFee, merchantBytes32, merchantAddr)",
+        "logic": ["wrap BNB→WBNB", "approve WBNB to PancakeSwap V3", "exactOutputSingle to USDC", "emit SwapCompleted", "refund unused WBNB"],
+        "dualMode": "CCTP-aware (cctpMessenger != address(0)) OR ADMIN_RELAY fallback"
+      },
+      "interfaces": ["IERC20", "IWBNB", "IPancakeV3Router", "ICCTPTokenMessenger"],
+      "deploy": "contracts/scripts/Deploy.s.sol — BRIDGE_MODE-aware Foundry script"
+    },
+
+    "apiRoutes": {
+      "POST /api/agent/quote": "fetch spot price → calc swap params (0.5% slippage + 0.1% AIG fee) → cache to Supabase → return SwapParams",
+      "POST /api/agent/execute": "SSE stream: swap_executing → bridging → confirmed (or bridge_delayed)",
+      "GET /api/points": "{ totalPoints, tier } from points_balance table",
+      "GET /api/dashboard": "{ merchantProfile, analyticsStats } — server-side aggregation"
+    },
+
+    "libModules": {
+      "lib/agent.ts": "fetchSpotPrice (PancakeSwap Quoter), calculateSwapParams, updateSessionStatus (Supabase upsert + JSONB cache)",
+      "lib/chains.ts": "getArcChain() — viem defineChain Arc Testnet ID 212",
+      "lib/mock-bridge.ts": "pollSwapCompleted, adminRelay (atomic idempotency), verifyAdminWalletBalance",
+      "lib/cctp.ts": "extractMessageHash, extractRawMessage, receiveMessage (Arc MessageTransmitter), pollAttestation (Circle API)",
+      "lib/points.ts": "awardPoints (insert ledger + update balance), getPointsBalance",
+      "lib/merchant.ts": "upsertMerchant, getMerchantStats (totalRevenue, transactionCount, successRate, recentVolume)"
+    },
+
+    "pages": {
+      "/": "Landing page",
+      "/pay/[id]": "Customer payment page — wagmi connect, fee breakdown, SSE progress, mobile-first",
+      "/dashboard": "Merchant dashboard — Pencil UI, QR generator, real-time payment feed, points tier, stat cards"
+    },
+
+    "uiComponents": [
+      "fee-breakdown-card.tsx",
+      "payment-progress-bar.tsx",
+      "qr-code-generator.tsx",
+      "payment-feed-table.tsx",
+      "dashboard-stat-cards.tsx",
+      "points-tier-card.tsx"
+    ],
+
+    "database": {
+      "provider": "Supabase",
+      "tables": {
+        "payment_sessions": "session_id (unique), status, bridge_mode, merchant_wallet, customer_wallet, target_usdc, swap_params (JSONB)",
+        "merchants": "wallet_address (unique), business_name, created_at",
+        "points_ledger": "merchant_wallet, txn_type, points_awarded, session_id",
+        "points_balance": "merchant_wallet (pk), total_points, current_tier"
+      },
+      "migrations": [
+        "001_create_payment_sessions.sql",
+        "002_create_points_tables.sql",
+        "003_create_merchants_table.sql"
+      ]
+    },
+
+    "external": {
+      "PancakeSwap V3 (BSC Testnet)": "Quoter (spot price) + Router (exactOutputSingle swap)",
+      "Circle CCTP": "Domain 7 (Arc) — TokenMessenger.depositForBurn → MessageTransmitter.receiveMessage; attestation via Circle API",
+      "Arc Network": "Settlement chain (chain ID 212) — USDC mint destination",
+      "Vercel": "Frontend hosting"
+    }
+  },
+
+  "bridgeModes": {
+    "CCTP (primary)": {
+      "gate": "scripts/test-cctp-domain7.ts must exit 0",
+      "flow": "BSC SwapCompleted → extract MessageSent log → keccak256 hash → poll Circle attestation (5s interval, 120s timeout) → Arc MessageTransmitter.receiveMessage(message, attestation) → USDC mint"
+    },
+    "ADMIN_RELAY (fallback)": {
+      "gate": "smoke test FAIL or dev mode",
+      "flow": "BSC SwapCompleted → poll receipt 30s → Supabase atomic guard (status=PENDING) → admin wallet USDC.transfer on Arc",
+      "constraint": "Disabled on mainnet — testnet only"
+    }
+  },
+
+  "dataFlow": {
+    "paymentInitiation": [
+      "Customer → /pay/[id]",
+      "POST /api/agent/quote → fetchSpotPrice + calc + cache",
+      "FeeBreakdownCard renders quote",
+      "Customer signs SwapRouter.swapAndBridge() via MetaMask"
+    ],
+    "paymentExecution": [
+      "Frontend opens EventSource: POST /api/agent/execute",
+      "Backend: load cached swap_params, emit swap_executing",
+      "pollSwapCompleted(swapTxHash) — 30s timeout",
+      "emit bridging — branch on BRIDGE_MODE",
+      "CCTP: extractMessageHash → pollAttestation → receiveMessage on Arc",
+      "ADMIN_RELAY: adminRelay(merchant, netUSDC, sessionId) — atomic guard",
+      "emit confirmed → awardPoints → close stream"
+    ],
+    "merchantDashboard": [
+      "Connect wallet (wagmi) → upsertMerchant",
+      "GET /api/dashboard → render profile + stat cards",
+      "Supabase real-time subscription → PaymentFeedTable updates",
+      "GET /api/points → display tier"
+    ]
+  },
+
+  "keyDesignDecisions": {
+    "BRIDGE_MODE_abstraction": "Graceful fallback CCTP↔ADMIN_RELAY without code change — env var at deploy",
+    "atomicIdempotency": "Supabase .eq('status','PENDING') prevents duplicate transfers on retry",
+    "quoteCaching": "swap_params JSONB cache → /execute uses cached values (no recalculation drift)",
+    "offChainMath": "All floating-point in TypeScript (lib/agent.ts) — Solidity sees only integer wei",
+    "clientSideOnly": "Payment + dashboard pages are 'use client' — wagmi needs browser env"
+  },
+
+  "security": {
+    "auth": "Wallet-based identity (Phase 1 PoC, no auth system)",
+    "privateKeys": "AIG_ADMIN_WALLET_PRIVATE_KEY env-only, server-side only",
+    "inputValidation": "sessionId (hex 32B), walletAddress (checksum), targetUSDC (positive bounded)",
+    "txFinality": "waitForTransactionReceipt before bridging",
+    "timeouts": "pollSwapCompleted 30s, pollAttestation 120s"
+  },
+
+  "performance": {
+    "quoteEndpoint": "<500ms",
+    "ssePolling": "2-5s (viem default)",
+    "supabaseQueries": "<200ms (indexed on session_id)",
+    "qrRefresh": "60s"
+  },
+
+  "envVars": {
+    "rpc": ["BSC_TESTNET_RPC_URL", "ARC_TESTNET_RPC_URL", "NEXT_PUBLIC_BSC_TESTNET_RPC_URL"],
+    "contracts": ["WBNB_ADDRESS_BSC", "USDC_ADDRESS_BSC_TESTNET", "PANCAKESWAP_V3_QUOTER_BSC", "PANCAKESWAP_V3_ROUTER_BSC", "NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC"],
+    "cctp": ["CCTP_TOKEN_MESSENGER_BSC", "CCTP_MESSAGE_TRANSMITTER_ARC"],
+    "supabase": ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+    "keys": ["AIG_ADMIN_WALLET_PRIVATE_KEY", "AIG_ADMIN_WALLET_ADDRESS", "DEPLOYER_PRIVATE_KEY"],
+    "bridge": ["BRIDGE_MODE"],
+    "revenue": ["AIG_REVENUE_POOL_ADDRESS"]
+  }
+}
