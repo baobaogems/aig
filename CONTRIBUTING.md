@@ -70,7 +70,7 @@ If `architecture_AIG.json` or `roadmap_AIG.json` falls out of sync with reality 
 
 ## Code Standards
 
-See [`docs/code-standards.md`](./docs/code-standards.md) for full conventions. Key rules:
+Key rules (full reference doc deferred):
 
 - File naming: kebab-case with descriptive names
 - Functions: camelCase

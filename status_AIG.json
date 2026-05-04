@@ -4,7 +4,6 @@
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
   "lastUpdated": "2026-05-04T10:50:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
-
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
     "appendOnComplete": "After completing any task, append a new entry to logs[] with timestamp, type, what, files, status. Do not modify existing entries.",
@@ -14,21 +13,26 @@
       "title": "1-line summary",
       "what": "what was done (concise)",
       "why": "(optional) reason / trigger",
-      "files": ["array of paths touched"],
-      "commits": ["array of git commit hashes if any"],
+      "files": [
+        "array of paths touched"
+      ],
+      "commits": [
+        "array of git commit hashes if any"
+      ],
       "status": "done | done_with_concerns | blocked | in_progress",
       "concerns": "(optional) follow-ups or issues",
       "session": "(optional) session marker"
     }
   },
-
   "logs": [
     {
       "timestamp": "2026-05-02T09:10:00+07:00",
       "type": "docs",
       "title": "Project status overview report",
       "what": "Compiled full plan/status snapshot — 2 plans (Phase 1 MVP + Dashboard real data) both complete, 8/8 phases done; documented post-plan Vercel stabilization series (7+ commits) not yet in changelog",
-      "files": ["plans/reports/status-260502-0910-aig-project-overview.md"],
+      "files": [
+        "plans/reports/status-260502-0910-aig-project-overview.md"
+      ],
       "status": "done",
       "concerns": "project-changelog.md last updated 2026-03-15, missing Pencil redesign + Vercel stabilization entries"
     },
@@ -37,7 +41,10 @@
       "type": "ops",
       "title": "Symlink claudekit-marketing into project",
       "what": "Created symlink: aig_project/claudekit-marketing → /Users/baobao/WORKSPACE/02_PROJECTS/claudekit-marketing. Added to .gitignore line 27 to prevent tracking.",
-      "files": [".gitignore", "claudekit-marketing (symlink)"],
+      "files": [
+        ".gitignore",
+        "claudekit-marketing (symlink)"
+      ],
       "status": "done"
     },
     {
@@ -45,7 +52,9 @@
       "type": "brand",
       "title": "Brand guidelines v1.0 created (then v1.1)",
       "what": "Restructured Notion source RTF (textutil convert) into brand book at .claude/brand-guidelines.md. Sections: Quick Reference, Truth (KEPT VERBATIM), Visual Identity (extracted from Pencil dashboard: #FF8400/#F2F3F0/JetBrains Mono), Voice & Tone, Content Pillars (KEPT VERBATIM), Proof Points (KEPT VERBATIM), Competitor Positioning (MoonPay only), Messaging Framework, Tóm lại 1 câu (KEPT VERBATIM). v1.1: removed Aituvi section per user feedback (not relevant); renumbered subsections.",
-      "files": [".claude/brand-guidelines.md"],
+      "files": [
+        ".claude/brand-guidelines.md"
+      ],
       "status": "done",
       "concerns": ".claude/ is gitignored — guidelines file is local-only"
     },
@@ -63,7 +72,9 @@
         "assets/brand/logo/png/* (8 PNGs)",
         "assets/brand/logo/README.md"
       ],
-      "commits": ["eee8329"],
+      "commits": [
+        "eee8329"
+      ],
       "status": "done",
       "concerns": "SVG <text> depends on JetBrains Mono being installed on renderer. For production web/print, convert text→outlined paths via Inkscape (deferred per user)."
     },
@@ -91,7 +102,9 @@
         "roadmap_AIG.json",
         "status_AIG.json"
       ],
-      "commits": ["03be3b1"],
+      "commits": [
+        "03be3b1"
+      ],
       "status": "done",
       "concerns": "CLAUDE.md is gitignored (per .gitignore line 26), so the anchor instruction lives only on local machine. Memory file at ~/.claude/projects/.../memory/feedback_anchor_context_files.md provides redundant enforcement."
     },
@@ -108,6 +121,37 @@
         "roadmap_AIG.json",
         "assets/brand/logo/README.md",
         "~/.claude/projects/.../memory/feedback_anchor_context_files.md"
+      ],
+      "status": "done"
+    },
+    {
+      "timestamp": "2026-05-04T14:55:00+07:00",
+      "type": "docs",
+      "title": "Remove dead link to docs/code-standards.md from CONTRIBUTING",
+      "what": "Removed deferred-doc link from CONTRIBUTING.md Code Standards section. Inline rules kept (kebab-case, camelCase, etc.). docs/code-standards.md creation deferred per user.",
+      "why": "Dead link → reader confusion. Defer file creation until needed.",
+      "files": [
+        "CONTRIBUTING.md"
+      ],
+      "status": "done"
+    },
+    {
+      "timestamp": "2026-05-04T14:55:00+07:00",
+      "type": "research",
+      "title": "Stop hook investigation — session-state.cjs NOT missing",
+      "what": "User reported Stop hook error claiming session-state.cjs module missing. Verified: script exists at ~/.claude/hooks/session-state.cjs, required deps (lib/ck-config-utils.cjs, lib/session-state-manager.cjs) all exist, runs with exit 0 against realistic input. Premise wrong — declined to edit user settings.json. User chose option C: skip hook fix.",
+      "why": "Editing user-level settings.json based on wrong premise risks disabling working feature (session-state feeds multiple hooks).",
+      "files": [],
+      "status": "done",
+      "concerns": "Real error source unknown — if user encounters Stop hook error again, need actual error message to diagnose."
+    },
+    {
+      "timestamp": "2026-05-04T14:55:00+07:00",
+      "type": "ops",
+      "title": "Verified status_AIG.json append-only invariant",
+      "what": "Confirmed entry #7 (2026-05-04T14:42:00+07:00 — brand-guidelines move) appended without altering entries 1-6. All 7 entries valid JSON, timestamps strictly increasing.",
+      "files": [
+        "status_AIG.json"
       ],
       "status": "done"
     }
