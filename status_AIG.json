@@ -1,0 +1,83 @@
+{
+  "$schema": "anchor-context/v1",
+  "project": "ARC Invisible Gateway (AIG)",
+  "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
+  "lastUpdated": "2026-05-04T10:50:00+07:00",
+  "owner": "Bao Bao (hoangcaaa555@gmail.com)",
+
+  "usage": {
+    "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
+    "appendOnComplete": "After completing any task, append a new entry to logs[] with timestamp, type, what, files, status. Do not modify existing entries.",
+    "logEntrySchema": {
+      "timestamp": "ISO 8601 with timezone",
+      "type": "feature | fix | docs | chore | brand | ops | research | plan | refactor",
+      "title": "1-line summary",
+      "what": "what was done (concise)",
+      "why": "(optional) reason / trigger",
+      "files": ["array of paths touched"],
+      "commits": ["array of git commit hashes if any"],
+      "status": "done | done_with_concerns | blocked | in_progress",
+      "concerns": "(optional) follow-ups or issues",
+      "session": "(optional) session marker"
+    }
+  },
+
+  "logs": [
+    {
+      "timestamp": "2026-05-02T09:10:00+07:00",
+      "type": "docs",
+      "title": "Project status overview report",
+      "what": "Compiled full plan/status snapshot — 2 plans (Phase 1 MVP + Dashboard real data) both complete, 8/8 phases done; documented post-plan Vercel stabilization series (7+ commits) not yet in changelog",
+      "files": ["plans/reports/status-260502-0910-aig-project-overview.md"],
+      "status": "done",
+      "concerns": "project-changelog.md last updated 2026-03-15, missing Pencil redesign + Vercel stabilization entries"
+    },
+    {
+      "timestamp": "2026-05-04T09:27:00+07:00",
+      "type": "ops",
+      "title": "Symlink claudekit-marketing into project",
+      "what": "Created symlink: aig_project/claudekit-marketing → /Users/baobao/WORKSPACE/02_PROJECTS/claudekit-marketing. Added to .gitignore line 27 to prevent tracking.",
+      "files": [".gitignore", "claudekit-marketing (symlink)"],
+      "status": "done"
+    },
+    {
+      "timestamp": "2026-05-04T09:57:00+07:00",
+      "type": "brand",
+      "title": "Brand guidelines v1.0 created (then v1.1)",
+      "what": "Restructured Notion source RTF (textutil convert) into brand book at .claude/brand-guidelines.md. Sections: Quick Reference, Truth (KEPT VERBATIM), Visual Identity (extracted from Pencil dashboard: #FF8400/#F2F3F0/JetBrains Mono), Voice & Tone, Content Pillars (KEPT VERBATIM), Proof Points (KEPT VERBATIM), Competitor Positioning (MoonPay only), Messaging Framework, Tóm lại 1 câu (KEPT VERBATIM). v1.1: removed Aituvi section per user feedback (not relevant); renumbered subsections.",
+      "files": [".claude/brand-guidelines.md"],
+      "status": "done",
+      "concerns": ".claude/ is gitignored — guidelines file is local-only"
+    },
+    {
+      "timestamp": "2026-05-04T10:46:00+07:00",
+      "type": "brand",
+      "title": "AIG logo asset bundle (5 SVG + 8 PNG)",
+      "what": "Hand-crafted SVG (Gemini API quota exhausted, pivoted from logo-design skill). Concept: AIG wordmark in JetBrains Mono Bold + orange #FF8400 dot (terminal cursor / payload passthrough metaphor). Variants: wordmark horizontal/darkmode/monochrome, icon mark (gateway frame + dot), favicon (heavier stroke for 16-32px). Pre-rendered PNGs via rsvg-convert (librsvg) — ImageMagick had SVG rendering issues. Installed font-jetbrains-mono and librsvg via Homebrew. README documents variants, color/typography spec, re-render commands.",
+      "files": [
+        "assets/brand/logo/aig-wordmark-horizontal.svg",
+        "assets/brand/logo/aig-wordmark-darkmode.svg",
+        "assets/brand/logo/aig-wordmark-monochrome.svg",
+        "assets/brand/logo/aig-icon-mark.svg",
+        "assets/brand/logo/aig-favicon.svg",
+        "assets/brand/logo/png/* (8 PNGs)",
+        "assets/brand/logo/README.md"
+      ],
+      "commits": ["eee8329"],
+      "status": "done",
+      "concerns": "SVG <text> depends on JetBrains Mono being installed on renderer. For production web/print, convert text→outlined paths via Inkscape (deferred per user)."
+    },
+    {
+      "timestamp": "2026-05-04T10:50:00+07:00",
+      "type": "docs",
+      "title": "Created 3 anchor context JSON files",
+      "what": "Created architecture_AIG.json (system map), roadmap_AIG.json (phases + status), status_AIG.json (this file — append-only log). Convention: read all 3 BEFORE starting any work, append to status_AIG.json AFTER completing each task.",
+      "files": [
+        "architecture_AIG.json",
+        "roadmap_AIG.json",
+        "status_AIG.json"
+      ],
+      "status": "done"
+    }
+  ]
+}
