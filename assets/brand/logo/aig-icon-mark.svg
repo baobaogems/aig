@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="AIG icon">
+  <title>AIG icon — invisible gateway</title>
+  <desc>Square gateway frame containing orange #FF8400 payload dot. Symbolizes value passing through an invisible boundary. Use for app icons, social avatars, small spaces.</desc>
+  <rect x="8" y="8" width="48" height="48" rx="6" ry="6"
+        fill="none" stroke="#111111" stroke-width="4"/>
+  <circle cx="32" cy="32" r="7" fill="#FF8400"/>
+</svg>
