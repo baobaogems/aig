@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 60" role="img" aria-label="AIG — ARC Invisible Gateway (dark mode)">
+  <title>AIG — ARC Invisible Gateway</title>
+  <desc>Wordmark AIG for dark backgrounds. Light text with orange #FF8400 accent dot.</desc>
+  <text x="12" y="44"
+        font-family="'JetBrains Mono', 'Menlo', 'Consolas', monospace"
+        font-weight="700"
+        font-size="44"
+        letter-spacing="-0.5"
+        fill="#F2F3F0">AIG</text>
+  <circle cx="108" cy="24" r="7" fill="#FF8400"/>
+</svg>

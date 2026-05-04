@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="AIG favicon">
+  <title>AIG favicon</title>
+  <desc>Optimized for 16-32px rendering. Heavier stroke + larger dot for legibility at small sizes.</desc>
+  <rect x="3" y="3" width="26" height="26" rx="3" ry="3"
+        fill="none" stroke="#111111" stroke-width="3"/>
+  <circle cx="16" cy="16" r="5" fill="#FF8400"/>
+</svg>
