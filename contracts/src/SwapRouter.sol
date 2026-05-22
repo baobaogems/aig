@@ -32,6 +32,9 @@ contract SwapRouter {
     // Arc Testnet CCTP Domain ID (confirmed via Arc community — see PRD Section 6)
     uint32 public constant ARC_DOMAIN = 7;
 
+    // Contract version — bumped on each redeploy that changes behavior/observability
+    uint8 public constant VERSION = 2;
+
     // -------------------------------------------------------------------------
     // Events
     // -------------------------------------------------------------------------
@@ -50,6 +53,9 @@ contract SwapRouter {
         uint256 netUSDCAmount,
         address merchantWallet
     );
+
+    // Emitted once at construction so indexers can pin the deployed contract version
+    event SwapRouterVersion(uint8 version);
 
     // Emitted whenever unspent WBNB is returned to the customer
     event RefundIssued(
@@ -82,6 +88,8 @@ contract SwapRouter {
         cctpMessenger = ICCTPTokenMessenger(_cctpMessenger);
         revenuePool = _revenuePool;
         owner = msg.sender;
+
+        emit SwapRouterVersion(VERSION);
     }
 
     // -------------------------------------------------------------------------
