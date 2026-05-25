@@ -1,80 +1,45 @@
-# Phase 02 — API routes dual-path (env-flag switch)
+# Phase 02 — ✗ COLLAPSED (absorbed into Phase 03)
 
-**Priority:** P0 · **Status:** pending · **Target day:** 26-27/05/2026
+**Status:** ✗ COLLAPSED · **Date collapsed:** 25/05/2026 · **Reason:** architectural finding during spike
 
-## Goal
+## What changed
 
-`/api/agent/quote` + `/api/agent/execute` support both v1 (CCTP/Admin Relay) and v2 (App Kit) code paths. Switch via `BRIDGE_BACKEND=v1|v2`. Default `v1` until Phase 4 flips it. v1 remains the safe path during the entire transition.
+The original Phase 02 planned a server-side dual-path `/api/agent/quote` + `/api/agent/execute` switched by a `BRIDGE_BACKEND=v1|v2` env var, with the v2 branch calling `kit.estimateSwap + estimateBridge + estimateSend` server-side.
 
-## Files
+**That's impossible.** Phase 01 spike + a runtime probe (`frontend/` node REPL) confirmed every App Kit operation — including the read-only `estimate*` variants — requires `from.adapter` in its params, and that adapter must be wired to the **customer's wallet** (EIP-1193 provider). The server has no customer wallet. The PRD §8 server-side quote flow was modeled on v1's PancakeSwap quoter (public RPC reads, no wallet needed) and doesn't carry over to App Kit.
 
-**Modify**
-- `frontend/app/api/agent/quote/route.ts` — top-of-handler: branch on `process.env.BRIDGE_BACKEND ?? "v1"`; v1 branch = current PancakeSwap quoter code; v2 branch = call `quoteSwap + quoteBridge + quoteSend` from `appkit.server.ts`, return same response shape
-- `frontend/app/api/agent/execute/route.ts` — same env-flag branching; v2 branch streams SSE events from App Kit (per-Phase-1-spike outcome: `kit.on(...)` or client-poll)
-- `frontend/lib/agent.ts` — extract any shared session-state code into pure helpers; bridge-specific code stays branch-local
-- `frontend/.env.local` — `BRIDGE_BACKEND=v1` (explicit baseline)
+### Probe results (2026-05-25)
 
-**Untouched**
-- `cctp.ts`, `mock-bridge.ts`, `chains.ts` (v1 still uses them)
-- `appkit.server.ts` (just consumed)
-- `merchant.ts`, `points.ts`, dashboard route (merchant layer)
+```js
+// frontend/ node REPL with KIT_KEY set
+await kit.estimateSwap({ from: { chain: 'Arc_Testnet' }, tokenIn: 'USDC', tokenOut: 'EURC', amountIn: '1.00', config: { kitKey } })
+// → KitError: Invalid swap parameters: from.adapter: Required
 
-## Response shape contract (must match v1)
-
-`POST /api/agent/quote` returns:
-```json
-{ "targetUSDC": "...", "fees": { "swap": "...", "bridge": "...", "send": "...", "total": "..." }, "requiredTokenIn": "..." }
-```
-Frontend must not need to know which backend served the request.
-
-`POST /api/agent/execute` SSE stream — event names per PRD §8:
-```
-swap_executing → swap_done → bridging → bridge_done → sending → confirmed
-```
-v2 may collapse send into bridge if App Kit auto-routes; emit equivalent terminal event.
-
-## Smoke gate (end of phase)
-
-Two curls, same payload, both succeed:
-```
-BRIDGE_BACKEND=v1 npm run dev   # in one terminal
-curl -X POST http://localhost:3000/api/agent/quote -d @scripts/fixtures/sample-quote.json
-# expect v1 PancakeSwap-quoter response
-
-# stop, restart with BRIDGE_BACKEND=v2
-curl -X POST http://localhost:3000/api/agent/quote -d @scripts/fixtures/sample-quote.json
-# expect v2 App-Kit response, SAME shape
+await kit.estimateBridge({ from: { chain: 'Ethereum_Sepolia' }, to: { chain: 'Arc_Testnet' }, amount: '1.00', token: 'USDC' })
+// → KitError: Invalid parameters: from.adapter: Required; to: Invalid input
 ```
 
-Plus: `/api/agent/execute` SSE stream — open with `curl -N`, both flags must terminate on `confirmed` event.
+There IS a theoretical workaround (developer-controlled adapter via `createViemAdapterFromPrivateKey(AIG_KEY)` + `address: customerAddr`), but it would reflect AIG's wallet state for balances/gas/nonces — wrong by design for a customer quote.
 
-## Todo
+## Where Phase 02 scope went
 
-- [ ] Read existing `quote/route.ts` + `execute/route.ts` for session/SSE patterns to preserve
-- [ ] Extract shared helpers from `agent.ts`; gate bridge-specific code per branch
-- [ ] v1 branch: no behavior change
-- [ ] v2 branch: wire `appkit.server.ts` calls + SSE per Phase 1 spike outcome
-- [ ] Create `scripts/fixtures/sample-quote.json` for repeatable smoke
-- [ ] Both branches return identical response shape (contract test)
-- [ ] Add `BRIDGE_BACKEND=v1` to `.env.local`
-- [ ] Smoke: dual curl run
-- [ ] Commit `feat(v2): api routes dual-path behind BRIDGE_BACKEND (phase 02)`
+- **Quote (estimate)** → Phase 03, client-side. Page calls `kit.estimateSwap/estimateBridge/estimateSend` after wallet connects, displays fee breakdown.
+- **Execute (bridge)** → Phase 03, client-side. Page calls `kit.bridge`/`kit.send`, listens to `kit.on('*')` events for progress UI, PATCHes session status to the server.
+- **Server status endpoint** → Phase 03 adds `PATCH /api/sessions/[id]/status` (replaces the would-be `/api/agent/execute` v2 branch).
+- **`BRIDGE_BACKEND` env switch** → becomes `NEXT_PUBLIC_BRIDGE_BACKEND=v1|v2` only (client read), no server-side flag needed.
 
-## Success criteria
+## v1 server routes — untouched until Phase 06
 
-- `BRIDGE_BACKEND=v1` → identical behavior to pre-Phase-2 `main`
-- `BRIDGE_BACKEND=v2` → returns valid quote / streams to `confirmed`
-- Response shape contract preserved (frontend unchanged)
-- `main` green after commit; Vercel still serves v1 (no env var changes there yet)
+`/api/agent/quote` and `/api/agent/execute` keep their v1 PancakeSwap + CCTP/Admin-Relay logic. They simply stop being called when the client uses v2 mode. Phase 06 cleanup deletes them along with the rest of v1.
 
-## Risks
+## Plan-level downstream effects
 
-| Risk | Mitigation |
-|---|---|
-| Shape drift between v1 and v2 responses → frontend bugs | Contract test in smoke gate compares JSON keys |
-| SSE event order differs between backends | Document any divergence in commit msg; frontend handles unknown events gracefully |
-| Phase 1 spike said "use client-poll" → no SSE on v2 | Add `/api/agent/status/[sessionId]` route alongside; flag in execute response |
+- **Phase 04** shrinks: just set `KIT_KEY` + `NEXT_PUBLIC_BRIDGE_BACKEND=v2` on Vercel (no server env changes).
+- **Phase 06** unchanged in scope but the "delete v1 server-side branches" sub-task becomes "delete v1 server routes entirely" (no dual-path to unwind).
+- Total phase count drops from 8 → 7 effective.
 
-## Next
+## Lessons captured
 
-→ Phase 3: same env-flag switch in customer payment page.
+1. PRD §8 architecture diagram assumed v1's server-side quote pattern. Update the PRD doc to mark the quote/execute boxes as client-side for v2.
+2. Strangler-fig pattern still works — it just runs in the client layer (page) instead of the server layer (routes). Same env-flag idea, different layer.
+3. Spike-before-implement saved a week of wrong-direction work.

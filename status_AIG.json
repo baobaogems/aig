@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-25T23:40:00+07:00",
+  "lastUpdated": "2026-05-25T23:58:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -567,6 +567,20 @@
       ],
       "status": "done_with_concerns",
       "concerns": "Phase 01 smoke is build+node-introspection -- running /api/dev/appkit-ping in dev server deferred to user (npm run dev in frontend/ then curl http://localhost:3000/api/dev/appkit-ping; expect ok:true + chainCount:45). For Phase 02: BridgeParams/SwapParams/SendParams exact field shapes not yet enumerated (deferred -- wrappers pass through SDK types so Phase 02 hits real errors at call site if shape drifts). AppKitBridgeActions / AppKitUnifiedBalanceActions event names (kit.on/off keys) not yet enumerated for SSE wiring -- Phase 02 step 0 should grep DefaultBridgeKitActions. KIT_KEY value still blank -- Phase 02 fee math needs it; user fetches from console.circle.com between sessions. Pre-existing published-types path bugs in @circle-fin SDK (.d.ts hardcodes /home/runner/_work absolute paths) are cosmetic -- runtime works, type-check noisy. PRD doc still says @arc-network/app-kit -- needs user revision. Previous commit attempt missed package-lock.json (at workspace root not frontend/) and the status entry itself -- amending now."
+    },
+    {
+      "timestamp": "2026-05-25T23:58:00+07:00",
+      "type": "plan",
+      "title": "Phase 02 COLLAPSED — App Kit is fully client-side (architecture finding)",
+      "what": "Phase 02 step 0 spike (cook skill, code mode) ran probes against installed @circle-fin/app-kit v1.6.1. Confirmed via runtime probe in frontend/ node REPL: kit.estimateSwap and kit.estimateBridge BOTH require from.adapter in params (KitError 'from.adapter: Required'). The adapter is the customer's wallet (EIP1193Provider) — cannot be serialized server-side. Therefore the PRD-implied server-side quote/execute dual-path is architecturally impossible. App Kit is fully client-side for all operations (quote AND execute). Theoretical workaround (developer-controlled adapter via AIG_KEY + address override) would reflect AIG's wallet state — wrong-by-design for customer quote. Collapsed Phase 02 into Phase 03; updated plan.md status table (Phase 02 ✗ COLLAPSED, Phase 03 EXPANDED to include kit.estimateSwap+kit.bridge+kit.send client-side + new PATCH /api/sessions/[id]/status endpoint for client→server status updates, Phase 04 REDUCED to just setting NEXT_PUBLIC_BRIDGE_BACKEND=v2 on Vercel). Rewrote phase-02-api-routes-dual-path.md as a collapsed-with-rationale note capturing probe results, scope reallocation, and lessons. Edited phase-03-payment-page-dual-path.md to declare absorbed sub-tasks (client-side quote, client-side execute, status PATCH endpoint, kit.on wildcard wiring). No code changes — v1 server routes /api/agent/{quote,execute} stay UNTOUCHED until Phase 06 cleanup (they simply stop being called when client is on v2). Total v2 phase count effectively drops from 8 to 7. PRD §8 diagram still shows server-side flow — needs user revision.",
+      "why": "Cook skill review gate caught the architectural mismatch before any v2 server-route code got written. User picked 'A: Skip Phase 02, go to Phase 03' over backend-marker prep or developer-adapter spike. Most honest reflection of App Kit's actual design.",
+      "files": [
+        "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-02-api-routes-dual-path.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-03-payment-page-dual-path.md"
+      ],
+      "status": "done",
+      "concerns": "PRD doc /Users/baobao/Downloads/PRD_v2_AIG_AppKit.md §8 architecture diagram shows POST /api/agent/quote+/execute as server-orchestrated — needs user revision to reflect client-side reality. spike-app-kit-api-discovery.md still describes the original Phase 02 plan as if server-side wrappers were the goal; should append a 'Server-side quote impossible' section but deferred (info already captured in collapsed phase-02 doc). Phase 03 became larger (now owns estimate + execute + new status endpoint) — may need internal sub-phasing during implementation. Strangler-fig still works just in the client layer (NEXT_PUBLIC_BRIDGE_BACKEND env flag in page.tsx, not server-side BRIDGE_BACKEND)."
     }
   ]
 }

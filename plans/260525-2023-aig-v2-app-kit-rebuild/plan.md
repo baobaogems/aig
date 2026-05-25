@@ -31,11 +31,11 @@ kit.unifiedBalance.{ deposit, spend, getBalances, addDelegate, estimateSpend, ge
 
 | # | File | Status | Day | Summary |
 |---|---|---|---|---|
-| 00 | [phase-00-foundation-deps.md](phase-00-foundation-deps.md) | ✅ DONE | 25/05 | Installed `@circle-fin/app-kit` + `adapter-viem-v2`; verified v1.0 tag remote |
-| 01 | [phase-01-appkit-server-client.md](phase-01-appkit-server-client.md) | pending | 26/05 | Build `frontend/lib/appkit.server.ts` (per-request `getKit()`, typed wrappers, SSE spike, ESLint guard) |
-| 02 | [phase-02-api-routes-dual-path.md](phase-02-api-routes-dual-path.md) | pending | 26-27/05 | Add v2 path to `/api/agent/quote` + `execute` behind `BRIDGE_BACKEND=v1\|v2`. v1 default. Smoke: curl both. |
-| 03 | [phase-03-payment-page-dual-path.md](phase-03-payment-page-dual-path.md) | pending | 27-28/05 | Same env-flag switch in `pay/[id]/page.tsx`. Smoke: open both flows locally. |
-| 04 | [phase-04-flip-default-to-v2.md](phase-04-flip-default-to-v2.md) | pending | 28-29/05 | Set `KIT_KEY` + `BRIDGE_BACKEND=v2` on Vercel; production smoke; rollback path documented |
+| 00 | [phase-00-foundation-deps.md](phase-00-foundation-deps.md) | ✅ DONE | 25/05 | Installed `@circle-fin/app-kit` + `adapter-viem-v2`; verified v1.0 tag remote (folded into commit `e382aa2`) |
+| 01 | [phase-01-appkit-server-client.md](phase-01-appkit-server-client.md) | ✅ DONE | 25/05 | `frontend/lib/appkit.server.ts` (75 lines) + `/api/dev/appkit-ping` smoke + spike notes. Commit `e382aa2`, pushed to origin/main. SDK API discovery surfaced 3 PRD corrections (real package, real adapter factory, Arc CCTP domain). |
+| 02 | [phase-02-api-routes-dual-path.md](phase-02-api-routes-dual-path.md) | ✗ COLLAPSED | 25/05 | Spike found `kit.estimateSwap`/`estimateBridge` require `from.adapter` (customer wallet) — server-side quote impossible. v2 is fully client-side. Logic absorbed into Phase 03. |
+| 03 | [phase-03-payment-page-dual-path.md](phase-03-payment-page-dual-path.md) | pending | 26-28/05 | EXPANDED: `pay/[id]/page.tsx` does `kit.estimateSwap` + `kit.bridge` + `kit.send` client-side. New PATCH `/api/sessions/[id]/status` for client→server progress updates. v1 server routes untouched. Switch via `NEXT_PUBLIC_BRIDGE_BACKEND=v1\|v2`. |
+| 04 | [phase-04-flip-default-to-v2.md](phase-04-flip-default-to-v2.md) | pending | 28-29/05 | REDUCED: set `KIT_KEY` + `NEXT_PUBLIC_BRIDGE_BACKEND=v2` on Vercel (no server env changes — v1 server routes never get called when client is on v2). Production smoke. |
 | 05 | [phase-05-dashboard-unified-balance.md](phase-05-dashboard-unified-balance.md) | pending | 29-31/05 | Add `kit.unifiedBalance.getBalances` widget to merchant dashboard (additive) |
 | 06 | [phase-06-cleanup-v1.md](phase-06-cleanup-v1.md) | pending | 01-03/06 | **ONLY AFTER v2 proven**: delete `/contracts`, `cctp.ts`, `mock-bridge.ts`, admin-relay scripts; drop v1 branch from env flag; README banner re: v1.0 tag |
 | 07 | [phase-07-docs-smoke-tag.md](phase-07-docs-smoke-tag.md) | pending | 04-07/06 | Docs sweep (`system-architecture`, `codebase-summary`, README, brand), Arc Testnet end-to-end smoke, tag `v2.0-alpha` |

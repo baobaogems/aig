@@ -1,10 +1,19 @@
-# Phase 03 — Payment page dual-path
+# Phase 03 — Payment page + client-side v2 (expanded after Phase 02 collapsed)
 
-**Priority:** P0 · **Status:** pending · **Target day:** 27-28/05/2026
+**Priority:** P0 · **Status:** pending · **Target day:** 26-28/05/2026
+
+> **Scope expanded 25/05** — absorbed all of Phase 02's would-be server work after the architecture spike found App Kit is fully client-side. See `phase-02-api-routes-dual-path.md` for the rationale.
 
 ## Goal
 
-`frontend/app/pay/[id]/page.tsx` supports both v1 (direct `writeContract` to SwapRouter.sol) and v2 (App Kit flow via `/api/agent/execute`) code paths. Branch selected client-side via `NEXT_PUBLIC_BRIDGE_BACKEND=v1|v2` env (mirrors server-side flag, but exposed to client since the page needs to know).
+`frontend/app/pay/[id]/page.tsx` supports both v1 (direct `writeContract` to SwapRouter.sol → POST `/api/agent/execute`) and v2 (`kit.estimateSwap` + `kit.bridge` + `kit.send` entirely client-side → PATCH `/api/sessions/[id]/status` to update Supabase) code paths. Branch selected client-side via `NEXT_PUBLIC_BRIDGE_BACKEND=v1|v2` env.
+
+## New v2 sub-tasks (absorbed from Phase 02)
+
+- **Client-side quote** — when `NEXT_PUBLIC_BRIDGE_BACKEND=v2`, page calls `kit.estimateSwap/estimateBridge/estimateSend` after wallet connects; renders fee breakdown from real App Kit estimates.
+- **Client-side execute** — `kit.bridge(...)` and `kit.send(...)` run in the browser. Wallet signing happens inline (no separate `/api/agent/execute` POST).
+- **Status PATCH endpoint** — new `frontend/app/api/sessions/[id]/status/route.ts` accepts `PATCH { status, txHash?, error? }` from the client at each kit.on event; updates Supabase via `merchant.ts` helpers + awards points on `CONFIRMED`. Idempotent (replay-safe by sessionId + status).
+- **kit.on('*') wiring** — page registers wildcard event listener, surfaces each event to the UI progress bar AND posts to the status endpoint.
 
 ## Files
 
