@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-04T10:50:00+07:00",
+  "lastUpdated": "2026-05-25T20:25:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -154,6 +154,325 @@
         "status_AIG.json"
       ],
       "status": "done"
+    },
+    {
+      "timestamp": "2026-05-05T21:25:00+07:00",
+      "type": "research",
+      "title": "Created 3 ICP personas for AIG / Arc Network marketing motion",
+      "what": "Lead-qualifier agent generated 3 operator-brief ICP profiles tied to goal of Arc-team-recognized VN community mod role. Each file ~270-430 lines with TL;DR, role-in-goal, demographics, goals, pain points, engagement signals, channels, 5 messaging hooks tied to AIG proof points (SwapRouter.sol, commit hashes, /api/agent/*, CCTP Domain 7, Pencil dashboard), anti-patterns, KPIs, and 2-5 concrete activation plays. Persona 1 includes hybrid Watch List appendix — Circle GitHub org + arc.network site verified; individual Arc team handles flagged [unverified — verify before outreach] (X/Discord JS-blocked WebSearch). Brand-voice prohibited terms only present as anti-pattern callouts (correct usage). Total 991 lines / 57KB across 3 files.",
+      "why": "User invoked /persona create with explicit 3-persona spec. Personas anchor every future post/DM/Discord-reply/translation against the recognition goal. Build-in-Public + Arc Explainer VN content pillars need ICP frame to avoid drift.",
+      "files": [
+        "assets/leads/icp-profiles/arc-team-member.md",
+        "assets/leads/icp-profiles/arc-community-builder.md",
+        "assets/leads/icp-profiles/vn-crypto-dev.md",
+        "/Users/baobao/.claude/plans/create-d-n-aig-pure-pond.md"
+      ],
+      "status": "done",
+      "concerns": "Arc Discord URL + individual Arc team handles unverified (manual verification needed via arc.network footer before cold outreach). Circle bounty program details referenced in Play 4 of vn-crypto-dev.md need confirmation before scaling. VN Telegram penetration stat in vn-crypto-dev.md is assumption (not verified data)."
+    },
+    {
+      "timestamp": "2026-05-05T23:30:00+07:00",
+      "type": "research",
+      "title": "Arc Network competitive landscape report (battlecard format)",
+      "what": "Researcher agent ran 16 WebSearch queries across Circle/Arc official sources, GitHub, Medium, X, VN crypto sites. Output 4-tier battlecard: Tier 1 (10+ institutional partners — BlackRock/Visa/Coinbase/Aave/Mastercard/HSBC/AWS/etc.), Tier 2 (5 direct payment competitors — Coinbase Commerce, Stripe Crypto, BitPay, HIFI, Nuvei/Brex), Tier 3 (4 indie builders — Lynn TheLight USDC bridge, UnitFlow Finance DEX, Arc Token Deployer, Arc Onboard wizard), Tier 4 (VN coverage = ZERO — uncontested niche confirmed; Coin98 Labs and VN KOLs silent on Arc). Gap analysis: 6 gaps where AIG wins, 3 HIGH confidence (geographic VN, merchant-first UX, CCTP technical depth). Positioning recco: don't fight Stripe/Coinbase on brand — fight on cost (CCTP-native) + transparency. HIFI is potential integration partner, not pure competitor (they assume merchants already hold USDC; AIG solves first mile).",
+      "why": "Persona files alone don't tell where AIG sits in the Arc ecosystem queue. Need explicit competitor map before crafting outreach + content calendar. Competitor research validates the VN-first thesis with hard evidence (no VN-language Arc content found anywhere).",
+      "files": [
+        "plans/reports/researcher-260505-2325-arc-network-builders.md"
+      ],
+      "status": "done",
+      "concerns": "7 open questions documented in report — most critical: (1) Nuvei/Brex Arc merchant product launch timing (Q3 2026 est, unconfirmed); (2) Stripe Arc support timeline; (3) HIFI merchant-tier availability today; (4) VN SBV regulatory stance on stablecoin merchant settlement (could block VN GTM). Filename uses 'researcher-' prefix instead of plan-spec'd 'competitor-' prefix — agent default behavior."
+    },
+    {
+      "timestamp": "2026-05-06T00:15:00+07:00",
+      "type": "research",
+      "title": "Extracted writing style from @baobao_gems X profile (5 sample posts)",
+      "what": "User pasted 5 best-performing X posts from @baobao_gems (different brand from AIG/@baobaogemschat TG, per user confirmation). Extracted full style guide: voice fingerprint (mình + bạn/anh em, crypto OG persona, anti-hype), 5 hook archetypes (all-caps reversal / title+data / practical promise / imperative challenge / humble framing), 5 body templates (narrative confession / tactical guide / philosophical framework / listicle / strategic analysis), lexical signature (kèo, alpha, payoff lệch, vốn raise + Buddhist refs Bát Nhã/chánh niệm/Vô uý Vô Luỵ), format conventions (zero emoji, paragraph breaks not 1-line/sentence, paragraph not Twitter-thread style, =====+ section divider, occasional typo kept for real-time-thought feel), topic-to-format map, 10-point stylistic DNA, prohibited list, output templates copy-paste ready, AIG-vs-baobao_gems voice mapping recommendation. File explicitly marks this as PERSONAL brand voice, NOT AIG product voice.",
+      "why": "Pre-step before crafting AIG content calendar. User wanted personal voice baseline captured separately so future content calendar can decide which posts go on @baobao_gems (personal style) vs AIG account (Builder/honest/technical brand voice from docs/brand-guidelines.md).",
+      "files": [
+        "assets/writing-styles/baobao-gems-x-style.md"
+      ],
+      "status": "done",
+      "concerns": "Sample = 5 'best' posts only — selection bias risk. Need 10-15 random posts to validate baseline. 5 open questions in file: post cadence unknown, audience overlap with @baobaogemschat unknown, sponsored/referral post style not in sample, no confirmed mapping of which AIG content pillars (if any) should ship under @baobao_gems voice. Default mapping = keep brands separate; cross-post via narrative confession template if user wants."
+    },
+    {
+      "timestamp": "2026-05-06T08:30:00+07:00",
+      "type": "plan",
+      "title": "AIG 30-day content calendar + campaign brief built",
+      "what": "User confirmed 5 inputs (cadence 2/day @baobao_gems, audience overlap X+TG same, skew accepted=ship-update-later, skip sponsored extract, KEEP brand voices separate cross-pollinate via narrative confession only). User also dropped Buddhist/Eastern wisdom layer from @baobao_gems voice future (style guide updated: TL;DR note + section 3.3 rewrite + DNA list rebuilt + template C cleaned + voice chart updated, marked 2026-05-06). campaign-manager agent then built 4 files in plans/260506-0818-aig-content-calendar/: plan.md (70 lines — overview, 4-week arc, channel/pillar allocation, open questions), campaign-brief.md (177 lines — KPIs, audience map, positioning, risk register, activation plays, milestones), content-calendar-30d.md (619 lines — Day 1-30 hooks/skeletons/CTAs, Day 1=Mon 2026-05-11), voice-routing.md (205 lines — decision tree, voice comparison, 3 confession templates, unified prohibited terms incl new Buddhist ban, 10-item checklist). Pillar split: 12 Build-in-Public + 8 Arc Explainer VN + 6 Use Case Demo + 4 VN Community = 30 AIG posts; plus 4 @baobao_gems narrative confessions (D5/D12/D20/D28). Top 3 leverage posts: D3 proof-of-work thread (tag @circlefin), D18 live demo video, D30 30-day recap with explicit mod role ask (paired with D29 Arc Discord DM). Prohibited-term scan clean.",
+      "why": "Pulls together 4 prior research/planning artifacts (3 personas + competitor report + brand guidelines + style guide) into shippable execution plan. Without this, prior work is reference material; with this, user has Day-1-ready operational schedule.",
+      "files": [
+        "assets/writing-styles/baobao-gems-x-style.md",
+        "plans/260506-0818-aig-content-calendar/plan.md",
+        "plans/260506-0818-aig-content-calendar/campaign-brief.md",
+        "plans/260506-0818-aig-content-calendar/content-calendar-30d.md",
+        "plans/260506-0818-aig-content-calendar/voice-routing.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "5 pre-launch dependencies need resolution before Day 1 (Mon 2026-05-11): (1) public Vercel URL — calendar uses [AIG_VERCEL_URL] placeholder throughout, must replace; (2) Arc Discord membership status — Day 1 requires active membership; (3) AIG X account — dedicated or all-via-@baobao_gems? calendar assumes dedicated; (4) specific BSC testnet tx hash for D3 proof-of-work thread; (5) Circle Builders Fund application status. None are blockers but all need answers before D1."
+    },
+    {
+      "timestamp": "2026-05-06T09:00:00+07:00",
+      "type": "plan",
+      "title": "Calendar revised — single-account model + Discord observe + real proofs injected",
+      "what": "User answered 5 pre-launch deps. Calendar revised across 4 files: (1) Vercel URL https://aig-frontend-blond.vercel.app/dashboard replaces 14 placeholder occurrences via sed. (2) Found real BSC Testnet contract 0xa8cea8fa47874c688511cb1d72aa86a4b3c583a7 + deploy tx 0xac33606531c478760b8776ee8b862476df548fe423e3cb1c7765b163700dfeab in contracts/broadcast/Deploy.s.sol/97/run-latest.json — injected into D1 single-tweet body + D3 proof-of-work thread. (3) Single-account restructure: 'AIG X (EN/VN)' as separate channels collapsed to '@baobao_gems X (AIG content — EN/VN)' across plan.md Channels table + campaign-brief.md Cadence Map + Voice Routing Matrix + voice-routing.md Decision Tree. Voice differentiates AIG content from personal content within ONE handle. (4) Arc Discord workflow shifted: D1 changed from 'DM Arc DevRel' to OBSERVE-ONLY (W1 = read pinned, bookmark handles, no posts/DMs per server strict no-self-promo rules); D8 added FIRST helpful reply (no AIG mention); D14 PIVOT = first Arc Discord DM after 2 weeks public proof established. Activation Plays renumbered: Play 0 OBSERVE / Play 4 first helpful reply / Play 6 first DM / Play 10 second DM. (5) All 4 Builders Fund mentions removed from active scope (kept only as 'OUT OF SCOPE' callouts). (6) plan.md Open Questions section split into 'Pre-Launch Status (resolved)' table + new 'Open Questions' (4 remaining: EN-on-X history, Arc team handles unverified, E2E swap+bridge tx hash beyond deploy, bilingual W1 strategy). All bulk renames + structural edits done directly (no agent respawn needed).",
+      "why": "Calendar built yesterday assumed multi-channel reality. Today user confirmed: single account (@baobao_gems), Discord observe-only initially, no Builders Fund. Calendar must reflect actual constraints else Day 1 launch breaks Discord rules + creates voice confusion within @baobao_gems feed.",
+      "files": [
+        "plans/260506-0818-aig-content-calendar/plan.md",
+        "plans/260506-0818-aig-content-calendar/campaign-brief.md",
+        "plans/260506-0818-aig-content-calendar/content-calendar-30d.md",
+        "plans/260506-0818-aig-content-calendar/voice-routing.md"
+      ],
+      "status": "done",
+      "concerns": "4 open questions remain before D1: (1) has @baobao_gems posted EN on X before — affects feed transition strategy; (2) Arc team X handles still unverified — calendar can launch without them but D3 thread ideally tags @circlefin only; (3) E2E swap+bridge tx hash beyond deploy tx — need at least one full flow tx for D3 thread maximum proof signal; (4) consider bilingual W1 strategy (EN body + VN quote-tweet) to soften feed transition for existing VN audience. None are blockers."
+    },
+    {
+      "timestamp": "2026-05-06T11:00:00+07:00",
+      "type": "ops",
+      "title": "Project test pass — build + tsc + foundry tests OK",
+      "what": "Ran full test sweep on AIG codebase. Foundry: forge build OK (only ERC20 unchecked-transfer warnings on SwapRouter.sol:152, 185 — non-breaking); forge test 4/4 PASS (precomputed amount, refund, insufficient output, swap completed event). Frontend: tsc --noEmit EXIT 0 zero type errors. ESLint: 2 errors in app/dashboard/page.tsx:43,47 (React 19 strict 'set-state-in-effect' rule flagging standard mounted-hook + fetch trigger pattern — non-breaking, doesn't block runtime/Vercel). 1 warning fee-breakdown-card.tsx:33 unused targetUSDC. Vercel demo responds at https://aig-frontend-blond.vercel.app/dashboard with 'Loading...' (expected — page is 'use client' for wagmi). CCTP smoke test missing env loader for ts-node — needs dotenv -e .env.local prefix when run manually.",
+      "files": [],
+      "status": "done_with_concerns",
+      "concerns": "2 React 19 strict-mode lint errors in dashboard/page.tsx not blocking runtime but break `npm run lint` exit code. Optional fix: refactor mounted-hook + fetch-trigger to comply, OR add eslint-disable lines, OR loosen rule in eslint.config. Not D1 blocker."
+    },
+    {
+      "timestamp": "2026-05-06T13:58:00+07:00",
+      "type": "ops",
+      "title": "GitHub username renamed hoangcaaa → baobaogems; URL refs updated",
+      "what": "User renamed GitHub account hoangcaaa → baobaogems via web UI (account settings, takes 90-day redirect). Local git remote updated: `git remote set-url origin https://github.com/baobaogems/aig.git`, fetch verified. Calendar files revised: (1) added GitHub URL + contract address + deploy tx to proof-points-key header line of content-calendar-30d.md; (2) replaced all `[GitHub]` / `[GitHub link]` / `[GitHub/<subpath>]` / `[GitHub README]` placeholder forms with real URL `https://github.com/baobaogems/aig` (and subpath form `https://github.com/baobaogems/aig/blob/main/<path>` for code refs); (3) sed pass touched 19 occurrences in content-calendar-30d.md + 1 in voice-routing.md (Day 5 narrative confession Example A proof link). All `[GitHub*]` placeholders eliminated (verified zero remaining). README.md / docs/ / CLAUDE.md / CONTRIBUTING.md / status_AIG.json had no hardcoded GitHub URL references — only status_AIG.json contains owner email hoangcaaa555@gmail.com which stays unchanged (email != GH username).",
+      "why": "Brand consistency before Day 1 launch. Old URL hoangcaaa/aig in published Day 1/3 posts would trigger Arc team confusion 'who is hoangcaaa?'. New URL baobaogems/aig matches X handle @baobao_gems and TG @baobaogemschat. GitHub auto-redirects old URLs for 90 days so historic refs still work.",
+      "files": [
+        ".git/config (remote URL)",
+        "plans/260506-0818-aig-content-calendar/content-calendar-30d.md",
+        "plans/260506-0818-aig-content-calendar/voice-routing.md"
+      ],
+      "status": "done"
+    },
+    {
+      "timestamp": "2026-05-06T14:10:00+07:00",
+      "type": "plan",
+      "title": "Day 1 pivoted — technical proof → narrative confession",
+      "what": "User pivoted D1 strategy. Original D1: technical Build-in-Public single tweet (AIG voice EN). New D1: @baobao_gems narrative confession (X Premium Long format ~1640 chars EN main + ~720 chars VN quote-tweet). Story arc: shipped AIG 24h → Phase 2 hit (multi-chain/microservices/points) → didn't know where to start → 2 months idle → looked at Arc ecosystem (100+ partners, zero VN-native, zero VN coverage) → came back, build slow in public, bilingual translation, help Arc builders integrate CCTP → proof block (contract 0xa8cea8...583a7 + GitHub + Vercel) → principle close 'Position doesn't come from waiting until you're sure. It comes from showing up again, after you stopped.' Voice DNA validated: ALL-CAPS hook reversal, definition by negation, 3-item numbered framework, concrete numbers (24h/8 phases/2 months/100+), zero emoji, no Buddhist refs, principle close not CTA. 4-confession cycle SHIFTED: D5/12/20/28 → D1/12/20/28 (D5 freed for Build-in-Public commit highlight). Files updated: content-calendar-30d.md (D1 entry rewritten + D5 entry rewritten), plan.md (cycle dates), campaign-brief.md (3 references), voice-routing.md (3 references). E2E swap+bridge testnet tx execution DEFERRED (user pivoted away from that task; needs to be addressed separately).",
+      "why": "Strategic logic per user: existing @baobao_gems audience is VN-heavy and trusts him via personal voice. Opening Day 1 with story (audience already trusts) before D3 technical thread (EN, AIG voice, @circlefin tag) creates softer feed transition. Also more authentic — leads with vulnerability/honesty (the abandoned-2-months part) before showing proof, which matches @baobao_gems sample post 1 (Hyperliquid regret) structure exactly.",
+      "files": [
+        "plans/260506-0818-aig-content-calendar/content-calendar-30d.md",
+        "plans/260506-0818-aig-content-calendar/plan.md",
+        "plans/260506-0818-aig-content-calendar/campaign-brief.md",
+        "plans/260506-0818-aig-content-calendar/voice-routing.md"
+      ],
+      "status": "done",
+      "concerns": "E2E swap+bridge testnet tx still not run — needed for D3 thread Tweet 3 maximum proof signal. User asked to run it, then immediately pivoted to D1 rewrite before execution started. Need to circle back: run scripts/test-cctp-domain7.ts or scripts/test-e2e-admin-relay.ts with proper env loading (root .env.local has all required vars). Action item before D3 publishes (Wed May 13)."
+    },
+    {
+      "timestamp": "2026-05-13T13:15:00+07:00",
+      "type": "research",
+      "title": "Arc Network intel doc updated — 10→13/05 delta (presale, whitepaper, Agent Stack)",
+      "what": "Refreshed docs/arc-network-latest.md with 3-day delta. Major new items merged from researcher report: (1) ARC token presale CLOSED 11/05/2026 — $222M @ $3B FDV, lead a16z $75M, backers BlackRock/Apollo/Bullish/ARK/General Catalyst/Haun/ICE/IDG/Janus Henderson/Marshall Wace/SBI/Standard Chartered; 740M tokens @ $0.30; allocation 60% ecosystem / 25% Circle / 15% reserve; first NYSE-listed company doing compliant token presale → CRCL +16% on day, +68% YTD. (2) ARC whitepaper published 11/05 — governance via ARC voting on fees/inflation/burn, fee flow stablecoin→ARC→validators+stakers (portion burned), PoS deadline 08/05/2028. (3) Mainnet timeline REFINED from '2026' to 'summer 2026' (Q2-Q3) per whitepaper; testnet 2.441B tx since 10/2025. (4) Circle Agent Stack LAUNCHED 11/05 — Circle CLI / Agent Wallets / Agent Marketplace / Circle Skills / Nanopayments ($0.000001 USDC, zero gas) targeting AI agents as autonomous economic actors. (5) cirBTC NEW product line — 1:1 wrapped BTC, real-time on-chain reserves, launches first on Ethereum + Arc, awaiting regulatory approval. (6) Q1 2026 financials: USDC $77B (+28% YoY), on-chain volume $21.5T (+263% YoY), revenue $694M (+20%). (7) Regional stablecoin partners on Arc testnet confirmed: BRLA (Brazil), JYPC (Japan), MXNB (Mexico), PHPC (Philippines), KRW1 (South Korea). (8) VN coverage status: STILL ZERO as of 13/05 — AIG first-mover window intact. Doc structure preserved (Token / Mainnet / Quantum / App Kit / cirBTC / Partners / CCTP / Market signal / VN / Unresolved). Researcher report saved to plans/reports/researcher-260513-1308-arc-network-latest-update.md.",
+      "why": "Doc was due 17/05 but ARC presale on 11/05 + Agent Stack launch + mainnet date refinement materially changed positioning. Any AIG content written 13–20/05 must reflect new narrative angles (presale validation, AI+crypto via Agent Stack, regional stablecoin SEA story, summer mainnet urgency).",
+      "files": [
+        "docs/arc-network-latest.md",
+        "plans/reports/researcher-260513-1308-arc-network-latest-update.md"
+      ],
+      "status": "done",
+      "concerns": "7 unresolved questions logged in doc: exact mainnet date within summer, presale lockup details (1y vs 4y), validator set composition, cirBTC launch date, VN exchange listing plans for ARC, Layer 2 strategy, CCTP/Gateway audit firm. Next intel refresh due 20/05/2026."
+    },
+    {
+      "timestamp": "2026-05-13T13:35:00+07:00",
+      "type": "brand",
+      "title": "Writing style guide — added §11 EN Thread Format from Day 3 published edit",
+      "what": "Compared ClaudeKit-drafted Day 3 thread vs user-edited published version. Extracted 9 concrete editing rules and added new §11 'EN Thread Format — AIG voice via @baobao_gems handle' to assets/writing-styles/baobao-gems-x-style.md. New section covers: 3-layer hook structure (ALL-CAPS reversal → calm prose w/ timestamp + 3-item preview → bridge line + Thread. + @mention + 1/N), thread numbering at END (not start), diplomacy with @-tagged party (critique gap-to-prod NOT docs/team), concrete-over-jargon with file+mechanism+success-condition rule, CTA spacing (\\n\\n between links, bare URLs), humility hedge on closing claim (First X → One of the first X + scope qualifier), active verb for community label (building on > on), per-tweet length budget (T1 350-420 needs X Premium, T2-T5 230-280), voice constraints retained (no emoji even semantic, no mình/anh em, no VN crypto slang), anti-pattern checklist (12 items), and copy-paste output template. Voice update note dated 2026-05-13 added at top of file with 7-point summary. §10 (AIG content mapping) cross-references §11. Renumbered: prior §11 'Open Questions' → §12.",
+      "why": "Day 3 published edit (Wed 13/05) diverges materially from initial draft on hook structure, diplomacy, and closing claims. Pattern needs codifying before D5/D6/D8 Build-in-Public EN content gets drafted — otherwise same edits will repeat manually each cycle. Day 3 is the reference implementation for all future EN technical threads on @baobao_gems handle.",
+      "files": [
+        "assets/writing-styles/baobao-gems-x-style.md"
+      ],
+      "status": "done",
+      "concerns": "Day 3 not yet published to X as of log time — published edit text reviewed but ship time TBD. T1 ~390 chars confirmed Premium-required (memory: X Premium = 25,000 char budget so well within limit). Markdown URL syntax in user's edit ([text](url)) flagged as 'strip before publish' rule but actual publish workflow not confirmed — may be artifact of paste from markdown tool."
+    },
+    {
+      "timestamp": "2026-05-13T14:10:00+07:00",
+      "type": "brand",
+      "title": "Bonus news-jacking post drafted — ARC presale $222M + Agent Stack + VN-missing-from-stablecoin-partners angle",
+      "what": "Drafted VN long-form @baobao_gems voice post news-jacking 48h Arc/Circle hot cluster (11-13/05): ARC presale closed $222M @ $3B FDV (a16z lead), Circle Agent Stack launched (Nanopayments $0.000001 USDC zero gas), mainnet timeline refined to 'summer 2026', regional stablecoin partners list with VN visibly absent (BRLA/JYPC/MXNB/PHPC/KRW1). Hook = ALL-CAPS reversal '$222M VÀO ARC HÔM QUA. ANH EM ĐỪNG FOMO TOKEN. NÊN FOMO VỊ THẾ.' — flips greed instinct from token to positioning. Format = Template E (strategic analysis) + Template A (reversal hook) hybrid, ~2800 chars / ~450 words single VN long-form (NOT EN thread, NOT AIG voice). Voice DNA checklist passed all 22 items (ALL-CAPS reversal, self-disclosure non-flex, anti-hype, concrete numbers, ⚡️ tactical bullets, 🫡 framework opener, daily-life verbs, humility hedge '1 trong số ít — không phải duy nhất' applying today's §11.5 EN→VN transfer, community invite 3-part, anh em pronoun, slang khác bọt/ùa vào/ăn nhau, hashtag tail). Contributor angle delivered via build proof not the formal word ('Mình không nói từ ghế khán giả. Mình đã build AIG trên Arc testnet từ tháng 3'). Saved to content/bonus-260513.md with metadata header + voice DNA checklist + strategic notes + 3 open questions (cross-post EN? hashtag mix? pair with regional-partner-list visual?).",
+      "why": "User flagged 48h news cluster worth news-jacking. Multiple high-leverage angles intersected: presale validates $3B FDV thesis, mainnet window narrowing to summer 2026 creates urgency, VN absent from confirmed regional stablecoin partner list is a real positioning gap not flexed elsewhere on VN crypto Twitter. AIG = first-mover Arc VN, but window closes at mainnet — so post pushes anh em to act NOW not later. Also: applies §11.5 humility hedge (Day 3 lesson) to VN voice for the first time, validating that EN published-edit lessons transfer to VN long-form.",
+      "files": [
+        "content/bonus-260513.md"
+      ],
+      "status": "done",
+      "concerns": "Post timing-sensitive — news 11/05, draft 13/05, optimal ship within 24-48h before discussion peaks elsewhere. Open question: pair with screenshot showing Arc regional stablecoin partner list (Brazil/Japan/Mexico/Philippines/Korea visible + VN absent) for stronger visual leverage — defer to user. Not yet published. If user ships, monitor for $ARC secondary FOMO crowd vs builder crowd response split."
+    },
+    {
+      "timestamp": "2026-05-13T14:35:00+07:00",
+      "type": "brand",
+      "title": "Writing style guide — added §12 News-Jacking VN Long-form Format from bonus post published edit",
+      "what": "Compared ClaudeKit-drafted bonus-260513.md vs user-edited published version. Extracted 17 concrete editing rules covering 9 distinct beats. Added new §12 'News-Jacking VN Long-form Format' to assets/writing-styles/baobao-gems-x-style.md with 3 subsections: (12.1) 9-beat structure scaffold, (12.2) beat-by-beat rules with diff examples for all 9 beats + community invite + engagement Q, (12.3) anti-pattern checklist (20 items). KEY NEW RULES: (1) Hook title-style — drop audience pronoun, no period, hyphen-separator, parallel ĐỪNG-HÃY. (2) `=====` divider MIGRATED from before-hashtags to after-hook. (3) VN finance journalism dramatization mandatory (chính thức/huy động/định giá/dàn backer toàn thế lực/lập tức/cổ phiếu). (4) Anti-shill uses loaded VN verb `xúi` + `(nếu có)` hedge. (5) Reveal-intro `Sự thật trần trụi:` colon-frame before risk facts. (6) Framework intro `Dưới đây là N dịch chuyển (shifts) cốt lõi` — VN-translation + EN-in-parens for searchability. (7) Selective country VN-ization: Nhật Bản/Hàn Quốc YES, Brazil/Mexico/Philippines NO. (8) Self-positioning DROPPED ENTIRELY in news-jacking — even §11.5 hedge too self-flex; reframe to market-gap observation. (9) Vibecode + zero-code signature paragraph MANDATORY with `chén thánh` (holy grail) daily-life metaphor as principle extraction. (10) Honest negative ('chưa có người dùng') strengthens credibility paradoxically. (11) Full clickable proof URLs (bscscan + vercel) replace truncated addresses. (12) Bullet hierarchy enforced: ⚡️=analysis/shifts, 1️⃣2️⃣3️⃣=action-plan, 1./2./3.=narrative. (13) NEW emojis added to §4 policy: 🛠 (action-plan section header), 📌 (community invite section header), 👇 (engagement Q directional). (14) Closing principle drops poker slang (ăn nhau/chiến kèo) in news-jacking — uses explicit-choice agency framing instead. (15) Hub chuyên biệt > group riêng. (16) Dev terms quoted ('bug') NOT translated (thắc mắc). (17) Finance framing tối ưu ROI thời gian for indie dev audience. ALSO extended §3.1 lexicon with 16 new vocab entries (chén thánh, đóng sập, khởi chạy, tràn ngập, bài xào lại, xúi, dàn backer toàn thế lực, huy động/định giá/cổ phiếu, chính thức/lập tức/trực tiếp, Sự thật trần trụi:, (nếu có), Hub chuyên biệt, support chéo, tối ưu ROI thời gian, Action-plan/Proof-of-Work, 'bug' quoted). UPDATED §4 emoji policy + section divider + numbered list rows with multi-position rules. RENUMBERED §12 Open Questions → §13. Voice update note dated 2026-05-13 rev 2 added at top with 11-point summary (before today's earlier rev 1 EN-thread note).",
+      "why": "Bonus news-jacking post edit revealed VN long-form format is materially different from existing templates A-E (§2.2) and community/educational (§9.0). Without codification, every future news-jacking post would require same manual edit cycle (17 rules across 9 beats = significant edit time). Critical insight: §11.5 humility hedge (Day 3 EN-thread lesson) does NOT transfer to news-jacking VN — there self-positioning must DROP ENTIRELY, even the hedged form. Different format = different positioning calculus. Vibecode signature paragraph also confirmed as core identity marker not optional vocab — every news-jacking post needs it.",
+      "files": [
+        "assets/writing-styles/baobao-gems-x-style.md"
+      ],
+      "status": "done",
+      "concerns": "File now ~750 lines (approaching docs.maxLoc 800 ceiling — but this is an asset/reference file, not a doc per se). Consider future split if 4th major format gets added: maybe move templates A-E to separate file, keep main file as voice + emoji + lexicon. Not urgent. Also: rule #8 (drop self-positioning entirely) directly contradicts rule established 2 hours ago in §11.5 (humility hedge). Both correct — they apply to different formats (EN-thread vs VN-news-jacking). Documented contrast clearly but worth watching for confusion when applying to future content."
+    },
+    {
+      "timestamp": "2026-05-14T09:30:00+07:00",
+      "type": "docs",
+      "title": "Added 7-customer-insights framework reference doc",
+      "what": "Created references/7-customer-insights.md (new directory references/ at project root). Framework từ Ngao Content (Self-Made Creative): 7 insight types (Pain/Desire/Fear/Belief/Behavior/Social/Hidden) với 4 lookup tables (insight definitions + dấu hiệu + dùng để viết, độ mạnh + độ chạm + khi nào dùng, công thức kết hợp 4 combos, debug bài dở reverse-lookup) + pre-write checklist (4 items) + AIG pillar mapping (5 pillars → primary insights). Marked as MUST-READ before writing any content. Note: row 5 (Behavior) bị truncate trong message đầu — user pasted lại full content sau khi em hỏi via AskUserQuestion.",
+      "why": "Framework lockable layer trước các format-specific style guides. Style guide (assets/writing-styles/baobao-gems-x-style.md) trả lời 'HOW to write'. Customer insight framework trả lời 'WHY this hits'. Mỗi content cần chạm ít nhất 1 insight — pillar mapping defines which insight per AIG pillar. Build-in-Public = Pain+Behavior, Arc Explainer = Belief+Behavior, Use Case Demo = Desire+Behavior, VN Community = Social+Fear, Confession = Fear+Hidden. Retroactive check: Day 3 EN thread = Pain (CCTP debugging) + Behavior (how-to). Bonus news-jacking = Social (VN missing from partners) + Fear (cửa sổ đóng sập) + Desire (vị thế first-mover). Both validated against framework post-hoc.",
+      "files": [
+        "references/7-customer-insights.md"
+      ],
+      "status": "done",
+      "concerns": "Framework chưa được integrate vào content review checklist của style guide §11/§12. Future enhancement: add 'Insight check' row vào anti-pattern checklists — every post should declare which insight(s) it hits before publish. Not urgent — can wait for next post draft cycle."
+    },
+    {
+      "timestamp": "2026-05-14T23:05:00+07:00",
+      "type": "brand",
+      "title": "Day 4 draft — Use Case Demo bilingual (AIG voice EN main + VN quote-tweet)",
+      "what": "Drafted Day 4 content per calendar Use Case Demo pillar + user-requested format upgrade. Format = X Premium Long EN main (~1500 chars) + VN quote-tweet (~720 chars) ~5min later. Voice = AIG (Builder/honest/technical/proof-driven), not @baobao_gems VN colloquial. Hook ALL CAPS reversal: 'YOUR MERCHANT DOESN'T NEED TO KNOW WHAT CCTP IS. THEY JUST NEED A WALLET.' — flips expectation 'complicated CCTP learning curve' → simple 'just wallet'. Body 4-step flow with concrete file/UI/API at each step: (1) /dashboard wallet connect + merchants table auto-register + QR from session_id, (2) /pay/[id] fee breakdown UI, (3) SwapRouter.swapAndBridge() + SSE stream from /api/agent/execute with explicit state machine swap_executing→bridging→confirmed, (4) Arc explorer USDC settlement ~60-90s. Honest paragraph names what merchant DOESN'T see (CCTP Domain 7 routing, attestation polling, slippage guards, cold-start handling) — all abstracted in SwapRouter.sol + /api/agent/execute. Proof URLs full clickable (bscscan address + vercel demo + github repo). Closing humility hedge: 'hardest part wasn't the contract — making CCTP invisible to the merchant'. INSIGHT CHECK applied first time per 7-customer-insights.md: Desire (merchant wants USDC easily) + Behavior (4-step show-how-it-works). Both hit explicitly. Anti-pattern checklist passed: no emoji, ALL CAPS hook only at top, concrete numbers match prior posts (24h dev + 7 fixes consistent with D1/D3/bonus), single long-form NOT thread (per calendar), no @circlefin tag (saved for D6), VN quote-tweet declarative AIG-VN style (not @baobao_gems anh-em colloquial). Saved to content/day4-draft.md with publish notes (screenshot REQUIRED, 9am UTC+7 schedule, bare URLs when publishing per D3 §11.5 lesson) + 3 open questions.",
+      "why": "First content piece written AFTER 7-customer-insights framework added — applied as drafting guide, not just retroactive check. Format upgrade from calendar (single VN tweet → bilingual EN+VN long-form) reflects pattern established by D1 (bilingual long-form works well for @baobao_gems audience). AIG voice + ALL CAPS hook combination tested for first time on single-post format (D3 was 5-tweet thread). Use Case Demo pillar needs visual proof — screenshot flagged as REQUIRED in publish notes since Use Case Demo without visual loses ~30% impact.",
+      "files": [
+        "content/day4-draft.md"
+      ],
+      "status": "done",
+      "concerns": "Screenshot not yet captured. Recommend capture /dashboard mid-flow showing payment progress bar at 'bridging' stage (highest visual interest). Also: today is Thu 14/05 (Day 4) and post not yet published — recommend ship within next 12h to stay on calendar. Insight check row not yet added to style guide §11/§12 anti-pattern checklists — done ad-hoc in draft but should formalize after 2-3 more drafts confirm pattern works."
+    },
+    {
+      "timestamp": "2026-05-14T23:35:00+07:00",
+      "type": "brand",
+      "title": "Day 4 v2 rewrite — Baobao VN voice, Pain+Desire insights, plain language",
+      "what": "User feedback v1: 'reads like README, not content. Thiếu insight.' Rewrote Day 4 entirely to content/day4-draft-v2.md. CHANGES: (1) Voice shift AIG technical → @baobao_gems VN colloquial với `mình` + `anh em`. (2) Insights shifted Desire+Behavior → Pain+Desire (Pain leads hook per framework 'Hook, tiêu đề, content viral'). (3) Format simplified: bilingual EN+VN qt → VN single long-form. (4) Hook reframed: declarative AIG 'YOUR MERCHANT DOESN'T NEED TO KNOW WHAT CCTP IS' → Pain-question 'MERCHANT VN MUỐN NHẬN USDC NHƯNG SỢ BRIDGE/SWAP/CCTP? MÌNH ĐÃ DẸP HẾT MẤY THỨ ĐÓ'. (5) Step language jargon-stripped: SwapRouter.swapAndBridge()/SSE/session_id/amountInMax/api endpoints REMOVED from 4-step body; replaced with everyday VN ('Khách hàng ký giao dịch 1 lần', 'progress bar live', 'USDC vào trên Arc explorer'). Tech jargon now only appears in 'what merchant doesn't need to know' paragraph — naming abstracted complexity, not asking reader to understand. (6) Added VN market context paragraph (100 triệu dân, 0 stablecoin payment infra cho merchant nhỏ) to connect Pain to opportunity. (7) Closing principle: 'Bây giờ là thời điểm vọc vạch trước khi thị trường ùa vào' — vivid Baobao verbs. (8) Proof links section gets 🛠 header + clean trio (dashboard demo + GitHub + @baobaogemschat). LENGTH ~400 VN words / ~2200 chars single post (matches v1 total but single language, denser). META INSIGHT: framework worked as drafting guide for first time — Pain in hook + question form drove emotional engagement before tech reveal. v1 was Behavior-dominant (showed how it works without selling why). v2 hits framework combo 'Pain + Desire = Kéo → đẩy hành động' explicitly.",
+      "why": "User flagged v1 'reads like README'. Root cause analysis: AIG voice technical builds for dev audience, but Use Case Demo pillar's job is to show MERCHANT audience why they care + how it works. v1 was tech-doc explaining HOW to devs; v2 leads with WHY merchants care (Pain), then HOW in plain VN. Validates framework: Behavior insight alone produces tutorial-feel content; Pain+Desire combo produces actionable narrative. Also: bilingual format adds production overhead without clear audience win for this pillar — VN merchants don't read EN main + VN qt, they read one or the other. Single VN focus = cleaner reader path.",
+      "files": [
+        "content/day4-draft-v2.md"
+      ],
+      "status": "done",
+      "concerns": "v1 (content/day4-draft.md) still exists in content/. Decision needed: archive v1 to content/archive/ or keep both for reference? Recommend keep both for retrospective lesson (good example of Behavior-dominant vs Pain-led same content). Also: dashboard screenshot still not captured — same blocker as v1. Insight check pattern proven through v2 rewrite — should now formalize as 'Insight check' row in style guide §11.9 + §12.18 anti-pattern checklists (deferred 2 entries ago, now 2 of 2 next drafts confirm pattern works). One more concern: AIG voice technical EN single posts may need their own format section in style guide — currently §11 covers EN Thread, §12 covers VN news-jacking, but EN single-post AIG voice (which v1 was) falls in gap. May want to formalize after seeing more single-post AIG voice content."
+    },
+    {
+      "timestamp": "2026-05-15T00:05:00+07:00",
+      "type": "brand",
+      "title": "Day 4 final — 3 edits applied + insight coverage doubled (Pain+Desire → Pain+Desire+Belief+Hidden)",
+      "what": "Applied 3 user-requested edits to v2 → content/day4-final.md. EDIT 1: 'merchant' → contextual mix of 'cửa hàng bán lẻ' (formal action subject in hook + steps + abstraction paragraph) and 'anh em bán hàng' (warmer mentor framing in market context + AIG motivation paragraphs). EDIT 2: 'ít rủi ro Tether freeze hơn' → 'an toàn pháp lý hơn USDT' (cleaner legal-not-technical framing). EDIT 3: Added 4-micro-paragraph closing block before proof links (verbatim user text): (a) self-deprecating honesty ('mắc cỡ', 'không đột phá gì ráo', 'ít người dùng — chỉ demo'), (b) optimism + roadmap ('sản phẩm đầu tay', 'phase 1, các phase sau'), (c) chợ rau vs Bách Hoá Xanh metaphor ('đâu phải chờ tới lớn như Bách Hoá Xanh thì mới bắt đầu bán đâu'), (d) vivid principle close 'Cứ làm, nhé.' INSIGHT COVERAGE: v1 hit Desire+Behavior (2/7), v2 hit Pain+Desire (2/7), final hits Pain+Desire+Belief+Hidden (4/7). New closing adds Belief (phá 'phải có sản phẩm đột phá / phải đợi to mới làm' → chợ rau metaphor) + Hidden (động cơ thật surfaced: mắc cỡ + muốn truyền lửa cho builders khác, không phải pitch). Per framework: Pain+Desire = 'Kéo → đẩy hành động' (tactical) + Belief+Hidden = personal brand depth. Rare combo — most posts hit 2 max. ALSO: post structure follows sample post 1 (Hyperliquid regret) pattern more closely now — self-disclosure of weakness FIRST ('mắc cỡ') BEFORE principle ('cứ làm cái đơn giản đi'). Chợ rau metaphor validates §3.3 secular daily-life metaphor rule (replaces Buddhist refs per 2026-05-06).",
+      "why": "Pre-edit version was strong product demo but missing personal-brand layer. User instinct caught what framework predicted: 4 insights > 2 insights for memorable content. The chợ rau / Bách Hoá Xanh metaphor is gold — it (a) makes AIG accessible (small shop OK), (b) phá belief blocking builders ('phải đột phá / phải to'), (c) signals Baobao mentor energy beyond product pitch. Self-deprecation + builder encouragement = signature Baobao voice DNA that v1/v2 lacked. Confirms framework prediction: posts that hit Hidden insight feel deeper, less salesy.",
+      "files": [
+        "content/day4-final.md"
+      ],
+      "status": "done",
+      "concerns": "3 versions of Day 4 now exist in content/: day4-draft.md (v1 AIG bilingual), day4-draft-v2.md (Baobao VN Pain+Desire), day4-final.md (Baobao VN + Belief+Hidden). For audit trail this is valuable — clear evolution v1→v2→final showing insight progression. But for content publish workflow, only day4-final.md should be referenced. Consider future convention: prefix non-final drafts with _ (e.g., _day4-draft.md) so glob picks only final. Not urgent. Screenshot still blocker — recommend capture asap, target 9-10am UTC+7 ship window."
+    },
+    {
+      "timestamp": "2026-05-17T22:20:00+07:00",
+      "type": "content",
+      "title": "Day 5 draft written — Build-in-Public commit highlight (EN, AIG voice)",
+      "what": "Read Day 5 skeleton (content-calendar-30d.md), docs/arc-network-latest.md, baobao-gems-x-style.md (§10/§11/§12 AIG EN voice), references/7-customer-insights.md. Wrote content/day5-draft.md: single EN tweet, AIG voice, highlighting commit e7b0cde (graceful API 500 handling). ALL-CAPS reversal hook 'SHIPPING ISN'T THE LAUNCH SIGNAL. THE BORING FIX AFTER IT IS.' Body uses verified commit facts (frontend/app/dashboard/page.tsx, /api/dashboard, /api/points, +28 lines) per git show e7b0cde. Insight: Pain (blank-page merchant frustration) + Behavior (error boundary mechanism) + Belief PRIMARY (reverses 'launch = the flashy 24h hack' → 'launch = surviving your own failure modes'). X-algo: ends on open question (reply driver), zero links in body, no hashtags, no emoji/VN slang. End notes added: image options (before/after split recommended), first-reply link placement, 12-item pre-publish checklist.",
+      "why": "Content production was at Day 4; calendar Day 5 (Fri 15/05) still unwritten. Belief-led framing differentiates a 'boring fix' post — turns a 28-line maintenance commit into a positioning signal (demo→product). Open-question close engineered for X reply-weight per task spec. Commit facts verified against git, not paraphrased, per style §12.4.",
+      "files": [
+        "content/day5-draft.md"
+      ],
+      "status": "done",
+      "concerns": "references/x-algorithm-policy.md (requested in task) does not exist — only 7-customer-insights.md present in references/. Applied X-algo rules from task prompt directly. Recommend creating canonical references/x-algorithm-policy.md so future content tasks have a single source. Also: Day 5 still drafted 2 days behind calendar (Days 6-7 unwritten). Screenshot Option A (blank-state repro) is a soft blocker for publish."
+    },
+    {
+      "timestamp": "2026-05-17T22:40:00+07:00",
+      "type": "feature",
+      "title": "SwapRouter v2 — emit SwapRouterVersion in constructor + redeploy BSC Testnet",
+      "what": "Added VERSION constant (uint8 = 2), SwapRouterVersion(uint8) event, and emit SwapRouterVersion(VERSION) at end of constructor in contracts/src/SwapRouter.sol so indexers can pin deployed version. forge build OK (only pre-existing ERC20 unchecked-transfer warnings on lines ~160/193, non-breaking). forge test 4/4 PASS. Redeployed via existing scripts/Deploy.s.sol to BSC Testnet (chain 97), ADMIN_RELAY mode (cctp=address(0)). New contract: 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3. Deploy tx: 0x7d263b1bbb89852862eea824986ca3aff3f94015deb665055a2b4151fc9290f9 (block 107975040, gas 779259, status success). Supersedes prior v1 contract 0xa8cea8fa47874c688511cb1d72aa86a4b3c583a7 (tx 0xac33606531c478760b8776ee8b862476df548fe423e3cb1c7765b163700dfeab). Constructor args reused verbatim from prior committed broadcast (WBNB 0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd, USDC 0x64544969ed7EBf5f083679233325356EbE738930, PancakeV3 0x1b81D678ffb9C0263b24A97847620C99d213eB14, cctp 0x0, revenue=deployer 0x0809a724862D6636874809775Ba3623080c5ceF8).",
+      "why": "User requested small observability improvement + fresh BSC Testnet deploy. Version event lets off-chain agent/indexer distinguish v1 vs v2 contract without ABI guessing.",
+      "files": [
+        "contracts/src/SwapRouter.sol",
+        "contracts/broadcast/Deploy.s.sol/97/run-latest.json"
+      ],
+      "commits": [],
+      "status": "done_with_concerns",
+      "concerns": "Root .env.local was missing 4 deploy vars (WBNB_ADDRESS_BSC_TESTNET, PANCAKESWAP_V3_ROUTER_BSC, BRIDGE_MODE, AIG_REVENUE_POOL_ADDRESS) — supplied inline from recovered prior broadcast values; recommend restoring them to .env.local for reproducibility. New v2 address 0xd5A7a9... NOT yet propagated to frontend/.env / api / content calendar / docs — any code or post referencing the old v1 address 0xa8cea8... still points at v1. Contract change not yet git-committed (user did not request commit)."
+    },
+    {
+      "timestamp": "2026-05-21T14:55:00+07:00",
+      "type": "content",
+      "title": "Day 6 draft written — Build-in-Public reference implementation (EN, AIG voice)",
+      "what": "Read Day 6 skeleton (content-calendar-30d.md), docs/arc-network-latest.md, baobao-gems-x-style.md (§12.8 AIG EN voice), references/7-customer-insights.md. Wrote content/day6-draft.md: single X Premium Long EN post, AIG voice, framing AIG as an open-source CCTP Domain 7 reference implementation. ALL-CAPS reversal hook 'I DIDN'T OPEN-SOURCE AIG FOR STARS. I DID IT TO DELETE YOUR FIRST 10 HOURS.' (75 chars). Body cites 3 verified files: contracts/src/SwapRouter.sol (198 lines, wc-confirmed), frontend/app/api/agent/execute/route.ts (SSE stream swap_executing->bridging->confirmed, header-confirmed), scripts/test-cctp-domain7.ts (7-step STEP 1->7 smoke test, grep-confirmed). Insight: Pain PRIMARY (from-scratch CCTP integration pain) + Behavior (3-file how-to) + Desire (saved 10h drives the fork CTA); combo Pain+Desire = 'Keo -> day hanh dong'. X-algo: open-question close, zero body links, no hashtags, no emoji/VN slang. Dropped skeleton's 'RT if this helps' invite (violates style §4.1 + open-question rule). End notes: image options (7-step test-run terminal screenshot recommended), first-reply links, 12-item pre-publish checklist, cadence note.",
+      "why": "Content production was at Day 5; calendar Days 6-7 unwritten. Last ARC post 18/05 — 3-day gap, task flagged need to resume cadence (post is evergreen so gap is harmless; publish 21/05). Reference-implementation framing turns AIG into a reusable artifact for other Arc/CCTP builders — fork-driven distribution.",
+      "files": [
+        "content/day6-draft.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "PUBLISH BLOCKER — contract address v1 vs v2: prior log (2026-05-17T22:40) shows SwapRouter v2 redeployed to 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3, superseding v1 0xa8cea8fa...583a7 in the calendar proof-key. v2 not yet git-committed/pushed. Day 6 body carries no address (safe) but first-reply contract line omitted until repo reflects v2 — flagged in draft Unresolved #6. Also: references/x-algorithm-policy.md still missing (X-algo rules applied from task prompt, same as Day 5). Format skeleton conflict — 'Single tweet EN' line vs 'reference implementation thread' description; produced single post per Day 5 precedent + task's single-hook instruction."
+    },
+    {
+      "timestamp": "2026-05-21T20:15:00+07:00",
+      "type": "content",
+      "title": "Day 6 VN variant written — Build-in-Public reference implementation (VN, Baobao voice)",
+      "what": "User requested a VN Baobao-voice variant of Day 6 alongside the EN AIG-voice draft. Wrote content/day6-draft-vn.md (new file — EN draft content/day6-draft.md kept intact, confirmed via AskUserQuestion). Single X Premium Long VN post, @baobao_gems Baobao voice (mình/anh em, câu ngắn, không triết lý, no em dash per user). ALL-CAPS reversal hook 'MÌNH OPEN-SOURCE AIG KHÔNG PHẢI ĐỂ KHOE. ĐỂ ANH EM KHỎI TỐN 10 TIẾNG NHƯ MÌNH.' Same 3 verified files as EN draft: SwapRouter.sol (198 lines), api/agent/execute/route.ts (SSE swap_executing->bridging->confirmed), test-cctp-domain7.ts (7-step). Honest beats per user spec: 'code 2 tháng trước', 'chưa có ai dùng', 'hơi mắc cỡ'. Insight: Pain PRIMARY + Behavior + Desire + light Hidden (honest self-disclosure). X-algo: open-question close (user confirmed via AskUserQuestion — original task instruction truncated at 'Kết'), zero body links, no hashtags. End notes: image options, first-reply links, VN pre-publish checklist.",
+      "why": "User wants both an EN AIG-voice and a VN Baobao-voice version of Day 6 — different handle-voice, same Day 6 skeleton. Project precedent: Day 4 kept parallel variants (draft/v2/final).",
+      "files": [
+        "content/day6-draft-vn.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "Same contract v1/v2 publish blocker as the EN Day 6 draft (v2 0xd5A7a9... not yet committed/pushed) — flagged in day6-draft-vn.md Unresolved #2. Hashtag tail: Baobao VN voice §4.3 normally appends '#baobao_gems #cryptoinsight #kiemtien'; omitted from the post per X-algo no-stuffing — recommend first-reply if brand discoverability wanted, needs user confirm. references/x-algorithm-policy.md still missing."
+    },
+    {
+      "timestamp": "2026-05-22T18:30:00+07:00",
+      "type": "content",
+      "title": "Day 6 finalized — content/day6-final.md (EN, VN-drafted then translated)",
+      "what": "User selected the edited English Day 6 post as final. Created content/day6-final.md: the AI-translated English rendering of content/day6-draft-vn.md (VN Baobao voice), keeping Baobao voice DNA through translation (ALL-CAPS reversal hook, ===== divider, ⚡️ bullets, short sentences, honest beats, 👇 close). Distinct from content/day6-draft.md (separate directly-written EN AIG-voice draft, kept for reference). File includes a Method section documenting the VN-first-then-translate workflow, Voice DNA check, publish notes, open questions. Saved the method to persistent memory (en-posts-draft-vietnamese-first, day6-final-is-canonical-version).",
+      "why": "User confirmed via AskUserQuestion: save the pasted edited EN post as day6-final and record the method — even English posts are drafted in Vietnamese (Baobao voice) first, then AI-translated, to preserve the unique style.",
+      "files": [
+        "content/day6-final.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "Publish still blocked on SwapRouter contract v1 vs v2: v2 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3 not yet git-committed/pushed. day6-final.md body carries no address (safe); first-reply contract link gated until repo reflects v2. Hashtag tail (#baobao_gems #cryptoinsight #kiemtien) omitted per X-algo no-stuffing — first-reply optional, needs user confirm."
+    },
+    {
+      "timestamp": "2026-05-22T18:42:00+07:00",
+      "type": "feature",
+      "title": "SwapRouter v2 committed + pushed to GitHub",
+      "what": "Committed the SwapRouter v2 change (VERSION constant uint8=2, SwapRouterVersion event, emit in constructor) to contracts/src/SwapRouter.sol and pushed to origin/main. Pre-push verification: forge build OK (only pre-existing ERC20 unchecked-transfer warnings lines 160/193, non-breaking), forge test 4/4 PASS. Commit ba827b6, pushed e7b0cde..ba827b6 main->main. Focused single-file commit (only SwapRouter.sol staged). Push initially blocked on invalid gh keyring token; user re-authenticated gh as account baobaogems, then push succeeded.",
+      "why": "User requested commit + push to resolve the Day 6 content publish blocker — v2 had been redeployed 2026-05-17 but the source change was never committed/pushed, so the public repo did not reflect the v2 contract that day6-final.md describes.",
+      "files": [
+        "contracts/src/SwapRouter.sol"
+      ],
+      "commits": [
+        "ba827b6da231f0d1aaf96923727de2a1672c12a4"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "v2 source now on GitHub, but propagation still incomplete: the v2 deployed address 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3 is not yet updated in frontend/.env / api / content calendar proof-key / docs. Deploy broadcast artifact (contracts/broadcast/Deploy.s.sol/97/run-latest.json) not part of this commit — verify it reflects the v2 deploy if repo deploy records matter. day6-final.md first-reply contract link can now be added once address propagation is confirmed. Stale invalid gh account 'hoangcaaa' still in keyring (harmless; baobaogems is active)."
+    },
+    {
+      "timestamp": "2026-05-22T18:48:00+07:00",
+      "type": "chore",
+      "title": "Propagate SwapRouter v2 address across frontend config / calendar / docs",
+      "what": "Replaced v1 SwapRouter address 0xa8cea8fa...583a7 with v2 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3 in current-state references: frontend/.env.local (SWAP_ROUTER_ADDRESS_BSC + NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC, lines 21-22), content calendar plan.md pre-launch status row (contract + deploy tx -> v2 tx 0x7d263b1b...9290f9), content-calendar-30d.md proof-points key (line 4) and Arc Discord first-DM template (line 316), docs/system-architecture.md section 1 (added Deployed BSC Testnet address bullet). Updated content/day6-final.md: contract-address publish blocker marked resolved, first-reply contract line un-gated, Open Question #2 closed.",
+      "why": "User requested v2 propagation so the Day 6 post's first-reply contract link is consistent with the deployed/forkable code. Follows the v2 commit+push (ba827b6).",
+      "files": [
+        "frontend/.env.local",
+        "plans/260506-0818-aig-content-calendar/plan.md",
+        "plans/260506-0818-aig-content-calendar/content-calendar-30d.md",
+        "docs/system-architecture.md",
+        "content/day6-final.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "(1) v1 address LEFT IN PLACE intentionally in historical/past-content files — content/day3-draft.md, content/day4-draft.md, content-calendar-30d.md line 82 (Day 3 Tweet 3), campaign-brief.md line 158 (Play 1 / Day 3), assets/writing-styles/baobao-gems-x-style.md line 708: Day 3/4 already published with v1 (before the 2026-05-17 v2 redeploy); changing them would break historical accuracy. Flag for user confirm. (2) frontend/.env.local is gitignored/local-only — the live Vercel deployment's NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC env var must be updated manually in the Vercel dashboard; not doable from here. (3) docs/system-architecture.md is the only git-tracked file changed here — needs commit+push to reach GitHub if repo-public consistency is wanted (not yet committed). (4) frontend has no .env.example — for a fork-friendly open-source repo, consider adding one."
+    },
+    {
+      "timestamp": "2026-05-25T10:00:00+07:00",
+      "type": "ops",
+      "title": "SwapRouter v2 on-chain smoke test — GO",
+      "what": "Lightweight cast-based smoke against the deployed v2 contract 0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3 on BSC Testnet (chain 97) via public RPC data-seed-prebsc-1-s1.binance.org. Verified: contract is deployed (3353 bytes of runtime code); VERSION() returns 2 (confirms the new constant — proves the deployed bytecode is built from the committed v2 source); v1 0xa8cea8fa…583a7 reverts on VERSION() as expected; constants match expectations — usdc()=0x64544969ed7EBf5f083679233325356EbE738930 (USDC BSC Testnet), ARC_DOMAIN()=7 (matches PRD §6), owner()=0x0809a724862D6636874809775Ba3623080c5ceF8 (matches deployer in 2026-05-17 log). SwapRouterVersion(uint8) event log query failed with -32005 limit exceeded on the public RPC (historical-log throttle, not a contract issue) — VERSION() return already proves the v2 source is deployed, so this is informational only.",
+      "why": "After propagating the v2 address across frontend/calendar/docs, verify the deployed contract at the propagated address actually responds correctly before Day 6 publishes a contract link.",
+      "files": [],
+      "status": "done",
+      "concerns": "Heavy end-to-end CCTP smoke (npm run test:cctp — 7-step approve→depositForBurn→attestation→receiveMessage→balance) NOT run — requires funded TEST_PRIVATE_KEY, BSC + Arc RPCs, USDC balance, ~60s attestation poll, real gas. Bridge flow logic unchanged in v2 (additive observability only — VERSION const + SwapRouterVersion event), so re-running the bridge test is not strictly required to validate v2; recommend running it next time bridge logic changes. Public BSC RPC throttled historical logs query; switch to a private/paid RPC if you want to verify the constructor SwapRouterVersion(2) emit on-chain."
+    },
+    {
+      "timestamp": "2026-05-25T20:25:00+07:00",
+      "type": "research",
+      "title": "Saved Arc docs llms.txt mirror for content/marketing reference",
+      "what": "Mirrored https://docs.arc.io/llms.txt to references/arc-llms.txt (8800 bytes, verbatim). The file is the canonical Arc documentation index in llms.txt format: Getting Started + use-arc Claude Code/Vercel skill install, 6-point AI-agent guidelines (USDC=gas, EVM-compat, sub-second finality, App Kit for bridging/swaps/unified balance, testnet-only, always check contract addresses), Arc Network concept docs (system overview, stable fee design, deterministic finality, opt-in privacy, post-quantum), Connect to Arc + Contract Addresses + EVM Compatibility + Gas/Fees references, Build on Arc tutorials, Tools (Account Abstraction, Compliance, Explorer https://testnet.arcscan.app, Faucet https://faucet.circle.com), and More Circle Skills index pointing at use-usdc / use-circle-wallets variants / use-gateway / use-smart-contract-platform. Saved with original .txt extension to preserve the llms.txt convention.",
+      "why": "User asked to save Arc reference material for claudekit marketing — used by content workflow (e.g. day6 drafts cite references/7-customer-insights.md the same way). Having the canonical Arc doc URL index locally means future AIG posts can cite specific Arc concept/reference pages without re-fetching, and the file's llms.txt format means LLM tooling can consume it directly.",
+      "files": [
+        "references/arc-llms.txt"
+      ],
+      "status": "done",
+      "concerns": "Snapshot (not auto-refresh) — re-run `curl -sL https://docs.arc.io/llms.txt -o references/arc-llms.txt` to update. Project's other Arc reference docs (docs/arc-network-latest.md last updated 2026-05-13, docs/arc-toolkit-notes.md) cadence is manual/weekly per their headers; align refresh with that cadence if you keep this in sync. SHA recorded in bash output for drift detection."
     }
   ]
 }

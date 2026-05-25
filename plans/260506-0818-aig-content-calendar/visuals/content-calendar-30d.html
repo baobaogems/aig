@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIG 30-Day Content Calendar — Slide Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Azeret+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ THEME: Paper / Ink (Warm Signal) ============ */
+  :root {
+    --font-body: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-mono: 'Azeret Mono', 'SF Mono', Consolas, monospace;
+    --bg: #faf6f0;
+    --surface: #ffffff;
+    --surface2: #f5efe5;
+    --surface-elevated: #fffdf5;
+    --border: rgba(60, 40, 20, 0.09);
+    --border-bright: rgba(60, 40, 20, 0.18);
+    --text: #2c2a25;
+    --text-dim: #7c756a;
+    --accent: #c2410c;
+    --accent-dim: rgba(194, 65, 12, 0.09);
+    --code-bg: #2a2520;
+    --code-text: #f0e8dc;
+    --green: #65a30d;
+    --green-dim: rgba(101, 163, 13, 0.10);
+    --red: #be123c;
+    --red-dim: rgba(190, 18, 60, 0.10);
+    --blue: #0369a1;
+    --blue-dim: rgba(3, 105, 161, 0.10);
+    --amber: #b45309;
+    --amber-dim: rgba(180, 83, 9, 0.10);
+    --sage: #4d7c0f;
+    --sage-dim: rgba(77, 124, 15, 0.10);
+    --plum: #86198f;
+    --plum-dim: rgba(134, 25, 143, 0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1c1916;
+      --surface: #262220;
+      --surface2: #2f2a26;
+      --surface-elevated: #3a3430;
+      --border: rgba(200, 180, 160, 0.09);
+      --border-bright: rgba(200, 180, 160, 0.18);
+      --text: #f0e8dc;
+      --text-dim: #a09888;
+      --accent: #e85d2a;
+      --accent-dim: rgba(232, 93, 42, 0.12);
+      --code-bg: #0e0c0a;
+      --code-text: #f0e8dc;
+      --green: #84cc16;
+      --green-dim: rgba(132, 204, 22, 0.12);
+      --red: #f43f5e;
+      --red-dim: rgba(244, 63, 94, 0.12);
+      --blue: #38bdf8;
+      --blue-dim: rgba(56, 189, 248, 0.12);
+      --amber: #f59e0b;
+      --amber-dim: rgba(245, 158, 11, 0.12);
+      --sage: #a3e635;
+      --sage-dim: rgba(163, 230, 53, 0.12);
+      --plum: #d946ef;
+      --plum-dim: rgba(217, 70, 239, 0.10);
+    }
+  }
+  [data-theme="dark"] {
+    --bg: #1c1916;
+    --surface: #262220;
+    --surface2: #2f2a26;
+    --surface-elevated: #3a3430;
+    --border: rgba(200, 180, 160, 0.09);
+    --border-bright: rgba(200, 180, 160, 0.18);
+    --text: #f0e8dc;
+    --text-dim: #a09888;
+    --accent: #e85d2a;
+    --accent-dim: rgba(232, 93, 42, 0.12);
+    --code-bg: #0e0c0a;
+    --code-text: #f0e8dc;
+    --green: #84cc16;
+    --green-dim: rgba(132, 204, 22, 0.12);
+    --red: #f43f5e;
+    --red-dim: rgba(244, 63, 94, 0.12);
+    --blue: #38bdf8;
+    --blue-dim: rgba(56, 189, 248, 0.12);
+    --amber: #f59e0b;
+    --amber-dim: rgba(245, 158, 11, 0.12);
+    --sage: #a3e635;
+    --sage-dim: rgba(163, 230, 53, 0.12);
+    --plum: #d946ef;
+    --plum-dim: rgba(217, 70, 239, 0.10);
+  }
+
+  /* ============ THEME TOGGLE ============ */
+  .theme-toggle {
+    position: fixed; top: 16px; right: 60px; z-index: 300;
+    width: 36px; height: 36px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text-dim); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; transition: background 0.15s, color 0.15s;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  }
+  .theme-toggle:hover { background: var(--surface2); color: var(--text); }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--text);
+    background: var(--bg);
+    overflow: hidden;
+  }
+
+  /* ============ DECK ENGINE ============ */
+  .deck {
+    height: 100dvh;
+    overflow-y: auto;
+    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .slide {
+    height: 100dvh;
+    scroll-snap-align: start;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+    isolation: isolate;
+    opacity: 0;
+    transform: translateY(40px) scale(0.98);
+    transition:
+      opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .slide.visible { opacity: 1; transform: none; }
+
+  .slide .reveal {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+      transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .slide.visible .reveal { opacity: 1; transform: none; }
+  .slide.visible .reveal:nth-child(1) { transition-delay: 0.05s; }
+  .slide.visible .reveal:nth-child(2) { transition-delay: 0.15s; }
+  .slide.visible .reveal:nth-child(3) { transition-delay: 0.25s; }
+  .slide.visible .reveal:nth-child(4) { transition-delay: 0.35s; }
+  .slide.visible .reveal:nth-child(5) { transition-delay: 0.45s; }
+  .slide.visible .reveal:nth-child(6) { transition-delay: 0.55s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .slide, .slide .reveal {
+      opacity: 1 !important; transform: none !important; transition: none !important;
+    }
+  }
+
+  /* ============ NAV CHROME ============ */
+  .deck-progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: var(--accent); z-index: 100;
+    transition: width 0.3s ease; pointer-events: none;
+  }
+  .deck-dots {
+    position: fixed; right: clamp(10px, 1.6vw, 18px); top: 50%;
+    transform: translateY(-50%); display: flex; flex-direction: column;
+    gap: 5px; z-index: 100; padding: 6px;
+    background: color-mix(in srgb, var(--bg) 60%, transparent 40%);
+    border-radius: 16px; max-height: 80vh; overflow-y: auto;
+    backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+    scrollbar-width: thin;
+  }
+  .deck-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--text-dim); opacity: 0.3; border: none; padding: 0;
+    cursor: pointer; transition: opacity 0.2s ease, transform 0.2s ease;
+    flex-shrink: 0;
+  }
+  .deck-dot:hover { opacity: 0.6; }
+  .deck-dot.active { opacity: 1; transform: scale(1.6); background: var(--accent); }
+
+  .deck-counter {
+    position: fixed; bottom: clamp(12px, 2vh, 24px); right: clamp(12px, 2vw, 24px);
+    font-family: var(--font-mono); font-size: 12px; color: var(--text-dim);
+    z-index: 100; font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  }
+  .deck-hints {
+    position: fixed; bottom: clamp(12px, 2vh, 24px); left: 50%;
+    transform: translateX(-50%); font-family: var(--font-mono);
+    font-size: 11px; color: var(--text-dim); opacity: 0.7; z-index: 100;
+    transition: opacity 0.5s ease; white-space: nowrap;
+  }
+  .deck-hints.faded { opacity: 0; pointer-events: none; }
+
+  /* ============ SHARED ============ */
+  .slide__display {
+    font-size: clamp(48px, 9vw, 110px);
+    font-weight: 700;
+    letter-spacing: -3px;
+    line-height: 0.95;
+    text-wrap: balance;
+  }
+  .slide__heading {
+    font-size: clamp(28px, 4.8vw, 46px);
+    font-weight: 600;
+    letter-spacing: -0.6px;
+    line-height: 1.18;
+    text-wrap: balance;
+  }
+  .slide__heading--quote {
+    font-size: clamp(22px, 3.2vw, 36px);
+    font-weight: 600;
+    letter-spacing: -0.4px;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+  .slide__body {
+    font-size: clamp(15px, 1.9vw, 20px);
+    line-height: 1.6;
+    color: var(--text-dim);
+    text-wrap: pretty;
+  }
+  .slide__subtitle {
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.3vw, 15px);
+    color: var(--text-dim);
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .slide__label {
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.1vw, 12px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    color: var(--accent);
+    margin-bottom: 14px;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .slide__label .dot {
+    width: 8px; height: 8px; border-radius: 50%; background: currentColor;
+  }
+  .slide__label--blue { color: var(--blue); }
+  .slide__label--green { color: var(--green); }
+  .slide__label--amber { color: var(--amber); }
+  .slide__label--sage { color: var(--sage); }
+  .slide__label--red { color: var(--red); }
+  .slide__label--plum { color: var(--plum); }
+
+  /* ============ TITLE ============ */
+  .slide--title {
+    justify-content: center; align-items: flex-start; text-align: left;
+    background-image: radial-gradient(ellipse at 80% 30%, var(--accent-dim) 0%, transparent 55%);
+  }
+  .slide--title .slide__display { color: var(--text); }
+  .slide--title .slide__display .accent { color: var(--accent); }
+  .slide__decor { position: absolute; pointer-events: none; z-index: 0; }
+
+  /* ============ DIVIDER ============ */
+  .slide--divider { justify-content: center; }
+  .slide--divider .slide__number {
+    font-size: clamp(120px, 26vw, 320px);
+    font-weight: 700;
+    line-height: 0.85;
+    opacity: 0.07;
+    position: absolute; top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    letter-spacing: -8px;
+  }
+  .slide--divider__week-tag {
+    font-family: var(--font-mono);
+    font-size: clamp(12px, 1.5vw, 16px);
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* ============ CONTENT (DAY CARDS) ============ */
+  .slide--content .slide__inner {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: clamp(24px, 4vw, 60px);
+    align-items: center;
+    width: 100%;
+  }
+  .slide__bullets { list-style: none; padding: 0; }
+  .slide__bullets li {
+    padding: 8px 0 8px 22px;
+    position: relative;
+    font-size: clamp(14px, 1.7vw, 18px);
+    line-height: 1.5;
+    color: var(--text-dim);
+  }
+  .slide__bullets li::before {
+    content: ''; position: absolute;
+    left: 0; top: 17px;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .slide__bullets li strong { color: var(--text); font-weight: 600; }
+  .slide__bullets li code {
+    font-family: var(--font-mono);
+    font-size: 0.85em;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 3px;
+  }
+
+  .slide__day-num {
+    font-family: var(--font-mono);
+    font-size: clamp(80px, 14vw, 200px);
+    font-weight: 700;
+    line-height: 0.9;
+    color: var(--accent);
+    opacity: 0.12;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -6px;
+  }
+  .slide__day-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: clamp(20px, 3vh, 32px);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+
+  .hook {
+    font-size: clamp(20px, 2.6vw, 28px);
+    font-weight: 600;
+    line-height: 1.3;
+    margin: 12px 0 20px 0;
+    color: var(--text);
+    text-wrap: balance;
+    letter-spacing: -0.3px;
+  }
+  .hook--allcaps {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: clamp(16px, 2vw, 22px);
+    line-height: 1.35;
+    color: var(--accent);
+  }
+
+  .meta-row {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 16px;
+  }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.1vw, 12px);
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+    letter-spacing: 0.5px;
+  }
+  .chip--accent { background: var(--accent-dim); color: var(--accent); border-color: transparent; }
+  .chip--blue { background: var(--blue-dim); color: var(--blue); border-color: transparent; }
+  .chip--green { background: var(--green-dim); color: var(--green); border-color: transparent; }
+  .chip--amber { background: var(--amber-dim); color: var(--amber); border-color: transparent; }
+  .chip--sage { background: var(--sage-dim); color: var(--sage); border-color: transparent; }
+  .chip--red { background: var(--red-dim); color: var(--red); border-color: transparent; }
+  .chip--plum { background: var(--plum-dim); color: var(--plum); border-color: transparent; }
+
+  /* ============ DASHBOARD (PILLAR MAP) ============ */
+  .slide--dashboard .slide__kpis {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(clamp(140px, 18vw, 200px), 1fr));
+    gap: clamp(12px, 2vw, 20px);
+    margin-top: 24px;
+  }
+  .slide__kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: clamp(18px, 3vh, 28px) clamp(16px, 2vw, 22px);
+    min-width: 0;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .slide__kpi-val {
+    font-family: var(--font-mono);
+    font-size: clamp(36px, 6vw, 56px);
+    font-weight: 700;
+    letter-spacing: -1.5px;
+    line-height: 1.1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  .slide__kpi-label {
+    font-family: var(--font-mono);
+    font-size: clamp(9px, 1.1vw, 12px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: var(--text-dim);
+    margin-top: 8px;
+  }
+  .slide__kpi-trend {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    margin-top: 4px;
+    color: var(--text-dim);
+  }
+
+  /* ============ TABLE ============ */
+  .slide--table { padding: clamp(24px, 4vh, 48px) clamp(24px, 4vw, 60px); }
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    flex: 1;
+    min-height: 0;
+    margin-top: 16px;
+  }
+  .table-scroll { overflow: auto; max-height: 100%; }
+  .data-table { width: 100%; border-collapse: collapse; }
+  .data-table th {
+    background: var(--surface2);
+    font-family: var(--font-mono);
+    font-size: clamp(10px, 1.2vw, 13px);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: left;
+    padding: clamp(10px, 1.5vh, 16px) clamp(14px, 2vw, 22px);
+    border-bottom: 2px solid var(--border-bright);
+    white-space: nowrap;
+    position: sticky; top: 0;
+  }
+  .data-table td {
+    padding: clamp(8px, 1.3vh, 14px) clamp(14px, 2vw, 22px);
+    border-bottom: 1px solid var(--border);
+    font-size: clamp(13px, 1.6vw, 17px);
+    vertical-align: top;
+  }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+  .data-table tbody tr:nth-child(even) { background: var(--surface2); }
+  .data-table tbody tr { transition: background 0.15s; }
+  .data-table tbody tr:hover { background: var(--accent-dim); }
+  .data-table code {
+    font-family: var(--font-mono); font-size: 0.85em;
+    background: var(--accent-dim); color: var(--accent);
+    padding: 1px 5px; border-radius: 3px;
+  }
+
+  /* ============ QUOTE (CONFESSION) ============ */
+  .slide--quote {
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: clamp(48px, 8vh, 100px) clamp(40px, 8vw, 140px);
+    background-image: radial-gradient(ellipse at 50% 50%, var(--accent-dim) 0%, transparent 45%);
+  }
+  .slide__quote-mark {
+    font-size: clamp(80px, 14vw, 180px);
+    line-height: 0.5;
+    opacity: 0.08;
+    font-family: Georgia, serif;
+    pointer-events: none;
+    margin-bottom: -10px;
+    color: var(--accent);
+  }
+  .slide--quote blockquote {
+    font-family: var(--font-mono);
+    font-size: clamp(20px, 3.4vw, 38px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.2px;
+    text-transform: uppercase;
+    color: var(--accent);
+    text-wrap: balance;
+  }
+  .slide--quote .quote-meta {
+    font-family: var(--font-mono);
+    font-size: clamp(11px, 1.3vw, 14px);
+    margin-top: clamp(20px, 3.5vh, 36px);
+    display: block;
+    letter-spacing: 1.6px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+  }
+
+  /* ============ FULL-BLEED ============ */
+  .slide--bleed { padding: 0; justify-content: flex-end; }
+  .slide__bg { position: absolute; inset: 0; z-index: 0; }
+  .slide__bg--gradient {
+    background: linear-gradient(135deg, #2a1810 0%, #1c1916 50%, #3a2418 100%);
+  }
+  .slide__bg--pivotal {
+    background: linear-gradient(135deg, #4a1a08 0%, #1c1916 60%, #c2410c33 100%);
+  }
+  .slide__scrim {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.15) 50%, transparent 100%);
+    z-index: 1;
+  }
+  .slide--bleed .slide__content {
+    position: relative; z-index: 2;
+    padding: clamp(40px, 6vh, 80px) clamp(40px, 8vw, 120px);
+    color: #ffffff; max-width: 1200px;
+  }
+  .slide--bleed .slide__heading { color: #ffffff; }
+  .slide--bleed .slide__subtitle { color: rgba(255,255,255,0.7); }
+  .slide--bleed .slide__bullets li { color: rgba(255,255,255,0.85); }
+  .slide--bleed .slide__bullets li::before { background: #f59e0b; }
+  .slide--bleed .slide__bullets li strong { color: #ffffff; }
+  .slide--bleed .chip { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.85); border-color: rgba(255,255,255,0.15); }
+
+  /* ============ RESPONSIVE ============ */
+  @media (max-height: 700px) {
+    .slide { padding: clamp(20px, 3.5vh, 40px) clamp(28px, 5.5vw, 80px); }
+    .slide__display { font-size: clamp(36px, 7vw, 64px); }
+    .slide--divider .slide__number { font-size: clamp(80px, 18vw, 200px); }
+    .slide__day-num { font-size: clamp(60px, 11vw, 140px); }
+  }
+  @media (max-height: 600px) {
+    .slide__decor { display: none; }
+    .slide--quote { padding: clamp(32px, 6vh, 60px) clamp(40px, 8vw, 100px); }
+    .slide__quote-mark { display: none; }
+  }
+  @media (max-height: 500px) {
+    .slide { padding: clamp(14px, 2.5vh, 22px) clamp(20px, 4.5vw, 40px); }
+    .deck-dots { display: none; }
+    .slide__display { font-size: clamp(28px, 6vw, 44px); }
+  }
+  @media (max-width: 768px) {
+    .slide--content .slide__inner { grid-template-columns: 1fr; }
+    .slide__day-num { display: none; }
+    .slide--dashboard .slide__kpis { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+<button class="theme-toggle" id="themeToggle" title="Toggle theme" aria-label="Toggle light/dark theme"></button>
+<script>
+(function() {
+  var t = document.getElementById('themeToggle');
+  var s = localStorage.getItem('theme');
+  var i = s || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  if (s) document.documentElement.setAttribute('data-theme', i);
+  t.textContent = i === 'dark' ? '☀' : '☾';
+  t.addEventListener('click', function() {
+    var c = document.documentElement.getAttribute('data-theme')
+      || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var n = c === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', n);
+    localStorage.setItem('theme', n);
+    t.textContent = n === 'dark' ? '☀' : '☾';
+  });
+})();
+</script>
+
+<div class="deck">
+
+  <!-- 1: COVER -->
+  <section class="slide slide--title">
+    <svg class="slide__decor" style="top:0;right:0;" width="180" height="180" viewBox="0 0 180 180">
+      <line x1="180" y1="0" x2="180" y2="60" stroke="var(--accent)" stroke-width="2" opacity="0.18"/>
+      <line x1="120" y1="0" x2="180" y2="0" stroke="var(--accent)" stroke-width="2" opacity="0.18"/>
+    </svg>
+    <svg class="slide__decor" style="bottom:0;left:0;" width="180" height="180" viewBox="0 0 180 180">
+      <line x1="0" y1="120" x2="0" y2="180" stroke="var(--accent)" stroke-width="2" opacity="0.18"/>
+      <line x1="0" y1="180" x2="60" y2="180" stroke="var(--accent)" stroke-width="2" opacity="0.18"/>
+    </svg>
+    <p class="slide__subtitle reveal">AIG · Arc Invisible Gateway · Content Calendar v1</p>
+    <h1 class="slide__display reveal" style="margin-top:24px;">30 ngày <br><span class="accent">build in public</span><br>trên Arc.</h1>
+    <p class="slide__body reveal" style="margin-top:32px; max-width:640px;">Mon May 11 → Tue Jun 9, 2026. Single-account model: @baobao_gems X (AIG voice + narrative confession), TG @baobaogemschat, Arc Discord. Goal: VN Arc community moderator role.</p>
+    <div class="meta-row reveal" style="margin-top:24px;">
+      <span class="chip chip--accent">30 posts · 5 pillars</span>
+      <span class="chip chip--blue">4 narrative confessions</span>
+      <span class="chip chip--green">2 Arc Discord plays</span>
+    </div>
+  </section>
+
+  <!-- 2: PILLAR MAP -->
+  <section class="slide slide--dashboard" style="background-image:radial-gradient(ellipse at 80% 30%, var(--accent-dim) 0%, transparent 45%);">
+    <p class="slide__label reveal"><span class="dot"></span>OVERVIEW</p>
+    <h2 class="slide__heading reveal">5 content pillars · 30 posts</h2>
+    <div class="slide__kpis">
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--blue);">12</div>
+        <div class="slide__kpi-label">Build-in-Public</div>
+        <div class="slide__kpi-trend">Proof-of-work · 40%</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--green);">8</div>
+        <div class="slide__kpi-label">Arc Explainer VN</div>
+        <div class="slide__kpi-trend">Education · 27%</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--amber);">6</div>
+        <div class="slide__kpi-label">Use Case Demo</div>
+        <div class="slide__kpi-trend">incl. video · 20%</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--accent);">4</div>
+        <div class="slide__kpi-label">VN Community</div>
+        <div class="slide__kpi-trend">TG-driven · 13%</div>
+      </div>
+      <div class="slide__kpi reveal">
+        <div class="slide__kpi-val" style="color:var(--red);">4</div>
+        <div class="slide__kpi-label">Confessions</div>
+        <div class="slide__kpi-trend">D1 · D12 · D20 · D28</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3: WEEK 1 DIVIDER -->
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 30% 70%, var(--accent-dim) 0%, transparent 45%);">
+    <span class="slide__number">01</span>
+    <div style="position:relative; z-index:1;">
+      <p class="slide--divider__week-tag reveal">WEEK 1 · MAY 11 → MAY 17</p>
+      <h2 class="slide__heading reveal" style="margin-top:14px; font-size:clamp(40px,7vw,80px); font-weight:700;">Establish.</h2>
+      <p class="slide__body reveal" style="margin-top:14px; max-width:560px;">Soft narrative open → technical proof thread → use case demo → reference impl invitation. Arc Discord stays observe-only.</p>
+    </div>
+  </section>
+
+  <!-- 4: DAY 1 -->
+  <section class="slide slide--quote">
+    <p class="slide__quote-mark reveal">&ldquo;</p>
+    <blockquote class="reveal">I shipped AIG on Arc Network in 24 hours.<br>Then I quit for 2 months.</blockquote>
+    <span class="quote-meta reveal">Day 1 · Mon May 11 · Narrative Confession #1 · X Premium Long EN ~1640 chars · 09:00 + VN quote-tweet ~09:05</span>
+  </section>
+
+  <!-- 5: DAY 2 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--accent-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal"><span class="dot"></span>DAY 2 · TUE MAY 12 · VN COMMUNITY</p>
+        <p class="hook reveal">Mình vừa ship AIG — Arc Invisible Gateway. Dự án payment crypto đầu tiên của người VN trên Arc Network. Code mở, có thể fork ngay hôm nay.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Arc Network là gì</strong> — Circle (USDC), chain ID 212, CCTP Domain 7</li>
+          <li><strong>AIG flow</strong> — BSC token → USDC trên Arc, không KYC</li>
+          <li><strong>Fork-ready</strong> — clone repo, ~30 phút testnet live</li>
+          <li><strong>CTA</strong> — Demo + GitHub + Hỏi trong group, trả lời 24h</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--accent">TG @baobaogemschat</span>
+          <span class="chip">Activation Play 4</span>
+          <span class="chip">VN · Conversational</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">02</div>
+    </div>
+  </section>
+
+  <!-- 6: DAY 3 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 3 · WED MAY 13 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">Shipped AIG to Arc testnet in 24h. Here's what we learned about CCTP Domain 7. Thread.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>5-tweet thread EN</strong> · proof-of-work format · tag <code>@circlefin</code></li>
+          <li><strong>T2</strong> what's AIG · BSC any-token → USDC on Arc · VN merchant TAM</li>
+          <li><strong>T3</strong> architecture · contract addr · deploy tx (BSCscan verify)</li>
+          <li><strong>T4</strong> 24h timeline · 7 prod commits (e7b0cde, 6146088, 46af981)</li>
+          <li><strong>T5</strong> what broke · CCTP attestation · slippage · cold starts</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">9am ICT (Bay Area wakeup)</span>
+          <span class="chip chip--accent">Highest-leverage W1 post</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">03</div>
+    </div>
+  </section>
+
+  <!-- 7: DAY 4 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--amber-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--amber reveal"><span class="dot"></span>DAY 4 · THU MAY 14 · USE CASE DEMO</p>
+        <p class="hook reveal">Làm thế nào để merchant VN nhận USDC mà không cần hiểu bridge/swap?</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Step 1</strong> — Merchant connect ví → <code>/dashboard</code> → QR tự tạo</li>
+          <li><strong>Step 2</strong> — Khách scan → <code>/pay/[id]</code> → fee breakdown rõ</li>
+          <li><strong>Step 3</strong> — Khách ký <code>swapAndBridge()</code> → SSE real-time</li>
+          <li><strong>Step 4</strong> — Merchant nhận USDC trên Arc · không biết bridge</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--amber">X VN</span>
+          <span class="chip">Single tweet + screenshot</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">04</div>
+    </div>
+  </section>
+
+  <!-- 8: DAY 5 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 5 · FRI MAY 15 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">Pushed commit e7b0cde: API now returns 500-graceful errors instead of unhandled exceptions. Boring fix. Mattered for production.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Before</strong> — dashboard crashed on Supabase error → blank page</li>
+          <li><strong>After</strong> — error boundary catches · merchant-friendly UX</li>
+          <li><strong>Why post</strong> — production code = post-launch maintenance signal</li>
+          <li><strong>Arc Discord</strong> — still observe-only · save Q for D8 first reply</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN · single tweet</span>
+          <span class="chip">Was confession #1 — pivoted to D1</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">05</div>
+    </div>
+  </section>
+
+  <!-- 9: DAY 6 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 6 · SAT MAY 16 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">AIG is an open-source CCTP Domain 7 reference implementation. If you're integrating Arc, this saves ~10 hrs.</p>
+        <ul class="slide__bullets reveal">
+          <li><code>SwapRouter.sol</code> — minimal · auditable · &lt;200 lines</li>
+          <li><code>/api/agent/execute</code> — SSE streaming &gt; webhook callbacks</li>
+          <li><code>scripts/test-cctp-domain7.ts</code> — 7-step smoke test</li>
+          <li><strong>Fork prompt</strong> — change router for Polygon/ETH/Arbitrum</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">Activation Play 3 · Reference impl</span>
+          <span class="chip">Tag peer builders</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">06</div>
+    </div>
+  </section>
+
+  <!-- 10: DAY 7 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 7 · SUN MAY 17 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">Arc Network là gì — giải thích bằng tiếng Việt, không dùng jargon.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Circle</strong> là ai (làm ra USDC)</li>
+          <li><strong>Arc</strong> = chain của Circle · ID 212 · USDC-native fees · finality ~30s</li>
+          <li><strong>Vs BSC</strong> — fees cố định · USDC settlement · không Tether risk</li>
+          <li><strong>CCTP</strong> = bridge protocol Circle · AIG dùng domain 7</li>
+          <li><strong>AIG</strong> = ví dụ đầu tiên của dev VN trên Arc</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">TG @baobaogemschat</span>
+          <span class="chip">VN explainer</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">07</div>
+    </div>
+  </section>
+
+  <!-- 11: WEEK 2 DIVIDER -->
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 70% 30%, var(--accent-dim) 0%, transparent 45%);">
+    <span class="slide__number">02</span>
+    <div style="position:relative; z-index:1;">
+      <p class="slide--divider__week-tag reveal">WEEK 2 · MAY 18 → MAY 24</p>
+      <h2 class="slide__heading reveal" style="margin-top:14px; font-size:clamp(40px,7vw,80px); font-weight:700;">Deepen.</h2>
+      <p class="slide__body reveal" style="margin-top:14px; max-width:560px;">Good-first-issues live · CCTP deep-dive · peer quote-tweet · confession #2 · pivotal Day 14 first Arc DM.</p>
+    </div>
+  </section>
+
+  <!-- 12: DAY 8 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 8 · MON MAY 18 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">AIG repo now has 2 good-first-issues for Arc builders. Fork this, learn CCTP, ship something.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Issue 1</strong> — USDT→USDC bridge on Polygon (PancakeSwap → Uniswap V3)</li>
+          <li><strong>Issue 2</strong> — translate README to VN (no code)</li>
+          <li><strong>Promise</strong> — PR reviewed in 24h · contributor credit</li>
+          <li><strong>Arc Discord</strong> — Play 4 · FIRST helpful reply (no AIG mention)</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip chip--accent">Activation Play 5 + Discord debut</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">08</div>
+    </div>
+  </section>
+
+  <!-- 13: DAY 9 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 9 · TUE MAY 19 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">CCTP Domain 7 là gì? Tại sao AIG dùng nó thay vì bridge thông thường?</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>CCTP</strong> = native USDC bridge · không wrap → không thêm contract risk</li>
+          <li><strong>Domain 7</strong> = Arc trong CCTP routing table</li>
+          <li><strong>Flow</strong> — BSC SwapCompleted → MessageSent log → Circle attestation → Arc receiveMessage</li>
+          <li>Code thật · <code>scripts/test-cctp-domain7.ts</code> · public</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">X VN + TG</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">09</div>
+    </div>
+  </section>
+
+  <!-- 14: DAY 10 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 10 · WED MAY 20 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">Quote-tweet a peer Arc builder shipping this week. Offer AIG's CCTP integration as time-saver.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Scan</strong> Arc Discord / X for builder who shipped this week</li>
+          <li><strong>Template</strong> — generous · architecture-agnostic · 1 link only</li>
+          <li><strong>Goal</strong> — peer recognition signal to Arc team</li>
+          <li><strong>Discord</strong> — 1 helpful reply (no AIG link)</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">Activation Play 7 · round 1</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">10</div>
+    </div>
+  </section>
+
+  <!-- 15: DAY 11 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--amber-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--amber reveal"><span class="dot"></span>DAY 11 · THU MAY 21 · USE CASE DEMO</p>
+        <p class="hook reveal">AIG /api/agent/execute uses SSE streaming, not webhooks. Here's why — and what the event stream looks like.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>SSE &gt; webhook</strong> — no callback URL · real-time · simpler integration</li>
+          <li><strong>Events</strong> — <code>swap_executing</code> → <code>bridging</code> → <code>confirmed</code></li>
+          <li><strong>Code snippet</strong> — endpoint signature</li>
+          <li><strong>Screenshot</strong> — <code>payment-progress-bar.tsx</code> live state</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--amber">X EN + screen recording</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">11</div>
+    </div>
+  </section>
+
+  <!-- 16: DAY 12 (CONFESSION) -->
+  <section class="slide slide--quote">
+    <p class="slide__quote-mark reveal">&ldquo;</p>
+    <blockquote class="reveal">Mình đã push 7 production fixes sau khi "launch".<br>Đây là những gì thật sự xảy ra khi ship.</blockquote>
+    <span class="quote-meta reveal">Day 12 · Fri May 22 · Narrative Confession #2 · @baobao_gems X (VN) · 1 link: git log public</span>
+  </section>
+
+  <!-- 17: DAY 13 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 13 · SAT MAY 23 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">AIG database schema: 4 tables, 3 migrations. Here's how we track payments across BSC → Arc.</p>
+        <ul class="slide__bullets reveal">
+          <li><code>payment_sessions</code> — session_id · status · bridge_mode · swap_params JSONB cache</li>
+          <li><code>merchants</code> — wallet_address pk · auto-register</li>
+          <li><code>points_ledger</code> + <code>points_balance</code> — engagement metrics</li>
+          <li><strong>Design</strong> — JSONB cache prevents re-quote drift during bridge latency</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">Migration link · 003_create_merchants_table.sql</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">13</div>
+    </div>
+  </section>
+
+  <!-- 18: DAY 14 (PIVOTAL) -->
+  <section class="slide slide--bleed">
+    <div class="slide__bg slide__bg--pivotal"></div>
+    <div class="slide__scrim"></div>
+    <div class="slide__content">
+      <p class="slide__label reveal" style="color:#f59e0b;"><span class="dot"></span>DAY 14 · SUN MAY 24 · PIVOTAL</p>
+      <h2 class="slide__heading reveal" style="margin-top:8px; font-size:clamp(28px,4.5vw,44px);">First Arc Discord DM<br>(Activation Play 6)</h2>
+      <p class="slide__body reveal" style="color:rgba(255,255,255,0.85); max-width:780px; margin-top:18px;">Pre-condition met: D3 thread + D6 ref impl + D8 helpful reply visible (2 weeks public proof).</p>
+      <ul class="slide__bullets reveal" style="margin-top:14px;">
+        <li><strong>DM target</strong> — Arc DevRel / Ecosystem Lead from W1-W2 observation</li>
+        <li><strong>References</strong> — public posts · contract addr · demo URL · D3 thread</li>
+        <li><strong>Ask</strong> — specific 15-min walkthrough · NOT cold</li>
+        <li><strong>+ Post</strong> — TG/X VN: <em>Cài Arc CLI trong 5 phút — hướng dẫn tiếng Việt</em> · install · <code>arc init</code> · <code>arc chat</code> · troubleshoot</li>
+      </ul>
+      <div class="meta-row reveal" style="margin-top:18px;">
+        <span class="chip">DM template adapted from arc-team-member.md Play 1</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 19: WEEK 3 DIVIDER -->
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 30% 70%, var(--accent-dim) 0%, transparent 45%);">
+    <span class="slide__number">03</span>
+    <div style="position:relative; z-index:1;">
+      <p class="slide--divider__week-tag reveal">WEEK 3 · MAY 25 → MAY 31</p>
+      <h2 class="slide__heading reveal" style="margin-top:14px; font-size:clamp(40px,7vw,80px); font-weight:700;">Amplify.</h2>
+      <p class="slide__body reveal" style="margin-top:14px; max-width:560px;">Architecture deep-dives · Arc CLI deploy guide · peer QT round 2 · video demo · VN builders shoutout · confession #3 · mainnet preview.</p>
+    </div>
+  </section>
+
+  <!-- 20: DAY 15 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 15 · MON MAY 25 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">AIG's SwapRouter.sol: 3 key design decisions that make CCTP work reliably.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>D1</strong> — <code>exactOutputSingle</code> · merchant gets exact USDC · slippage in <code>amountInMax</code></li>
+          <li><strong>D2</strong> — <code>dualMode</code> · CCTP / ADMIN_RELAY fallback · env var toggle</li>
+          <li><strong>D3</strong> — BNB auto-wrap WBNB · native BNB without pre-approval</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">Source link · GitHub auditable</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">15</div>
+    </div>
+  </section>
+
+  <!-- 21: DAY 16 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 16 · TUE MAY 26 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">ARC TOOLKIT: DEPLOY CONTRACT BẰNG CLI — STEP BY STEP</p>
+        <ul class="slide__bullets reveal">
+          <li><em>Mình deploy SwapRouter.sol bằng Arc CLI. Đây là mỗi bước.</em></li>
+          <li>Init — <code>arc init</code> trong thư mục contract</li>
+          <li>Compile — agent lập kế hoạch + biên dịch SwapRouter.sol</li>
+          <li>Deploy — lên BSC Testnet qua phiên <code>arc chat</code></li>
+          <li>Verify — <code>arc graph index</code> / <code>arc graph search</code> · check tx</li>
+          <li><strong>Insight</strong> — Behavior (step-by-step) + Desire (muốn deploy được)</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">X VN</span>
+          <span class="chip">Discord · helpful reply if relevant</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">16</div>
+    </div>
+  </section>
+
+  <!-- 22: DAY 17 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 17 · WED MAY 27 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">Quote-tweet peer builder · round 2.</p>
+        <ul class="slide__bullets reveal">
+          <li>Same template as Day 10</li>
+          <li>Target: Arc Discord builder who shipped this week</li>
+          <li><strong>Goal</strong> — second-touch peer recognition</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">Activation Play 7 · round 2</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">17</div>
+    </div>
+  </section>
+
+  <!-- 23: DAY 18 (VIDEO) -->
+  <section class="slide slide--bleed">
+    <div class="slide__bg slide__bg--gradient"></div>
+    <div class="slide__scrim"></div>
+    <div class="slide__content">
+      <p class="slide__label reveal" style="color:#f59e0b;"><span class="dot"></span>DAY 18 · THU MAY 28 · VIDEO DEMO</p>
+      <h2 class="slide__heading reveal" style="margin-top:8px; font-size:clamp(28px,4.5vw,44px);">AIG on Arc Testnet —<br>Clone, Deploy, Execute in 30 Min</h2>
+      <ul class="slide__bullets reveal" style="margin-top:18px;">
+        <li><strong>00:00–03:00</strong> — what's Arc, what's AIG (architecture diagram)</li>
+        <li><strong>03:00–08:00</strong> — clone + walk through SwapRouter.sol</li>
+        <li><strong>08:00–14:00</strong> — deploy BSC Testnet + smoke test</li>
+        <li><strong>14:00–22:00</strong> — execute payment · sign · SSE · Arc USDC confirmed</li>
+        <li><strong>22:00–28:00</strong> — fork walkthrough · change wallet/token/redeploy</li>
+        <li><strong>28:00–30:00</strong> — Q&amp;A invitation · @baobaogemschat link</li>
+      </ul>
+      <div class="meta-row reveal" style="margin-top:18px;">
+        <span class="chip">Activation Play 6</span>
+        <span class="chip">YouTube + X EN announce + TG VN cross-post</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 24: DAY 19 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--accent-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal"><span class="dot"></span>DAY 19 · FRI MAY 29 · VN COMMUNITY</p>
+        <p class="hook reveal">VN Builders trên Arc — update tuần này.</p>
+        <ul class="slide__bullets reveal">
+          <li>Shoutout VN dev đã fork / ask issue / post tx (nếu có)</li>
+          <li>AIG metrics tuần — demo views · GitHub clones · TG questions</li>
+          <li><strong>Invitation</strong> — "ship gì đó trên Arc testnet → mình shoutout"</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--accent">TG @baobaogemschat</span>
+          <span class="chip">Activation Play 8 · round 1</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">19</div>
+    </div>
+  </section>
+
+  <!-- 25: DAY 20 (CONFESSION + BUILD POST DOUBLE) -->
+  <section class="slide slide--quote">
+    <p class="slide__quote-mark reveal">&ldquo;</p>
+    <blockquote class="reveal">Mình xây AIG cho người Việt.<br>Không phải để "mo lên".</blockquote>
+    <span class="quote-meta reveal">Day 20 · Sat May 30 · Narrative Confession #3 (VN) + same-day BiP post: AIG points system on-chain</span>
+  </section>
+
+  <!-- 26: DAY 21 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 21 · SUN MAY 31 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">Arc Network ra mainnet 2026. Dev VN nên chuẩn bị gì ngay bây giờ?</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Mainnet Q4 2026</strong> — testnet window là bây giờ để xây portfolio</li>
+          <li>Arc team đang theo dõi early builders — RT · pin · feature có thật</li>
+          <li>Ecosystem 100+ partner toàn institutional · indie VN builder gần như 0</li>
+          <li>AIG = gateway: fork → customize → deploy → có Arc tx trong portfolio</li>
+          <li><strong>First mover advantage</strong> — builder #1 VN sẽ được Circle feature</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">X VN + TG</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">21</div>
+    </div>
+  </section>
+
+  <!-- 27: WEEK 4 DIVIDER -->
+  <section class="slide slide--divider" style="background-image:radial-gradient(ellipse at 70% 30%, var(--accent-dim) 0%, transparent 45%);">
+    <span class="slide__number">04</span>
+    <div style="position:relative; z-index:1;">
+      <p class="slide--divider__week-tag reveal">WEEK 4 · JUN 1 → JUN 9</p>
+      <h2 class="slide__heading reveal" style="margin-top:14px; font-size:clamp(40px,7vw,80px); font-weight:700;">Convert.</h2>
+      <p class="slide__body reveal" style="margin-top:14px; max-width:560px;">3-week milestone · FAQ · merchant hunt · video VN · final shoutout · confession #4 · phase 2 teaser · 30-day recap thread + Arc DM #2.</p>
+    </div>
+  </section>
+
+  <!-- 28: DAY 22 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--blue-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--blue reveal"><span class="dot"></span>DAY 22 · MON JUN 1 · BUILD-IN-PUBLIC</p>
+        <p class="hook reveal">3 weeks of AIG in public. Here's where we are.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Technical</strong> — SwapRouter live · 3 endpoints · 7+ fixes · CCTP working</li>
+          <li><strong>Community</strong> — [N] TG members · [N] stars · [N] demo views</li>
+          <li><strong>Builder signal</strong> — [N] forks · [N] issue contributors</li>
+          <li><strong>Honest gap</strong> — 0 mainnet merchants · Phase 2 not started</li>
+          <li><strong>Next</strong> — first merchant onboarding + Phase 2 planning</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--blue">X EN</span>
+          <span class="chip">3-week milestone</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">22</div>
+    </div>
+  </section>
+
+  <!-- 29: DAY 23 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 23 · TUE JUN 2 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">ARC CLI COMMANDS — CHEAT SHEET TIẾNG VIỆT</p>
+        <ul class="slide__bullets reveal">
+          <li><em>Tổng hợp tất cả commands Arc CLI mình dùng khi build AIG.</em></li>
+          <li><code>arc init</code> · <code>arc chat</code> · <code>arc review</code></li>
+          <li><code>arc graph index</code> / <code>arc graph search</code> · <code>arc dashboard</code></li>
+          <li>Mỗi command kèm 1 use case thật từ AIG</li>
+          <li>Lỗi hay gặp · <strong>Insight</strong> — Behavior + Pain (quên commands)</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">X VN + TG</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">23</div>
+    </div>
+  </section>
+
+  <!-- 30: DAY 24 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--amber-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--amber reveal"><span class="dot"></span>DAY 24 · WED JUN 3 · USE CASE DEMO</p>
+        <p class="hook reveal">AIG merchant dashboard: connect wallet, generate QR, receive USDC. Demo.</p>
+        <ul class="slide__bullets reveal">
+          <li>Screen recording — wallet connect → auto-register → QR generate</li>
+          <li>Stat cards — totalRevenue · txCount · successRate · recentVolume</li>
+          <li>Real-time payment feed — Supabase subscription · live update</li>
+          <li>Points tier card</li>
+          <li><strong>Honest</strong> — 0 real merchants yet · testnet only</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--amber">X EN + screen recording</span>
+          <span class="chip">Discord · heightened presence</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">24</div>
+    </div>
+  </section>
+
+  <!-- 31: DAY 25 (MERCHANT HUNT) -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--accent-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label reveal"><span class="dot"></span>DAY 25 · THU JUN 4 · MERCHANT HUNT</p>
+        <p class="hook reveal">Looking for AIG's first merchant. BSC-based, crypto-accepting, willing to test Arc USDC settlement.</p>
+        <ul class="slide__bullets reveal">
+          <li>What they get — customer pays any BSC token → USDC on Arc</li>
+          <li>Setup — connect wallet · QR · 10 minutes</li>
+          <li><strong>Risk honest</strong> — testnet only · no mainnet</li>
+          <li>What we want — 1 real merchant tx → demand proof to Arc team</li>
+          <li>DM open · TG VN cross-post</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--accent">X EN + TG VN</span>
+          <span class="chip">Conversion play</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">25</div>
+    </div>
+  </section>
+
+  <!-- 32: DAY 26 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--amber-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--amber reveal"><span class="dot"></span>DAY 26 · FRI JUN 5 · USE CASE DEMO</p>
+        <p class="hook reveal">Merchant VN nhận USDC trên Arc: cần gì? Chỉ cần 1 ví crypto.</p>
+        <ul class="slide__bullets reveal">
+          <li>Không cần tài khoản ngân hàng đặc biệt · không KYC</li>
+          <li>Setup — kết nối MetaMask → <code>/dashboard</code> → QR ready</li>
+          <li>Khách trả BNB/token BSC → merchant nhận USDC trên Arc trong ~30s</li>
+          <li><strong>Phase 2</strong> — webhook notifications</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--amber">X VN</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">26</div>
+    </div>
+  </section>
+
+  <!-- 33: DAY 27 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 20% 80%, var(--green-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--green reveal"><span class="dot"></span>DAY 27 · SAT JUN 6 · ARC EXPLAINER VN</p>
+        <p class="hook reveal">VN Builders on Arc — tổng kết tháng đầu tiên.</p>
+        <ul class="slide__bullets reveal">
+          <li>List mọi VN dev đã ship (GitHub + tx hash)</li>
+          <li>Metrics — stars · forks · demo views · TG growth</li>
+          <li>Ghi nhận cả người đặt câu hỏi · learning = contribution</li>
+          <li><strong>Preview</strong> — Phase 2 (multi-chain) nếu có merchant signal</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--green">TG @baobaogemschat</span>
+          <span class="chip">Shoutout round 2</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">27</div>
+    </div>
+  </section>
+
+  <!-- 34: DAY 28 (DUAL: BIP + CONFESSION #4) -->
+  <section class="slide slide--quote">
+    <p class="slide__quote-mark reveal">&ldquo;</p>
+    <blockquote class="reveal">Mình tìm được merchant đầu tiên cho AIG chưa? Thành thật mà nói...</blockquote>
+    <span class="quote-meta reveal">Day 28 · Sun Jun 7 · Confession #4 (VN) + same-day BiP: 28 days · Arc team direct signal post · tag @circlefin</span>
+  </section>
+
+  <!-- 35: DAY 29 -->
+  <section class="slide slide--content" style="background-image:radial-gradient(ellipse at 80% 30%, var(--amber-dim) 0%, transparent 45%);">
+    <div class="slide__inner">
+      <div>
+        <p class="slide__label slide__label--amber reveal"><span class="dot"></span>DAY 29 · MON JUN 8 · ROADMAP</p>
+        <p class="hook reveal">AIG Phase 1: done. Phase 2: not started. Here's what we're planning — and what's blocking us.</p>
+        <ul class="slide__bullets reveal">
+          <li><strong>Phase 1 shipped</strong> — SwapRouter · 3 APIs · dashboard · CCTP D7 · 7 fixes</li>
+          <li><strong>Phase 2 targets</strong> — multi-chain (Polygon/ETH/Arbitrum) · points distribution · webhooks</li>
+          <li><strong>Blocker</strong> — no first merchant signal · spec depends on real usage</li>
+          <li><strong>Honest ask</strong> — Arc builders use AIG · merchants DM</li>
+          <li><strong>Discord</strong> — Play 10 · second DM · explicit mod role ask</li>
+        </ul>
+        <div class="meta-row reveal">
+          <span class="chip chip--amber">X EN + Arc Discord DM</span>
+          <span class="chip">roadmap_AIG.json public</span>
+        </div>
+      </div>
+      <div class="slide__day-num reveal">29</div>
+    </div>
+  </section>
+
+  <!-- 36: DAY 30 (FINAL) -->
+  <section class="slide slide--bleed">
+    <div class="slide__bg slide__bg--pivotal"></div>
+    <div class="slide__scrim"></div>
+    <div class="slide__content">
+      <p class="slide__label reveal" style="color:#f59e0b;"><span class="dot"></span>DAY 30 · TUE JUN 9 · CONVERSION DAY</p>
+      <h2 class="slide__heading reveal" style="margin-top:8px; font-size:clamp(28px,4.5vw,44px);">30 days building AIG in public on Arc.<br>Final numbers.</h2>
+      <ul class="slide__bullets reveal" style="margin-top:18px;">
+        <li><strong>T2</strong> — what shipped · SwapRouter · CCTP D7 · 3 APIs · 7 fixes · dashboard</li>
+        <li><strong>T3</strong> — VN signal · [N] devs · [N] forks · [N] testnet deploys · [N] TG members</li>
+        <li><strong>T4</strong> — uncontested position · zero VN Arc coverage when started</li>
+        <li><strong>T5</strong> — explicit ask: <strong>VN community moderator role in Arc ecosystem</strong></li>
+        <li><strong>T6</strong> — links · GitHub · Vercel · @baobaogemschat</li>
+      </ul>
+      <div class="meta-row reveal" style="margin-top:18px;">
+        <span class="chip">X EN thread + TG VN recap + Arc Discord follow-up</span>
+        <span class="chip">Tag @circlefin</span>
+        <span class="chip">Monitor 48h response window</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 37: CLOSING (CHANNEL TABLE) -->
+  <section class="slide slide--table" style="background-image:radial-gradient(ellipse at 50% 0%, var(--accent-dim) 0%, transparent 35%);">
+    <p class="slide__label reveal"><span class="dot"></span>POST DISTRIBUTION</p>
+    <h2 class="slide__heading reveal">Channel breakdown</h2>
+    <div class="table-wrap reveal">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead><tr><th>Channel</th><th>Voice</th><th>Posts</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>X EN</td><td>AIG (technical)</td><td>17</td><td>Build-in-Public · Use Case Demo · final recap thread</td></tr>
+            <tr><td>X VN</td><td>AIG (technical)</td><td>7</td><td>Arc Explainer · Use Case Demo</td></tr>
+            <tr><td>TG <code>@baobaogemschat</code></td><td>Mixed</td><td>8</td><td>Launch · explainers · shoutouts · merchant hunt</td></tr>
+            <tr><td>@baobao_gems X (confession)</td><td>Personal narrative</td><td>4</td><td>D1 · D12 · D20 · D28 — every 7&ndash;10 days</td></tr>
+            <tr><td>Arc Discord</td><td>AIG (helpful, no promo)</td><td>Ongoing</td><td>Min 12 helpful replies + 2 DMs (D14, D29)</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p class="slide__body reveal" style="margin-top:16px; font-size:clamp(13px,1.5vw,16px);">Voice routing: AIG voice (technical, no <code>m&igrave;nh</code>) for product · @baobao_gems voice (<code>m&igrave;nh</code>, narrative) for confession days only. Arc Discord = observe-only W1, helpful W2+, DM W3+.</p>
+  </section>
+
+</div><!-- /deck -->
+
+<script>
+  // SlideEngine
+  function SlideEngine(){
+    this.deck=document.querySelector('.deck');
+    this.slides=[].slice.call(document.querySelectorAll('.slide'));
+    this.current=0;
+    this.total=this.slides.length;
+    this.buildChrome();
+    this.bindEvents();
+    this.observe();
+    this.update();
+  }
+  SlideEngine.prototype.buildChrome=function(){
+    var bar=document.createElement('div');bar.className='deck-progress';document.body.appendChild(bar);this.bar=bar;
+    var dots=document.createElement('div');dots.className='deck-dots';var self=this;
+    this.slides.forEach(function(_,i){var d=document.createElement('button');d.className='deck-dot';d.title='Slide '+(i+1);d.onclick=function(){self.goTo(i);};dots.appendChild(d);});
+    document.body.appendChild(dots);this.dots=[].slice.call(dots.children);
+    var ctr=document.createElement('div');ctr.className='deck-counter';document.body.appendChild(ctr);this.counter=ctr;
+    var hints=document.createElement('div');hints.className='deck-hints';hints.textContent='← → or scroll · 37 slides';document.body.appendChild(hints);this.hints=hints;
+    this.hintTimer=setTimeout(function(){hints.classList.add('faded');},5000);
+  };
+  SlideEngine.prototype.bindEvents=function(){
+    var self=this;
+    document.addEventListener('keydown',function(e){
+      if(e.target.closest('input,textarea,[contenteditable]'))return;
+      if(['ArrowDown','ArrowRight',' ','PageDown'].indexOf(e.key)>-1){e.preventDefault();self.next();}
+      else if(['ArrowUp','ArrowLeft','PageUp'].indexOf(e.key)>-1){e.preventDefault();self.prev();}
+      else if(e.key==='Home'){e.preventDefault();self.goTo(0);}
+      else if(e.key==='End'){e.preventDefault();self.goTo(self.total-1);}
+      self.fadeHints();
+    });
+    var tY;
+    this.deck.addEventListener('touchstart',function(e){tY=e.touches[0].clientY;},{passive:true});
+    this.deck.addEventListener('touchend',function(e){var dy=tY-e.changedTouches[0].clientY;if(Math.abs(dy)>50){dy>0?self.next():self.prev();}});
+  };
+  SlideEngine.prototype.observe=function(){
+    var self=this;
+    var obs=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){entry.target.classList.add('visible');self.current=self.slides.indexOf(entry.target);self.update();}});},{threshold:0.5});
+    this.slides.forEach(function(s){obs.observe(s);});
+  };
+  SlideEngine.prototype.goTo=function(i){this.slides[Math.max(0,Math.min(i,this.total-1))].scrollIntoView({behavior:'smooth'});};
+  SlideEngine.prototype.next=function(){if(this.current<this.total-1)this.goTo(this.current+1);};
+  SlideEngine.prototype.prev=function(){if(this.current>0)this.goTo(this.current-1);};
+  SlideEngine.prototype.update=function(){
+    this.bar.style.width=((this.current+1)/this.total*100)+'%';
+    var c=this.current;this.dots.forEach(function(d,i){d.classList.toggle('active',i===c);});
+    this.counter.textContent=(this.current+1)+' / '+this.total;
+  };
+  SlideEngine.prototype.fadeHints=function(){clearTimeout(this.hintTimer);this.hints.classList.add('faded');};
+
+  document.addEventListener('DOMContentLoaded', function(){ new SlideEngine(); });
+</script>
+
+</body>
+</html>
