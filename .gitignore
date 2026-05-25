@@ -24,6 +24,7 @@ build/
 # Claude Code (local tooling — not project code)
 .claude/
 CLAUDE.md
+claudekit-marketing
 
 # Sensitive project docs (keep local only)
 AGENTS.md
@@ -34,6 +35,9 @@ PRD*.md
 contracts/cache/
 contracts/out/
 contracts/broadcast/
+
+# Supabase (CLI cache — auto-regenerated; leaks project-ref + pooler URL)
+**/supabase/.temp/
 
 # Misc
 .DS_Store

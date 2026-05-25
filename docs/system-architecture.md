@@ -48,6 +48,7 @@ Merchant Dashboard
 - `swapAndBridge(sessionId, grossUSDC, aigFee, amountInMax, poolFee, merchantBytes32, merchantAddr)`
 - Executable only by contract owner (initial tests)
 - Future: integrate with CCTP TokenMessenger or relayer
+- Deployed (BSC Testnet, chain 97): `0xd5A7a98367F5ECf033bFD617d49e96d7dF751ab3` — SwapRouter v2 (supersedes v1 `0xa8cea8fa…583a7`)
 
 Logic:
 1. Receive BNB value
