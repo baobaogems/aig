@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-26T01:15:00+07:00",
+  "lastUpdated": "2026-05-26T09:05:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -613,6 +613,19 @@
       ],
       "status": "done_with_concerns",
       "concerns": "Real Arc Testnet smoke deferred to user -- needs funded Ethereum Sepolia wallet with USDC (faucet.circle.com for USDC, standard Sepolia ETH faucets for gas). Manual smoke recipe: cd frontend && npm run dev, set NEXT_PUBLIC_BRIDGE_BACKEND=v2 in .env.local, visit /pay/<sessionId>?merchant=<arc-addr>&amount=10, connect MetaMask on Sepolia, click Pay, expect 2 sigs, watch progress bar through swap_executing/bridging/confirmed (~30-60s attestation). page.tsx is 348 lines (over 200 guideline) -- strangler-fig transition exception, both v1 PaymentPage and v2 PaymentPageV2 functions coexist until Phase 06 cleanup deletes v1. NEXT_PUBLIC_BRIDGE_BACKEND in client bundle is fine (no secret -- just a UI dispatch flag). KIT_KEY env still set as blank placeholder; unused now and should be removed in Phase 06 along with appkit.server.ts + appkit-ping route + @circle-fin/* deps. Production deploy: Vercel still on v1 -- Phase 04 flips NEXT_PUBLIC_BRIDGE_BACKEND=v2 in Vercel env + adds the 6 new env vars there."
+    },
+    {
+      "timestamp": "2026-05-26T09:05:00+07:00",
+      "type": "docs",
+      "title": "Phase 04 plan rewritten to match Phase 03 ship (Vercel env flip recipe)",
+      "what": "Phase 04 was drafted before the SDK pivot and referenced KIT_KEY + App Kit. Rewrote to match what Phase 03 actually shipped: 8 env vars to ADD on Vercel (NEXT_PUBLIC_BRIDGE_BACKEND=v2, BRIDGE_BACKEND=v2, NEXT_PUBLIC_SOURCE_CHAIN_ID=11155111, NEXT_PUBLIC_USDC_ADDRESS_SOURCE=0x1c7D4B196Cb..., NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE=0x8fe6b999..., NEXT_PUBLIC_ARC_CCTP_DOMAIN=26, ETHEREUM_SEPOLIA_RPC_URL=publicnode, CCTP_MESSAGE_TRANSMITTER_ARC=0xE737e5cE... -- verify; was missing from local env). Listed v1 vars to KEEP for rollback (SWAP_ROUTER_*, BSC_*, ARC_*, AIG_ADMIN_*, BRIDGE_MODE, supabase). Listed DROP-from-plan vars (KIT_KEY, ARC_CCTP_DOMAIN_ID -- both unused now). Added pre-flight requirement (local Phase 03 smoke must pass first), redeploy instructions (Vercel dashboard Redeploy, not commit-triggered), 4-step production smoke gate (page UI text 'Pay with USDC', end-to-end payment ~60s, Arc explorer tx confirmation, dashboard feed update), rollback recipe (2 env flips + redeploy, ~2min recovery), risk register (RPC rate limits, missing CCTP_MESSAGE_TRANSMITTER_ARC, AIG admin Arc gas, Day 6 post audience confusion). Updated plan.md Phase 04 status row. No code changes. Commit candidate: docs(v2): rewrite phase 04 to match phase 03 reality.",
+      "why": "User asked 'cook Phase 04'. Phase 04 is a Vercel-dashboard task with no code to scaffold, so skipped the cook skill ceremony and went direct: update the stale plan doc + give user precise dashboard recipe. Vercel env work itself requires user dashboard access -- can't do from CLI.",
+      "files": [
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-04-flip-default-to-v2.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md"
+      ],
+      "status": "done",
+      "concerns": "Phase 04 actual execution (Vercel env adds + smoke) is a USER task. I can't access the Vercel dashboard. Recommend user: (1) run Phase 03 local smoke first (needs funded Sepolia wallet with USDC from faucet.circle.com), (2) if green, follow the phase-04 doc Vercel recipe. KIT_KEY may still be set on Vercel from previous Phase 01 plan -- it's harmless under v2, Phase 06 cleanup removes. CCTP_MESSAGE_TRANSMITTER_ARC was missing from frontend/.env.local (I added during Phase 03 implementation) -- might also be missing on Vercel; the phase-04 doc flags 'verify' on this row. Day 6 X post URL (referenced in content) still works against either backend, but UI text changes from 'Pay with BNB' to 'Pay with USDC' under v2 -- minor UX divergence that audience may not notice or may need a one-line follow-up post."
     }
   ]
 }
