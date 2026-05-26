@@ -105,8 +105,13 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
       const mintRecipient = pad(merchantWallet, { size: 32 }) as `0x${string}`;
 
       // Step 1: approve TokenMessenger to spend the customer's USDC.
+      // chainId is pinned explicitly: without it, wagmi may estimate gas via the
+      // default chain (first in chains[], i.e. bscTestnet) even though the wallet
+      // is on Sepolia — causing MetaMask to show a garbage "Insufficient funds"
+      // error from a bogus gas estimate against the wrong chain.
       setStep("swap_executing"); // reusing v1 step labels — progress bar already maps them
       await writeContractAsync({
+        chainId: SOURCE_CHAIN_ID,
         address: USDC,
         abi: ERC20_APPROVE_ABI,
         functionName: "approve",
@@ -115,6 +120,7 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
 
       // Step 2: burn USDC on source chain — emits MessageSent for Circle attestation.
       const burnTx = await writeContractAsync({
+        chainId: SOURCE_CHAIN_ID,
         address: TOKEN_MESSENGER,
         abi: CCTP_TOKEN_MESSENGER_ABI,
         functionName: "depositForBurn",
