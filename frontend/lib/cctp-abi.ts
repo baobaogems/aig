@@ -41,7 +41,12 @@ export const ERC20_APPROVE_ABI = [
   },
 ] as const;
 
-// Circle CCTP TokenMessenger v2 depositForBurn — initiates cross-chain burn.
+// Circle CCTP TokenMessengerV2 depositForBurn — initiates cross-chain burn.
+// V2 signature is 7 args (NOT v1's 4): adds destinationCaller, maxFee,
+// minFinalityThreshold. minFinalityThreshold=1000 = Standard transfer
+// (waits hard finality, no fee — maxFee can be 0). 2000 = Fast Transfer
+// (charges maxFee). Demo uses standard. destinationCaller=bytes32(0) lets
+// anyone call receiveMessage on Arc (our admin relay does it).
 // mintRecipient is bytes32 (left-pad EVM address with zeros).
 // destinationDomain: Arc Testnet = 26 (NOT 7 — v1 SwapRouter constant was wrong).
 export const CCTP_TOKEN_MESSENGER_ABI = [
@@ -54,6 +59,9 @@ export const CCTP_TOKEN_MESSENGER_ABI = [
       { name: "destinationDomain", type: "uint32" },
       { name: "mintRecipient", type: "bytes32" },
       { name: "burnToken", type: "address" },
+      { name: "destinationCaller", type: "bytes32" },
+      { name: "maxFee", type: "uint256" },
+      { name: "minFinalityThreshold", type: "uint32" },
     ],
     outputs: [{ name: "nonce", type: "uint64" }],
   },
