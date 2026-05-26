@@ -13,7 +13,7 @@
 
 import { useCallback, useState } from "react";
 import { useAccount, useSwitchChain, useWriteContract } from "wagmi";
-import { pad, parseUnits } from "viem";
+import { pad, parseGwei, parseUnits } from "viem";
 import { ERC20_APPROVE_ABI, CCTP_TOKEN_MESSENGER_ABI } from "./cctp-abi";
 import type { PaymentStep } from "@/components/payment-progress-bar";
 
@@ -25,6 +25,23 @@ const ARC_DOMAIN = Number(process.env.NEXT_PUBLIC_ARC_CCTP_DOMAIN ?? 26);
 
 // USDC has 6 decimals on every CCTP chain.
 const USDC_DECIMALS = 6;
+
+// EIP-1559 fee overrides — MetaMask's Sepolia gas oracle (Infura) occasionally
+// returns absurdly high `maxFeePerGas` during low-activity windows, which makes
+// MM flash "Insufficient funds for network fees" even when the wallet has
+// plenty of ETH. Pinning fee fields forces MM to use these values directly.
+// Sepolia base fee is typically 1-3 gwei; 50 gwei ceiling = ~100x headroom but
+// still ~0.005 ETH worst-case per tx. Priority fee 2 gwei = standard tip.
+const MAX_FEE_PER_GAS = parseGwei("50");
+const MAX_PRIORITY_FEE_PER_GAS = parseGwei("2");
+
+// CCTPv2 depositForBurn extra args (vs v1):
+// - destinationCaller = bytes32(0): anyone (our admin relay) can call receiveMessage on Arc
+// - maxFee = 0n: only consumed by Fast Transfer (threshold 2000); Standard ignores it
+// - minFinalityThreshold = 1000: Standard transfer, waits hard finality, no extra fee
+const DESTINATION_CALLER_ANY = `0x${"00".repeat(32)}` as `0x${string}`;
+const MAX_FEE = 0n;
+const MIN_FINALITY_THRESHOLD = 1000;
 
 export interface PaymentFlowV2Args {
   sessionId: string;
@@ -106,10 +123,9 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
 
       // Step 1: approve TokenMessenger to spend the customer's USDC.
       // chainId pinned so wagmi estimates against the right chain.
-      // gas override bypasses viem's eth_estimateGas — public Sepolia RPCs
-      // sometimes return absurd estimates for proxy contracts (USDC + CCTP
-      // both upgradeable proxies), which MetaMask reports as "Insufficient
-      // funds for network fees" even when the wallet has plenty.
+      // gas + fee overrides bypass MetaMask's Sepolia gas oracle, which
+      // returns absurd estimates and triggers a misleading "Insufficient
+      // funds for network fees" UI even with a fully funded wallet.
       // Real on-chain cost: approve ≈ 50k gas, depositForBurn ≈ 150k.
       setStep("swap_executing"); // reusing v1 step labels — progress bar already maps them
       await writeContractAsync({
@@ -119,16 +135,29 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
         functionName: "approve",
         args: [TOKEN_MESSENGER, amountWei],
         gas: 100_000n,
+        maxFeePerGas: MAX_FEE_PER_GAS,
+        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
       });
 
       // Step 2: burn USDC on source chain — emits MessageSent for Circle attestation.
+      // CCTPv2 signature is 7 args (see CCTP_TOKEN_MESSENGER_ABI comment).
       const burnTx = await writeContractAsync({
         chainId: SOURCE_CHAIN_ID,
         address: TOKEN_MESSENGER,
         abi: CCTP_TOKEN_MESSENGER_ABI,
         functionName: "depositForBurn",
-        args: [amountWei, ARC_DOMAIN, mintRecipient, USDC],
+        args: [
+          amountWei,
+          ARC_DOMAIN,
+          mintRecipient,
+          USDC,
+          DESTINATION_CALLER_ANY,
+          MAX_FEE,
+          MIN_FINALITY_THRESHOLD,
+        ],
         gas: 250_000n,
+        maxFeePerGas: MAX_FEE_PER_GAS,
+        maxPriorityFeePerGas: MAX_PRIORITY_FEE_PER_GAS,
       });
       setBurnTxHash(burnTx);
 
