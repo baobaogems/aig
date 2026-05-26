@@ -12,9 +12,10 @@ import {
   http,
   decodeAbiParameters,
   keccak256,
+  type Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { bscTestnet } from "viem/chains";
+import { bscTestnet, sepolia } from "viem/chains";
 import { getArcChain } from "./chains";
 
 // Circle CCTP MessageSent(bytes) topic0 — precomputed keccak256
@@ -35,10 +36,31 @@ interface AttestationResponse {
 // from the MessageSent(bytes) event log. Single RPC call — used by both
 // extractMessageHash() and extractRawMessage() to avoid duplicate fetches.
 // -------------------------------------------------------------------------
-async function extractMessageBytesFromReceipt(txHash: string): Promise<`0x${string}`> {
+// Source-chain config — which chain the customer's burn tx happened on.
+// v1 = BSC Testnet (existed but was dead code), v2 = Ethereum Sepolia.
+export interface SourceChainConfig {
+  chain: Chain;
+  rpcUrl: string;
+}
+
+// Convenience builders for the two real source chains AIG knows about.
+// Phase 03 adds Eth Sepolia for the v2 CCTP path; BSC stays for v1 compat.
+export const V1_BSC_SOURCE: SourceChainConfig = {
+  chain: bscTestnet,
+  rpcUrl: process.env.BSC_TESTNET_RPC_URL ?? "",
+};
+export const V2_ETH_SEPOLIA_SOURCE: SourceChainConfig = {
+  chain: sepolia,
+  rpcUrl: process.env.ETHEREUM_SEPOLIA_RPC_URL ?? "",
+};
+
+async function extractMessageBytesFromReceipt(
+  txHash: string,
+  source: SourceChainConfig = V1_BSC_SOURCE,
+): Promise<`0x${string}`> {
   const client = createPublicClient({
-    chain: bscTestnet,
-    transport: http(process.env.BSC_TESTNET_RPC_URL),
+    chain: source.chain,
+    transport: http(source.rpcUrl),
   });
 
   const receipt = await client.waitForTransactionReceipt({
@@ -60,22 +82,25 @@ async function extractMessageBytesFromReceipt(txHash: string): Promise<`0x${stri
 }
 
 // -------------------------------------------------------------------------
-// extractMessageHash
+// extractMessageHash / extractRawMessage
 //
-// Returns keccak256(messageBytes) — used as the Circle attestation lookup key.
+// Returns keccak256(messageBytes) and raw bytes respectively.
+// Source defaults to V1 BSC Testnet for backward-compat with v1 callers;
+// v2 callers pass V2_ETH_SEPOLIA_SOURCE (or any SourceChainConfig).
 // -------------------------------------------------------------------------
-export async function extractMessageHash(txHash: string): Promise<string> {
-  const messageBytes = await extractMessageBytesFromReceipt(txHash);
+export async function extractMessageHash(
+  txHash: string,
+  source: SourceChainConfig = V1_BSC_SOURCE,
+): Promise<string> {
+  const messageBytes = await extractMessageBytesFromReceipt(txHash, source);
   return keccak256(messageBytes);
 }
 
-// -------------------------------------------------------------------------
-// extractRawMessage
-//
-// Returns the raw message bytes hex string — first arg to receiveMessage().
-// -------------------------------------------------------------------------
-export async function extractRawMessage(txHash: string): Promise<string> {
-  return extractMessageBytesFromReceipt(txHash);
+export async function extractRawMessage(
+  txHash: string,
+  source: SourceChainConfig = V1_BSC_SOURCE,
+): Promise<string> {
+  return extractMessageBytesFromReceipt(txHash, source);
 }
 
 // -------------------------------------------------------------------------

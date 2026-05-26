@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-26T00:10:00+07:00",
+  "lastUpdated": "2026-05-26T01:15:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -595,6 +595,24 @@
       ],
       "status": "done_with_concerns",
       "concerns": "Phase 01 code (frontend/lib/appkit.server.ts + /api/dev/appkit-ping/route.ts at commit e382aa2) is now dead code. Kept on main as additive (not imported anywhere live, dev ping returns 404 in prod). Scheduled deletion in Phase 06 cleanup. @circle-fin/app-kit + @circle-fin/adapter-viem-v2 deps stay installed (may be useful for future Earn/Modular Wallets work). KIT_KEY env var unused -- can leave placeholder or remove. PRD doc needs significant revision: tagline 'Built on Arc App Kit' is misleading; should be 'Built on Arc bridge + USDC native settlement'. Phase 03 step 0 still needs: bridge contract ABI extraction (from @circle-fin/bridge-kit package source or arcscan), confirmation that Arc bridge wraps standard CCTP depositForBurn (vs adding fee/gas logic), source-chain deployment ABI consistency check. Phase 05 (Unified Balance) likely deferred -- no SDK means need bridge contract event scanning or Circle REST API. Effective phase count still 7 (Phase 02 collapsed earlier)."
+    },
+    {
+      "timestamp": "2026-05-26T01:15:00+07:00",
+      "type": "feature",
+      "title": "Phase 03 code shipped — v2 CCTP direct from Ethereum Sepolia (strangler-fig)",
+      "what": "Phase 03 step 0 spike found: bridge-kit doesn't expose kitContracts.bridge ABI; underlying mechanism is standard CCTPv2 (TokenMessenger.depositForBurn + Circle attestation + MessageTransmitter.receiveMessage). BSC Testnet isn't a CCTPv2 chain in the SDK catalog (Algorand, Aptos, Arc, Arbitrum, Avalanche, Base, Celo, Codex, Edge, Ethereum, HyperEVM, Ink, Linea, Optimism, Polygon, ... -- no BSC). v1 ran in ADMIN_RELAY because CCTP was dead code on BSC. User picked Ethereum Sepolia as v2 source chain + standard 2-sig flow (approve + depositForBurn). Implementation: (1) Appended 6 env vars to frontend/.env.local: NEXT_PUBLIC_BRIDGE_BACKEND=v1 (default, strangler-fig safe), NEXT_PUBLIC_SOURCE_CHAIN_ID=11155111, NEXT_PUBLIC_USDC_ADDRESS_SOURCE=0x1c7D4B196Cb..., NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE=0x8fe6b999..., NEXT_PUBLIC_ARC_CCTP_DOMAIN=26 (fixes v1 bug where ARC_CCTP_DOMAIN_ID was 7 -- Polygon's domain), ETHEREUM_SEPOLIA_RPC_URL=publicnode. Added missing CCTP_MESSAGE_TRANSMITTER_ARC=0xE737e5cE...CE275 (was unset in local env, only on Vercel). (2) New frontend/lib/cctp-abi.ts (53 lines): minimal ERC20 approve + view ABIs and CCTP TokenMessenger depositForBurn ABI. (3) New frontend/lib/payment-flow-v2.ts (124 lines): usePaymentFlowV2 hook does chain-switch to Sepolia, USDC.approve(TokenMessenger), TokenMessenger.depositForBurn(amount, 26, merchantBytes32, USDC), POSTs burn tx to /api/agent/execute, reads SSE stream. Reuses existing v1 SSE event names (swap_executing, bridging, confirmed) so PaymentProgressBar component is unchanged. (4) frontend/lib/cctp.ts parameterized: added SourceChainConfig interface + V1_BSC_SOURCE/V2_ETH_SEPOLIA_SOURCE convenience builders; extractMessageBytesFromReceipt/extractMessageHash/extractRawMessage now take optional source param (defaults to V1_BSC_SOURCE so existing callers don't break). (5) frontend/app/api/agent/execute/route.ts: top-level BRIDGE_BACKEND env check; v2 branch uses V2_ETH_SEPOLIA_SOURCE for extract calls, emits SSE events with source:'eth-sepolia' metadata, falls through to shared awardPoints; v1 branch wraps existing CCTP/ADMIN_RELAY logic unchanged. (6) frontend/app/pay/[id]/page.tsx: PaymentPageWrapper dispatches to PaymentPage (v1) or new inline PaymentPageV2 (v2) based on NEXT_PUBLIC_BRIDGE_BACKEND. PaymentPageV2 has its own UI (no FeeBreakdownCard since no swap math; simple 'You pay X USDC / Merchant receives X USDC' card + Pay button). Total page.tsx = 348 lines (over 200-line guideline -- strangler-fig transition exception, cleaned up in Phase 06). Build verification: next build 1.65s Turbopack, all 9 routes registered including untouched /api/agent/{quote,execute}, /api/dashboard, /api/dev/appkit-ping. NEXT_PUBLIC_BRIDGE_BACKEND defaults to v1 so production behavior unchanged until Phase 04 flip.",
+      "why": "Phase 03 deliverable per revised plan: client-side v2 payment via direct CCTP burn on Ethereum Sepolia, server polls + mints on Arc, strangler-fig flag preserves v1 production path. Skipped writing a custom Arc bridge contract ABI wrapper (no value over standard CCTP) and skipped including PancakeSwap-style swap (USDC-only MVP per user pick). Reused 90% of v1 cctp.ts server-side logic via SourceChainConfig parameterization.",
+      "files": [
+        "frontend/.env.local",
+        "frontend/lib/cctp-abi.ts",
+        "frontend/lib/payment-flow-v2.ts",
+        "frontend/lib/cctp.ts",
+        "frontend/app/api/agent/execute/route.ts",
+        "frontend/app/pay/[id]/page.tsx",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "Real Arc Testnet smoke deferred to user -- needs funded Ethereum Sepolia wallet with USDC (faucet.circle.com for USDC, standard Sepolia ETH faucets for gas). Manual smoke recipe: cd frontend && npm run dev, set NEXT_PUBLIC_BRIDGE_BACKEND=v2 in .env.local, visit /pay/<sessionId>?merchant=<arc-addr>&amount=10, connect MetaMask on Sepolia, click Pay, expect 2 sigs, watch progress bar through swap_executing/bridging/confirmed (~30-60s attestation). page.tsx is 348 lines (over 200 guideline) -- strangler-fig transition exception, both v1 PaymentPage and v2 PaymentPageV2 functions coexist until Phase 06 cleanup deletes v1. NEXT_PUBLIC_BRIDGE_BACKEND in client bundle is fine (no secret -- just a UI dispatch flag). KIT_KEY env still set as blank placeholder; unused now and should be removed in Phase 06 along with appkit.server.ts + appkit-ping route + @circle-fin/* deps. Production deploy: Vercel still on v1 -- Phase 04 flips NEXT_PUBLIC_BRIDGE_BACKEND=v2 in Vercel env + adds the 6 new env vars there."
     }
   ]
 }
