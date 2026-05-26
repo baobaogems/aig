@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-25T23:58:00+07:00",
+  "lastUpdated": "2026-05-26T00:10:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -581,6 +581,20 @@
       ],
       "status": "done",
       "concerns": "PRD doc /Users/baobao/Downloads/PRD_v2_AIG_AppKit.md §8 architecture diagram shows POST /api/agent/quote+/execute as server-orchestrated — needs user revision to reflect client-side reality. spike-app-kit-api-discovery.md still describes the original Phase 02 plan as if server-side wrappers were the goal; should append a 'Server-side quote impossible' section but deferred (info already captured in collapsed phase-02 doc). Phase 03 became larger (now owns estimate + execute + new status endpoint) — may need internal sub-phasing during implementation. Strangler-fig still works just in the client layer (NEXT_PUBLIC_BRIDGE_BACKEND env flag in page.tsx, not server-side BRIDGE_BACKEND)."
+    },
+    {
+      "timestamp": "2026-05-26T00:10:00+07:00",
+      "type": "plan",
+      "title": "ADR: Drop @circle-fin/app-kit SDK, pivot v2 to direct Arc bridge contract calls",
+      "what": "Phase 03 step 0 spike (cook skill code mode) ran 3 runtime probes against installed @circle-fin/app-kit v1.6.1: (TEST A) estimateSwap with adapter, no kitKey -> KitError: 'Kit key is required. Expected format: KIT_KEY:<keyId>:<keySecret>'; (TEST B) estimateBridge same -> BigInt serialization error (downstream of auth, also requires kitKey); (TEST C) confirmed Zod schema marking config.kitKey optional is misleading -- runtime enforces required. Confirmed kit key format encodes secret (keyId:keySecret); cannot ship to client bundles via NEXT_PUBLIC_*. Combined with Phase 02 finding (estimate* requires from.adapter = customer wallet, client-only), SDK is structurally incompatible with BYO-wallet payment flows -- needs both customer wallet AND server secret in single call, impossible to satisfy. User picked Option A: drop SDK, call Arc's kitContracts.bridge (0xC5567a5E3370d4DBfB0540025078e283e36A363d) directly via viem writeContract; server reuses existing v1 cctp.ts attestation poll loop, retargeted to Arc CCTP v2 domain 26 (not 7 -- v1 had wrong domain, was dead code in ADMIN_RELAY mode). Wrote plans/reports/adr-260525-2333-drop-app-kit-sdk-use-bridge-contract-directly.md (full context, 3 findings, decision rationale, consequences, alternatives B/C/D rejected, reversibility note, 3 open questions). Updated plan.md with 'Architecture pivot 25/05' callout + ADR link + revised Phase 03-06 descriptions. Rewrote phase-03-payment-page-dual-path.md from scratch as 'Arc bridge contract via writeContract' (step 0 research = Arc bridge ABI from @circle-fin/bridge-kit or explorer, source-chain bridge deployment consistency check, env vars NEXT_PUBLIC_BRIDGE_BACKEND + NEXT_PUBLIC_ARC_BRIDGE_CONTRACT_ADDRESS, page.tsx dual branch, cctp.ts parameterization for arbitrary chain, smoke gate dual-flag local test). No code changes -- Phase 03 implementation defers to next session.",
+      "why": "Cook skill code-mode review gate caught the SECOND structural blocker in two phases. SDK was the wrong abstraction; PRD framing ('rebuild on Arc App Kit') over-indexed on Circle's developer marketing. Real Arc commerce primitive is the bridge contract (Circle-maintained, well-tested); the SDK is for dev-owned wallets (treasury, Modular Wallets) not BYO-wallet flows. Direct contract pattern: closest to v1, reuses existing cctp.ts polling, eliminates dual-trust-domain auth problem, deletes our custom SwapRouter risk by using Circle's bridge instead.",
+      "files": [
+        "plans/reports/adr-260525-2333-drop-app-kit-sdk-use-bridge-contract-directly.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-03-payment-page-dual-path.md"
+      ],
+      "status": "done_with_concerns",
+      "concerns": "Phase 01 code (frontend/lib/appkit.server.ts + /api/dev/appkit-ping/route.ts at commit e382aa2) is now dead code. Kept on main as additive (not imported anywhere live, dev ping returns 404 in prod). Scheduled deletion in Phase 06 cleanup. @circle-fin/app-kit + @circle-fin/adapter-viem-v2 deps stay installed (may be useful for future Earn/Modular Wallets work). KIT_KEY env var unused -- can leave placeholder or remove. PRD doc needs significant revision: tagline 'Built on Arc App Kit' is misleading; should be 'Built on Arc bridge + USDC native settlement'. Phase 03 step 0 still needs: bridge contract ABI extraction (from @circle-fin/bridge-kit package source or arcscan), confirmation that Arc bridge wraps standard CCTP depositForBurn (vs adding fee/gas logic), source-chain deployment ABI consistency check. Phase 05 (Unified Balance) likely deferred -- no SDK means need bridge contract event scanning or Circle REST API. Effective phase count still 7 (Phase 02 collapsed earlier)."
     }
   ]
 }
