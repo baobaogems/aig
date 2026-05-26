@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-26T09:30:00+07:00",
+  "lastUpdated": "2026-05-26T09:50:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -638,6 +638,18 @@
       ],
       "status": "done",
       "concerns": "Only registers bscTestnet + sepolia. Future multi-chain expansion (Base Sepolia, Avalanche Fuji, etc.) needs same pattern. No NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL in env — falls back to publicnode RPC which may rate-limit under load (fine for dev/testnet)."
+    },
+    {
+      "timestamp": "2026-05-26T09:50:00+07:00",
+      "type": "fix",
+      "title": "Pin chainId on v2 writeContract calls (Sepolia approve+burn)",
+      "what": "User wallet test surfaced 'Insufficient funds - not enough SepoliaETH for network fees' on approve USDC tx, despite wallet holding 0.716 ETH. Diagnosis ruled out value=non-zero (default 0n, confirmed by reading payment-flow-v2.ts), wrong contract addresses (cast call verified USDC symbol/decimals + TokenMessenger bytecode + approve simulation returning true), and amount-encoding bugs. Real cause: writeContractAsync called without chainId, so wagmi v3 may estimate gas through the default chain transport (first in chains[] = bscTestnet) even though the connector is on Sepolia. Bogus gas estimate against the wrong chain → garbage MetaMask error string. Fix: pin chainId: SOURCE_CHAIN_ID on both writeContractAsync calls in frontend/lib/payment-flow-v2.ts. Build green.",
+      "why": "Wagmi v3 with multiple registered chains needs explicit chainId to disambiguate transport for estimation. Without it, behavior depends on connector state vs chains[] order.",
+      "files": [
+        "frontend/lib/payment-flow-v2.ts"
+      ],
+      "status": "done",
+      "concerns": "Defensive against this class of bug for any future wagmi cross-chain writeContract call: always pin chainId. Could add an ESLint rule or wrapper to enforce, but YAGNI for now — only two such call sites."
     }
   ]
 }
