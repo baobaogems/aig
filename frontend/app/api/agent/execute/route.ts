@@ -18,10 +18,17 @@ import {
   extractRawMessage,
   pollAttestation,
   receiveMessage,
+  V2_ETH_SEPOLIA_SOURCE,
+  V1_BSC_SOURCE,
+  type SourceChainConfig,
 } from "@/lib/cctp";
 import { pollSwapCompleted, adminRelay } from "@/lib/mock-bridge";
 import { awardPoints } from "@/lib/points";
 
+// Strangler-fig switch (server-side mirror of NEXT_PUBLIC_BRIDGE_BACKEND).
+// v1 = SwapRouter → BSC CCTP/ADMIN_RELAY (legacy). v2 = customer signs CCTP burn
+// on Ethereum Sepolia directly; server polls Circle attestation + mints on Arc.
+const BRIDGE_BACKEND = process.env.BRIDGE_BACKEND ?? "v1";
 const BRIDGE_MODE = (process.env.BRIDGE_MODE as BridgeMode) ?? "CCTP";
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
@@ -85,6 +92,30 @@ async function runPipeline({
   writer: WritableStreamDefaultWriter;
 }) {
   try {
+    // v2 (strangler-fig): customer burned CCTP directly on Ethereum Sepolia.
+    // Server polls + mints on Arc, same pattern as v1 CCTP path but Eth Sepolia source.
+    if (BRIDGE_BACKEND === "v2") {
+      await updateSessionStatus(sessionId, "SWAP_EXECUTING", "CCTP");
+      await emit("swap_executing", { txHash: swapTxHash, source: "eth-sepolia" });
+
+      await updateSessionStatus(sessionId, "BRIDGING");
+      await emit("bridging", { mode: "CCTP", source: "eth-sepolia" });
+
+      const source: SourceChainConfig = V2_ETH_SEPOLIA_SOURCE;
+      const [messageHash, rawMessage] = await Promise.all([
+        extractMessageHash(swapTxHash, source),
+        extractRawMessage(swapTxHash, source),
+      ]);
+
+      const attestation = await pollAttestation(messageHash, 120_000);
+      const { txHash: arcTxHash } = await receiveMessage(rawMessage, attestation);
+
+      await updateSessionStatus(sessionId, "CONFIRMED", "CCTP");
+      await emit("confirmed", { txHash: arcTxHash, bridgeMode: "CCTP", backend: "v2" });
+
+      // Fall through to points award (shared with v1 path below)
+    } else {
+
     await updateSessionStatus(sessionId, "SWAP_EXECUTING", BRIDGE_MODE);
     await emit("swap_executing", { txHash: swapTxHash });
 
@@ -92,10 +123,10 @@ async function runPipeline({
     await emit("bridging", { mode: BRIDGE_MODE });
 
     if (BRIDGE_MODE === "CCTP") {
-      // PRIMARY PATH: BSC burn → Circle attestation → Arc mint
+      // PRIMARY PATH: BSC burn → Circle attestation → Arc mint (default v1 BSC source)
       const [messageHash, rawMessage] = await Promise.all([
-        extractMessageHash(swapTxHash),
-        extractRawMessage(swapTxHash),
+        extractMessageHash(swapTxHash, V1_BSC_SOURCE),
+        extractRawMessage(swapTxHash, V1_BSC_SOURCE),
       ]);
 
       const attestation = await pollAttestation(messageHash, 120_000);
@@ -127,6 +158,8 @@ async function runPipeline({
       await updateSessionStatus(sessionId, "CONFIRMED", "ADMIN_RELAY");
       await emit("confirmed", { txHash: relayTxHash, bridgeMode: "ADMIN_RELAY" });
     }
+
+    } // end v1 branch
 
     // Award points after CONFIRMED
     // TODO: fetch merchantCreatedAt, isFirstChain, isReferred from DB in Phase 2
