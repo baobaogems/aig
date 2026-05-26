@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-26T09:05:00+07:00",
+  "lastUpdated": "2026-05-26T09:30:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -626,6 +626,18 @@
       ],
       "status": "done",
       "concerns": "Phase 04 actual execution (Vercel env adds + smoke) is a USER task. I can't access the Vercel dashboard. Recommend user: (1) run Phase 03 local smoke first (needs funded Sepolia wallet with USDC from faucet.circle.com), (2) if green, follow the phase-04 doc Vercel recipe. KIT_KEY may still be set on Vercel from previous Phase 01 plan -- it's harmless under v2, Phase 06 cleanup removes. CCTP_MESSAGE_TRANSMITTER_ARC was missing from frontend/.env.local (I added during Phase 03 implementation) -- might also be missing on Vercel; the phase-04 doc flags 'verify' on this row. Day 6 X post URL (referenced in content) still works against either backend, but UI text changes from 'Pay with BNB' to 'Pay with USDC' under v2 -- minor UX divergence that audience may not notice or may need a one-line follow-up post."
+    },
+    {
+      "timestamp": "2026-05-26T09:30:00+07:00",
+      "type": "fix",
+      "title": "Add Ethereum Sepolia to wagmi chain config (Phase 03 follow-up)",
+      "what": "frontend/components/providers.tsx only registered bscTestnet in wagmi createConfig. v2 payment flow (usePaymentFlowV2) calls useSwitchChain({chainId: 11155111}) which threw 'Chain not configured' in MetaMask. Added sepolia import from wagmi/chains, added to chains[] array, added transport with public RPC fallback (overridable via NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL). bscTestnet stays for v1 compatibility. Build green (next 16 turbopack, all routes intact).",
+      "why": "Real wallet test surfaced wagmi config gap. Phase 03 added v2 source chain support in app code + env vars but missed the wagmi provider registration.",
+      "files": [
+        "frontend/components/providers.tsx"
+      ],
+      "status": "done",
+      "concerns": "Only registers bscTestnet + sepolia. Future multi-chain expansion (Base Sepolia, Avalanche Fuji, etc.) needs same pattern. No NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL in env — falls back to publicnode RPC which may rate-limit under load (fine for dev/testnet)."
     }
   ]
 }
