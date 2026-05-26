@@ -105,10 +105,12 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
       const mintRecipient = pad(merchantWallet, { size: 32 }) as `0x${string}`;
 
       // Step 1: approve TokenMessenger to spend the customer's USDC.
-      // chainId is pinned explicitly: without it, wagmi may estimate gas via the
-      // default chain (first in chains[], i.e. bscTestnet) even though the wallet
-      // is on Sepolia — causing MetaMask to show a garbage "Insufficient funds"
-      // error from a bogus gas estimate against the wrong chain.
+      // chainId pinned so wagmi estimates against the right chain.
+      // gas override bypasses viem's eth_estimateGas — public Sepolia RPCs
+      // sometimes return absurd estimates for proxy contracts (USDC + CCTP
+      // both upgradeable proxies), which MetaMask reports as "Insufficient
+      // funds for network fees" even when the wallet has plenty.
+      // Real on-chain cost: approve ≈ 50k gas, depositForBurn ≈ 150k.
       setStep("swap_executing"); // reusing v1 step labels — progress bar already maps them
       await writeContractAsync({
         chainId: SOURCE_CHAIN_ID,
@@ -116,6 +118,7 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
         abi: ERC20_APPROVE_ABI,
         functionName: "approve",
         args: [TOKEN_MESSENGER, amountWei],
+        gas: 100_000n,
       });
 
       // Step 2: burn USDC on source chain — emits MessageSent for Circle attestation.
@@ -125,6 +128,7 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
         abi: CCTP_TOKEN_MESSENGER_ABI,
         functionName: "depositForBurn",
         args: [amountWei, ARC_DOMAIN, mintRecipient, USDC],
+        gas: 250_000n,
       });
       setBurnTxHash(burnTx);
 
