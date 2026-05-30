@@ -57,37 +57,49 @@ export async function POST(req: NextRequest) {
     return Response.json({ error: "targetUSDC must be positive number" }, { status: 400 });
   }
 
-  const { readable, writable } = new TransformStream();
-  const writer = writable.getWriter();
-  const encoder = new TextEncoder();
-
-  const emit = async (event: string, data: object) => {
-    const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    // Guard: client may have disconnected (SSE closed) mid-pipeline. Writing to a
-    // closed WritableStream throws ERR_INVALID_STATE and crashes the route — swallow it.
-    try {
-      await writer.write(encoder.encode(payload));
-    } catch {
-      /* stream already closed by client — stop emitting */
-    }
-  };
-
-  runPipeline({ sessionId, swapTxHash, merchantWallet, targetUSDC, emit, writer }).catch(
-    async (err) => {
-      await emit("error", { message: err instanceof Error ? err.message : String(err) });
+  // ReadableStream + start() keeps the pipeline running inside Vercel's
+  // serverless function lifetime. Fire-and-forget after `return new Response()`
+  // gets killed early on Vercel (observed ~2-3s) — the runtime closes the
+  // stream once the handler returns. Anchoring the pipeline in start() ties
+  // it to the stream's lifecycle until controller.close() runs.
+  const stream = new ReadableStream({
+    async start(controller) {
+      const enc = new TextEncoder();
+      let closed = false;
+      const emit = async (event: string, data: object) => {
+        if (closed) return;
+        try {
+          controller.enqueue(
+            enc.encode(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`),
+          );
+        } catch {
+          closed = true;
+        }
+      };
       try {
-        await writer.close();
-      } catch {
-        /* already closed */
+        await runPipeline({ sessionId, swapTxHash, merchantWallet, targetUSDC, emit });
+      } catch (err) {
+        await emit("error", {
+          message: err instanceof Error ? err.message : String(err),
+        });
+      } finally {
+        if (!closed) {
+          try {
+            controller.close();
+          } catch {
+            /* already closed */
+          }
+        }
       }
-    }
-  );
+    },
+  });
 
-  return new Response(readable, {
+  return new Response(stream, {
     headers: {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-transform",
       Connection: "keep-alive",
+      "X-Accel-Buffering": "no",
     },
   });
 }
@@ -98,16 +110,13 @@ async function runPipeline({
   merchantWallet,
   targetUSDC,
   emit,
-  writer,
 }: {
   sessionId: string;
   swapTxHash: string;
   merchantWallet: string;
   targetUSDC: number;
   emit: (event: string, data: object) => Promise<void>;
-  writer: WritableStreamDefaultWriter;
 }) {
-  try {
     // v2 (strangler-fig): customer burned CCTP directly on Ethereum Sepolia.
     // Server polls + mints on Arc, same pattern as v1 CCTP path but Eth Sepolia source.
     if (BRIDGE_BACKEND === "v2") {
@@ -189,7 +198,4 @@ async function runPipeline({
       false,
       false
     );
-  } finally {
-    await writer.close();
-  }
 }
