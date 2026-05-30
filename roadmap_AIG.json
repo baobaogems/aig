@@ -2,18 +2,16 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "version": "1.0.0",
-  "lastUpdated": "2026-05-04",
+  "lastUpdated": "2026-05-30",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
-
   "currentState": {
-    "phase": "Post-Phase-1 stabilization + Brand v1",
+    "phase": "v2 CCTP rebuild — Phase 03 e2e PROVEN (Sepolia→Arc, 30/05); Phase 04 Vercel env flip pending user",
     "branch": "main",
     "production": "Deployed on Vercel",
     "merchants": 0,
     "users": 0,
     "blockerForGrowth": "No traction yet — need first merchant + GTM motion"
   },
-
   "phases": [
     {
       "id": "phase-1-mvp",
@@ -25,14 +23,59 @@
       "effort": "24h",
       "planFile": "plans/260312-1301-aig-phase1-implementation/plan.md",
       "subPhases": [
-        { "id": 1, "name": "Foundation", "status": "complete", "deliverables": ["smoke test test-cctp-domain7.ts", "fetchSpotPrice", "updateSessionStatus", "route refactor"] },
-        { "id": 2, "name": "ADMIN_RELAY Path", "status": "complete", "deliverables": ["pollSwapCompleted", "adminRelay atomic idempotency", "verifyAdminWalletBalance"] },
-        { "id": 3, "name": "CCTP Path", "status": "complete", "deliverables": ["extractMessageHash", "receiveMessage", "extractRawMessage"] },
-        { "id": 4, "name": "UI", "status": "complete", "deliverables": ["payment page", "merchant dashboard", "5 components", "wagmi v2 setup"] },
-        { "id": 5, "name": "Contract Deployment", "status": "complete", "deliverables": ["Deploy.s.sol", "SwapRouter on BSC Testnet"] }
+        {
+          "id": 1,
+          "name": "Foundation",
+          "status": "complete",
+          "deliverables": [
+            "smoke test test-cctp-domain7.ts",
+            "fetchSpotPrice",
+            "updateSessionStatus",
+            "route refactor"
+          ]
+        },
+        {
+          "id": 2,
+          "name": "ADMIN_RELAY Path",
+          "status": "complete",
+          "deliverables": [
+            "pollSwapCompleted",
+            "adminRelay atomic idempotency",
+            "verifyAdminWalletBalance"
+          ]
+        },
+        {
+          "id": 3,
+          "name": "CCTP Path",
+          "status": "complete",
+          "deliverables": [
+            "extractMessageHash",
+            "receiveMessage",
+            "extractRawMessage"
+          ]
+        },
+        {
+          "id": 4,
+          "name": "UI",
+          "status": "complete",
+          "deliverables": [
+            "payment page",
+            "merchant dashboard",
+            "5 components",
+            "wagmi v2 setup"
+          ]
+        },
+        {
+          "id": 5,
+          "name": "Contract Deployment",
+          "status": "complete",
+          "deliverables": [
+            "Deploy.s.sol",
+            "SwapRouter on BSC Testnet"
+          ]
+        }
       ]
     },
-
     {
       "id": "post-phase-1-dashboard",
       "name": "Dashboard Real Data — Merchants + Analytics",
@@ -43,12 +86,23 @@
       "effort": "3h",
       "planFile": "plans/260315-1019-dashboard-real-data/plan.md",
       "subPhases": [
-        { "id": 1, "name": "Schema migration (003_create_merchants_table.sql)", "status": "complete" },
-        { "id": 2, "name": "GET /api/dashboard analytics endpoint", "status": "complete" },
-        { "id": 3, "name": "UI stat cards + merchant auto-register", "status": "complete" }
+        {
+          "id": 1,
+          "name": "Schema migration (003_create_merchants_table.sql)",
+          "status": "complete"
+        },
+        {
+          "id": 2,
+          "name": "GET /api/dashboard analytics endpoint",
+          "status": "complete"
+        },
+        {
+          "id": 3,
+          "name": "UI stat cards + merchant auto-register",
+          "status": "complete"
+        }
       ]
     },
-
     {
       "id": "post-phase-1-pencil-redesign",
       "name": "Pencil Dashboard UI Redesign",
@@ -63,7 +117,6 @@
         "Color palette: #F2F3F0 bg / #FF8400 orange / #111111 text"
       ]
     },
-
     {
       "id": "post-phase-1-vercel-stabilization",
       "name": "Vercel Production Stabilization",
@@ -83,7 +136,6 @@
       ],
       "note": "Not yet documented in project-changelog.md (last changelog entry: 2026-03-15)"
     },
-
     {
       "id": "brand-identity-v1",
       "name": "Brand Identity v1 (Guidelines + Logo)",
@@ -96,10 +148,68 @@
         "Pre-rendered: wordmark horizontal/darkmode/monochrome, icon mark, favicon",
         "Concept: AIG wordmark JetBrains Mono Bold + #FF8400 dot (terminal cursor / payload passthrough)"
       ],
-      "commits": ["eee8329 feat(brand): add AIG logo assets"],
-      "tools": ["Homebrew: font-jetbrains-mono, librsvg"]
+      "commits": [
+        "eee8329 feat(brand): add AIG logo assets"
+      ],
+      "tools": [
+        "Homebrew: font-jetbrains-mono, librsvg"
+      ]
     },
-
+    {
+      "id": "v2-cctp-rebuild",
+      "name": "AIG v2 — Direct CCTP rebuild (App Kit pivot)",
+      "status": "in_progress",
+      "priority": "P0",
+      "startDate": "2026-05-25",
+      "endDate": null,
+      "planFile": "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md",
+      "subPhases": [
+        {
+          "id": 0,
+          "name": "Foundation deps",
+          "status": "complete"
+        },
+        {
+          "id": 1,
+          "name": "App Kit server/client (dead code, scheduled for removal)",
+          "status": "complete"
+        },
+        {
+          "id": 2,
+          "name": "API routes dual-path",
+          "status": "collapsed",
+          "note": "absorbed into Phase 03 — app-kit is client-side"
+        },
+        {
+          "id": 3,
+          "name": "Payment page dual-path + e2e CCTPv2 Sepolia→Arc",
+          "status": "complete",
+          "note": "first e2e success 2026-05-30: Sepolia burn 0x9a620cf2 → Arc mint 0xc0b4cca9"
+        },
+        {
+          "id": 4,
+          "name": "Flip default to v2 on Vercel",
+          "status": "pending",
+          "note": "user-only: requires Vercel dashboard env edits"
+        },
+        {
+          "id": 5,
+          "name": "Dashboard unified balance",
+          "status": "deferred",
+          "note": "kit-key constraint — likely v3"
+        },
+        {
+          "id": 6,
+          "name": "Cleanup v1 dead code",
+          "status": "pending"
+        },
+        {
+          "id": 7,
+          "name": "Docs sweep + smoke + v2.0-alpha tag",
+          "status": "pending"
+        }
+      ]
+    },
     {
       "id": "phase-2-scaling",
       "name": "Phase 2 — Scaling & Optimization",
@@ -115,9 +225,11 @@
         "Enhanced error recovery (grace period bridge retries)",
         "Webhook notifications (transaction updates)"
       ],
-      "blockers": ["No formal plan yet", "No first merchant (no real-world signal)"]
+      "blockers": [
+        "No formal plan yet",
+        "No first merchant (no real-world signal)"
+      ]
     },
-
     {
       "id": "phase-3-production-hardening",
       "name": "Phase 3 — Production Hardening",
@@ -133,24 +245,33 @@
         "Settlement & reconciliation workflows",
         "Monitoring & alerting system"
       ],
-      "dependencies": ["Phase 2 complete", "Audit firm engaged"]
+      "dependencies": [
+        "Phase 2 complete",
+        "Audit firm engaged"
+      ]
     },
-
     {
       "id": "mainnet-launch",
       "name": "Mainnet Launch",
       "status": "planned",
       "priority": "P0",
       "targetQuarter": "2026-Q4",
-      "dependencies": ["Phase 3 complete", "Audit passed", "Compliance review"]
+      "dependencies": [
+        "Phase 3 complete",
+        "Audit passed",
+        "Compliance review"
+      ]
     }
   ],
-
   "successMetrics": {
     "phase1": {
       "smokeTestExit": "0 (CCTP PASS) or 1 (ADMIN_RELAY FALLBACK)",
       "quoteEndpointLatency": "<500ms",
-      "uxRequirements": ["mobile-friendly", "MetaMask connect", "SSE real-time progress"],
+      "uxRequirements": [
+        "mobile-friendly",
+        "MetaMask connect",
+        "SSE real-time progress"
+      ],
       "deploymentChain": "BSC Testnet (callable via cast)",
       "e2eFlow": "QR → payment → sign → swap → bridge → confirmed",
       "compilation": "no TypeScript errors",
@@ -158,7 +279,6 @@
     },
     "phase2_targets_TBD": "Define when first merchant onboarded"
   },
-
   "openQuestions": [
     "When to formalize Phase 2 plan? (waiting for first merchant traction signal)",
     "Vercel stabilization series + brand v1 still missing from project-changelog.md",

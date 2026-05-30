@@ -650,6 +650,46 @@
       ],
       "status": "done",
       "concerns": "Defensive against this class of bug for any future wagmi cross-chain writeContract call: always pin chainId. Could add an ESLint rule or wrapper to enforce, but YAGNI for now — only two such call sites."
+    },
+    {
+      "timestamp": "2026-05-29T00:15:00+07:00",
+      "type": "ops",
+      "title": "Verified v2 CCTP Sepolia->Arc readiness for smoke retest (no code change)",
+      "what": "Restarted frontend dev server (npm run dev, Ready 1.3s, port 3000) with NEXT_PUBLIC_BRIDGE_BACKEND=v2. Smoke: / ->307 /dashboard, /dashboard 200, /pay/[id] 200 (PaymentPageV2). tsc --noEmit green. Verified against Circle docs: Arc Testnet CCTP domain = 26 (code NEXT_PUBLIC_ARC_CCTP_DOMAIN=26 CORRECT; stale ARC_CCTP_DOMAIN_ID=7 in env is Polygon domain, unused by v2). Confirmed CCTPv2 addresses match Circle testnet: USDC Sepolia 0x1c7D4B196Cb..., TokenMessengerV2 0x8fe6b999...2daa, MessageTransmitter Arc 0xE737e5cE...CE275. 7-arg depositForBurn ABI correct for V2. Current Sepolia base fee 1.05 gwei << pinned maxFeePerGas 50 gwei, so the EIP-1559 fee pin (commit 6267fe5) eliminates the MetaMask \"insufficient funds for network fees\" symptom the user hit. User confirmed their blocker was exactly that MM fee error at signing -- most likely tested on pre-fix code.",
+      "files": [
+        "frontend/lib/payment-flow-v2.ts",
+        "frontend/lib/cctp-abi.ts",
+        "frontend/.env.local"
+      ],
+      "status": "done",
+      "why": "User stuck at Phase 03 v2 smoke test step; needed verification before a manual wallet retest to avoid burning testnet funds on a misconfig.",
+      "concerns": "(1) minFinalityThreshold=1000 (Fast) + maxFee=0 is mislabeled \"Standard\" in code comments; behavior likely OK but server pollAttestation timeout is only 120s -- if Sepolia attestation resolves at finalized level (~15min) the bridging step will TIME OUT. Watch this if approve+burn succeed but progress bar stalls on bridging. (2) Stale ARC_CCTP_DOMAIN_ID=7 leftover in env -- harmless (v2 reads NEXT_PUBLIC_ARC_CCTP_DOMAIN) but remove in Phase 06 cleanup. (3) Full e2e mint on Arc needs AIG admin wallet funded with Arc gas (untested here). (4) Manual browser+MetaMask test is user-only; cannot run headless."
+    },
+    {
+      "timestamp": "2026-05-29T00:55:00+07:00",
+      "type": "fix",
+      "title": "Enable CCTPv2 Fast Transfer + guard SSE stream crash (v2 bridge step was hanging)",
+      "what": "User got past approve+burn via OKX wallet (MetaMask Sepolia gas oracle was the earlier blocker -- false insufficient-funds; switching wallet bypassed it). Bridge step then hung, never reached confirmed. Root cause from dev log: POST /api/agent/execute ran 2.2min then unhandledRejection TypeError Invalid state: WritableStream is closed at emit (route.ts:60). Diagnosis: maxFee=0n made Circle treat burn as Standard transfer (waits Sepolia hard finality ~13-19min) while server pollAttestation timeout was only 120s. Verified via Circle Iris sandbox: burn tx 0x43182ad74e9297894e1fdce8d7ecc7ad2fce41c33c18080b7ad9c6866b97f081 status=pending_confirmations, cctpVersion=2. Fee API /v2/burn/USDC/fees/0/26 returned fast(threshold 1000)=1bps min, standard(2000)=0; fast allowance ~100k USDC available, so Fast is supported Sepolia->Arc. Fixes: (1) frontend/lib/payment-flow-v2.ts: maxFee = amountWei/1000n || 1n (0.1% ceiling, >0 to qualify Fast; actual charge ~1bps), removed MAX_FEE=0n const, kept minFinalityThreshold=1000 (now correctly Fast), corrected misleading comments that called 1000 Standard. (2) frontend/app/api/agent/execute/route.ts: wrapped emit() write and writer.close() in try/catch to stop ERR_INVALID_STATE crash on client SSE disconnect; bumped v2 pollAttestation timeout 120s->180s. tsc --noEmit green.",
+      "files": [
+        "frontend/lib/payment-flow-v2.ts",
+        "frontend/app/api/agent/execute/route.ts"
+      ],
+      "status": "done_with_concerns",
+      "why": "v2 smoke test reached bridge step but timed out; demo needs fast settlement, not a 15min finality wait, for a payment gateway UX.",
+      "concerns": "(1) Pending Standard burn 0x43182ad7... (1 USDC) still finalizing ~15min -- NOT lost, mintable once attestation completes. (2) Fast Transfer deducts ~1bps fee at mint so merchant receives amount minus tiny fee -- slightly breaks README exact-USDC promise; gross-up (burn amount+fee) is a future refinement. (3) Server receiveMessage mint on Arc still UNVERIFIED e2e -- needs AIG admin wallet funded with Arc gas; watch this step on next test. (4) On Vercel, holding SSE open up to 180s may exceed serverless function timeout on some plans -- fine locally, verify on prod before Phase 04 flip."
+    },
+    {
+      "timestamp": "2026-05-30T10:35:00+07:00",
+      "type": "fix",
+      "title": "v2 CCTP Sepolia->Arc end-to-end WORKING (first successful e2e payment)",
+      "what": "User reported approve+burn OK but bridge step failed with network error. Root cause: cctp.ts pollAttestation() uses CCTPv1 API pattern (GET {apiBase}/{messageHash}) but our v2 burns need CCTPv2 Iris endpoint (GET /v2/messages/{sourceDomain}?transactionHash={tx}). v1 polling on v2 burns 404s forever -> times out at 180s even though Circle had attestation ready (verified status=complete via direct Iris query on burn 0x9a620cf2ff42df5882a8b424094f4d26dd51bbfdd87d3a2070b34aae4edffa16). Fix: (1) frontend/lib/cctp.ts: new pollAttestationV2(txHash, sourceDomain, timeoutMs) helper -> queries Iris v2, returns {message, attestation}; default base https://iris-api-sandbox.circle.com/v2 overridable via CIRCLE_IRIS_API_V2 env. (2) frontend/app/api/agent/execute/route.ts v2 branch: replaced extractMessageHash/extractRawMessage/pollAttestation chain with single pollAttestationV2 call (Iris v2 returns BOTH raw msg + attestation so on-chain extract step is unnecessary for v2); removed unused V2_ETH_SEPOLIA_SOURCE/SourceChainConfig imports. tsc green. Verified end-to-end: POSTed /api/agent/execute against existing burn 0x9a620... -> SSE emitted swap_executing, bridging, confirmed in seconds. Arc mint tx 0xc0b4cca98ca37963c92d43afaada02c65e093567e6f374d04e667acdf641eb61 status=success at block 44698950, gas 175814. Merchant 0x0809...ceF8 USDC balance on Arc now 40.996383. First time the v2 pipeline has completed end-to-end (Sepolia burn -> Circle attestation -> Arc mint via admin wallet).",
+      "files": [
+        "frontend/lib/cctp.ts",
+        "frontend/app/api/agent/execute/route.ts"
+      ],
+      "status": "done",
+      "why": "v2 bridge step kept timing out at 180s despite Circle attestation being ready -- mismatched API version (v1 endpoint vs v2 burn) was the silent killer.",
+      "concerns": "(1) Burn 0x43182ad7... (the very first Standard test burn, maxFee=0) was never minted on Arc; attestation likely complete by now but receiveMessage was never called. Can manually mint by POSTing /api/agent/execute against it with new code. (2) AIG admin wallet has Arc gas (proven now) -- no immediate top-up needed but monitor. (3) Net amount minted (0.996383 of 1 USDC burned, ~0.36% fee) is higher than 1bps protocol minimum -- need to confirm whether CCTPv2 actual Sepolia->Arc rate is higher than the minimumFee API suggests, or whether there is an Arc-side gas/fee component. (4) Phase 03 status in roadmap_AIG.json may need updating from done_with_concerns to done. (5) Vercel deploy (Phase 04) still pending USER action; local proof now exists."
     }
   ]
 }
