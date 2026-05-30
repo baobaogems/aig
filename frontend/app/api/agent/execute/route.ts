@@ -30,6 +30,13 @@ import { awardPoints } from "@/lib/points";
 const BRIDGE_BACKEND = process.env.BRIDGE_BACKEND ?? "v1";
 const BRIDGE_MODE = (process.env.BRIDGE_MODE as BridgeMode) ?? "CCTP";
 
+// Vercel route config: SSE stream needs to stay open long enough for Iris
+// attestation poll + Arc mint submit. Default streaming timeout is short
+// (~3-5s observed); 60s is the Pro plan ceiling and ample for the fast path.
+export const maxDuration = 60;
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
 
