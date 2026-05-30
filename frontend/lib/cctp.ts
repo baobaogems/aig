@@ -15,7 +15,7 @@ import {
   type Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { bscTestnet, sepolia } from "viem/chains";
+import { bscTestnet } from "viem/chains";
 import { getArcChain } from "./chains";
 
 // Circle CCTP MessageSent(bytes) topic0 — precomputed keccak256
@@ -49,10 +49,6 @@ export const V1_BSC_SOURCE: SourceChainConfig = {
   chain: bscTestnet,
   rpcUrl: process.env.BSC_TESTNET_RPC_URL ?? "",
 };
-export const V2_ETH_SEPOLIA_SOURCE: SourceChainConfig = {
-  chain: sepolia,
-  rpcUrl: process.env.ETHEREUM_SEPOLIA_RPC_URL ?? "",
-};
 
 async function extractMessageBytesFromReceipt(
   txHash: string,
@@ -85,8 +81,7 @@ async function extractMessageBytesFromReceipt(
 // extractMessageHash / extractRawMessage
 //
 // Returns keccak256(messageBytes) and raw bytes respectively.
-// Source defaults to V1 BSC Testnet for backward-compat with v1 callers;
-// v2 callers pass V2_ETH_SEPOLIA_SOURCE (or any SourceChainConfig).
+// v1-only helper — v2 reads message + attestation directly from Iris v2.
 // -------------------------------------------------------------------------
 export async function extractMessageHash(
   txHash: string,

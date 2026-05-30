@@ -1,12 +1,30 @@
-# Phase 06 — v1 cleanup (ONLY AFTER v2 proven in production)
+# Phase 06 — v1 cleanup
 
-**Priority:** P0 (for v2 ship) · **Status:** pending · **Target day:** 01-03/06/2026
+**Priority:** P0 (for v2 ship) · **Status:** PARTIAL DONE (30/05) — App Kit dead code shipped; v1 stack waits on Vercel flip · **Target day:** 01-03/06/2026
 
-## Gate (don't start until ALL true)
+## Partial done — 30/05 (safe-now subset)
+
+App Kit dead code (post-ADR) removed without waiting for the production gate, since none of it ran in v1 OR v2:
+
+- ✅ DELETE `frontend/lib/appkit.server.ts`
+- ✅ DELETE `frontend/app/api/dev/appkit-ping/route.ts` (+ empty `app/api/dev/`)
+- ✅ Remove deps `@circle-fin/app-kit` + `@circle-fin/adapter-viem-v2` from `frontend/package.json` + lock
+- ✅ Remove unused `V2_ETH_SEPOLIA_SOURCE` export from `frontend/lib/cctp.ts` (v2 uses `pollAttestationV2` now, no on-chain extract path)
+- ✅ Drop `KIT_KEY` line + section header from `frontend/.env.local`
+- ✅ Build green (`npm run build` 8 routes, no /api/dev/appkit-ping)
+
+## Post-ADR plan corrections
+
+Original plan assumed v2 = App Kit SDK. After ADR (drop SDK, use CCTPv2 contracts directly), several "DELETE" items are WRONG and must be kept:
+
+- **KEEP `frontend/lib/cctp.ts`** entirely — v2 uses `pollAttestationV2` + `receiveMessage` from here. Only the v1-specific helpers (`extractMessageHash`, `extractRawMessage`, `extractMessageBytesFromReceipt`, v1 `pollAttestation`, `V1_BSC_SOURCE`, `SourceChainConfig`) can be deleted, AND only after the v1 branch in `execute/route.ts` is removed (which itself waits on Vercel flip).
+- **KEEP env `CCTP_MESSAGE_TRANSMITTER_ARC`** — v2 admin relay mints on Arc through this contract. The plan's "drop" list was wrong on this var.
+
+## Gate (for remaining v1-stack deletes — don't start until ALL true)
 
 - [ ] v2 default on Vercel for **≥48h** with no rollback incidents
 - [ ] At least 3 successful test payments via v2 on production (logged)
-- [ ] `KIT_KEY` quota not blown, error rate <1%
+- [ ] Local e2e ✅ (Sepolia burn 0x9a620cf2 → Arc mint 0xc0b4cca9, 30/05)
 
 ## Files — DELETE
 
