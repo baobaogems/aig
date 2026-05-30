@@ -690,6 +690,42 @@
       "status": "done",
       "why": "v2 bridge step kept timing out at 180s despite Circle attestation being ready -- mismatched API version (v1 endpoint vs v2 burn) was the silent killer.",
       "concerns": "(1) Burn 0x43182ad7... (the very first Standard test burn, maxFee=0) was never minted on Arc; attestation likely complete by now but receiveMessage was never called. Can manually mint by POSTing /api/agent/execute against it with new code. (2) AIG admin wallet has Arc gas (proven now) -- no immediate top-up needed but monitor. (3) Net amount minted (0.996383 of 1 USDC burned, ~0.36% fee) is higher than 1bps protocol minimum -- need to confirm whether CCTPv2 actual Sepolia->Arc rate is higher than the minimumFee API suggests, or whether there is an Arc-side gas/fee component. (4) Phase 03 status in roadmap_AIG.json may need updating from done_with_concerns to done. (5) Vercel deploy (Phase 04) still pending USER action; local proof now exists."
+    },
+    {
+      "timestamp": "2026-05-30T11:05:00+07:00",
+      "type": "chore",
+      "title": "Phase 06 PARTIAL — App Kit dead code purged (post-ADR cleanup)",
+      "what": "Following the 30/05 e2e success, ran the safe-now subset of Phase 06 cleanup: removed code that was dead in BOTH v1 and v2 runtime paths after the 25/05 ADR dropped @circle-fin/app-kit. Skipped the risky v1-stack deletes (contracts/, mock-bridge, v1 PaymentPage, /api/agent/quote, v1 helpers in cctp.ts, BRIDGE_BACKEND env) because Vercel still serves v1 and those would break next deploy. Deleted: frontend/lib/appkit.server.ts, frontend/app/api/dev/appkit-ping/route.ts (+ empty app/api/dev/), @circle-fin/app-kit + @circle-fin/adapter-viem-v2 deps from frontend/package.json, unused V2_ETH_SEPOLIA_SOURCE export + sepolia import from frontend/lib/cctp.ts, KIT_KEY entry from frontend/.env.local (gitignored, not committed). Updated frontend/lib/cctp.ts comment referencing the removed export. Plan file phase-06-cleanup-v1.md gained partial-done section + post-ADR corrections (cctp.ts cannot be wholesale-deleted as the original plan said -- v2 uses pollAttestationV2 + receiveMessage from here; env CCTP_MESSAGE_TRANSMITTER_ARC must KEEP for v2 mint). plan.md Phase 06 row flipped to 🟡 PARTIAL. Verified: tsc clean, next build green (8 routes, /api/dev/appkit-ping gone). code-reviewer subagent DONE (1 minor finding: stale comment, fixed). 2 commits: 836b584 (App Kit dead code) + 09f1b42 (root lockfile sync, -1287 lines).",
+      "files": [
+        "frontend/lib/appkit.server.ts",
+        "frontend/app/api/dev/appkit-ping/route.ts",
+        "frontend/lib/cctp.ts",
+        "frontend/package.json",
+        "frontend/package-lock.json",
+        "package-lock.json",
+        "frontend/.env.local",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md",
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-06-cleanup-v1.md"
+      ],
+      "status": "done",
+      "commits": [
+        "836b584",
+        "09f1b42"
+      ],
+      "why": "Reduce surface area and confusion now that the SDK approach is fully abandoned -- without touching anything that v1 (still on Vercel) depends on.",
+      "concerns": "(1) Remaining Phase 06 work (v1 stack deletes) GATED on Phase 04 Vercel env flip + 48h prod smoke. (2) chains.ts and agent.ts not touched -- contain v1-leaning helpers; revisit when v1 branch removed from execute/route.ts. (3) ./docs/codebase-summary.md (if it exists) likely references appkit.server.ts -- consider a doc sweep in Phase 07. (4) Audit warning from npm install: 7 vulns (4 moderate, 3 high) -- pre-existing transitive, not introduced by this change; defer to a separate dep-bump pass."
+    },
+    {
+      "timestamp": "2026-05-30T11:00:00+07:00",
+      "type": "docs",
+      "title": "Phase 04 Vercel checklist refreshed — paste-ready env block",
+      "what": "Edited plans/260525-2023-aig-v2-app-kit-rebuild/phase-04-flip-default-to-v2.md: status banner now reflects pre-flight DONE 30/05 with Sepolia burn 0x9a620cf2 + Arc mint 0xc0b4cca9 evidence table. Replaced obsolete \"if you have not run it\" pre-flight instructions. Added a paste-ready 8-line env block before the per-var ADD table for bulk Vercel paste (all NEXT_PUBLIC_* + server vars, no secrets). KEEP table split CIRCLE_ATTESTATION_API into its own row noting it is v1-rollback only (v2 uses pollAttestationV2 with hardcoded https://iris-api-sandbox.circle.com/v2 base; optional CIRCLE_IRIS_API_V2 env to override). AIG admin wallet Arc-gas risk row updated to note proven by mint 175k gas. KIT_KEY DROP row notes Phase 06 partial already cleaned it locally. Smoke gate header check loosened to Sepolia-vs-BSC signal rather than exact wording. PRE-flight Todo checkbox flipped to checked. No code change.",
+      "files": [
+        "plans/260525-2023-aig-v2-app-kit-rebuild/phase-04-flip-default-to-v2.md"
+      ],
+      "status": "done",
+      "why": "User needs a one-shot paste-ready Vercel checklist so the env flip is mechanical, not interpretive — and the doc had to catch up to Phase 03 e2e proof + Phase 06 partial cleanup.",
+      "concerns": "(1) Phase 04 execution itself (paste env vars + redeploy + 4-step prod smoke) is USER step; I cannot access Vercel dashboard. (2) Exact PaymentPageV2 header wording not verified against the rendered UI — smoke gate now uses Sepolia-vs-BSC as the loose signal; tighten later if needed. (3) Did not add CIRCLE_IRIS_API_V2 to .env.example since default works on testnet sandbox."
     }
   ]
 }
