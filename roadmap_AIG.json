@@ -5,12 +5,12 @@
   "lastUpdated": "2026-05-30",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
   "currentState": {
-    "phase": "v2 CCTP rebuild — Phase 03 e2e PROVEN on local; Phase 04 IN PROGRESS on Vercel (SSE pipeline live, blocked on AIG_ADMIN_WALLET_PRIVATE_KEY env add)",
+    "phase": "v2 LIVE on Vercel production (Phase 04 DONE 30/05); Phase 06 full + Phase 07 next, gated on 48h prod smoke",
     "branch": "main",
-    "production": "Deployed on Vercel",
+    "production": "Deployed on Vercel — v2 (CCTPv2 Sepolia→Arc) active path; first prod e2e payment 30/05 Arc mint 0x240d90f7",
     "merchants": 0,
     "users": 0,
-    "blockerForGrowth": "Phase 04 user-step: add AIG_ADMIN_WALLET_PRIVATE_KEY on Vercel + redeploy; after that mint of pending burn 0x061ad3ca runs automatically"
+    "blockerForGrowth": "None on the tech path — Phase 06 full + Phase 07 cleanup/docs gated by self-imposed 48h smoke. GTM remains: no traction yet, need first merchant."
   },
   "phases": [
     {
@@ -189,8 +189,8 @@
         {
           "id": 4,
           "name": "Flip default to v2 on Vercel",
-          "status": "in_progress",
-          "note": "30/05 prod smoke: SSE pipeline refactored (ReadableStream + maxDuration=60) — delivers events correctly. Burn 0x061ad3ca attestation ready. Blocked: AIG_ADMIN_WALLET_PRIVATE_KEY missing on Vercel env."
+          "status": "complete",
+          "note": "DONE 30/05: Vercel env flip + AIG_ADMIN_WALLET_PRIVATE_KEY add + CCTP_MESSAGE_TRANSMITTER_ARC corrected (Mar-17 stale value replaced). First prod e2e mint: Arc tx 0x240d90f7 block via burn 0x061ad3ca, merchant +0.996383 USDC."
         },
         {
           "id": 5,
