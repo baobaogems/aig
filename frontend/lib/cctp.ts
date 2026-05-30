@@ -219,6 +219,11 @@ export async function receiveMessage(
     args: [message as `0x${string}`, attestation as `0x${string}`],
   });
 
-  await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+  // Don't block on Arc receipt — tx is in mempool, will mine independently.
+  // Returning immediately lets the SSE response complete inside Vercel's
+  // serverless function window. Best-effort receipt wait runs detached.
+  publicClient
+    .waitForTransactionReceipt({ hash: txHash, timeout: 60_000 })
+    .catch(() => {});
   return { txHash };
 }
