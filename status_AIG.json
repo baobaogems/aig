@@ -743,6 +743,16 @@
       ],
       "why": "Phase 04 user-step in progress; needed prod end-to-end verification gated on Vercel actually running the new code AND completing the full SSE pipeline within serverless function lifetime.",
       "concerns": "(1) BLOCKER: AIG_ADMIN_WALLET_PRIVATE_KEY missing on Vercel. User must add via dashboard (key value lives in local frontend/.env.local; never paste in chat). After add + redeploy, mint should run on first attempt — burn 0x061ad3ca... attestation is ready. (2) PRIVATE_KEY and TEST_PRIVATE_KEY env vars on Vercel show \"Needs Attention\" — likely wrong-named historical leftovers; code reads AIG_ADMIN_WALLET_PRIVATE_KEY specifically. After Phase 04 success, audit and remove. (3) Production \"confirmed\" SSE event now means \"mint tx submitted\" not \"mint tx mined\" — client/dashboard should poll Arc explorer or re-check Supabase session for finality. (4) Vercel x-vercel-id sin1::iad1::... shows Singapore→Virginia routing — acceptable latency for testnet demo."
+    },
+    {
+      "timestamp": "2026-05-30T12:00:00+07:00",
+      "type": "feature",
+      "title": "Phase 04 DONE — v2 LIVE on Vercel production (first prod e2e payment)",
+      "what": "User added AIG_ADMIN_WALLET_PRIVATE_KEY env on Vercel and edited CCTP_MESSAGE_TRANSMITTER_ARC from the stale Mar-17 value 0x807559a6...7048123 (EOA, bytecode=0) to the verified-working 0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275 (bytecode=2175). After redeploy, auto-triggered /api/agent/execute on prod against pending burn 0x061ad3ca... — SSE emitted swap_executing → bridging → confirmed in seconds. Arc mint tx 0x240d90f701c5733dda1369459db2d80bccac1146f852f466220df0f968e49545. Arc admin nonce 1->2 (mint sent), merchant USDC on Arc 40.996383 -> 41.992766 (+0.996383). v2 backend now serving production payments end-to-end on Vercel.",
+      "files": [],
+      "status": "done",
+      "why": "Phase 04 success unblocks Phase 06 full (v1 stack deletes after 48h prod smoke) and Phase 07 (docs sweep + v2.0-alpha tag).",
+      "concerns": "(1) Wallet admin private key exposed in this Claude session via IDE selection share — rotate after Phase 04 stable. Testnet so low urgency. (2) 0.36% net loss observed again (1 USDC burn -> 0.996383 received) — confirm Circle protocol fee schedule vs API minimumFee=1bps; either rate is higher in practice or there is an Arc-side gas reimbursement deducted. (3) Vercel env still has legacy v1 vars (BRIDGE_MODE, BSC_*, SWAP_ROUTER_*, etc.) for rollback path -- KEEP until Phase 06 full. (4) Start 48h smoke clock for Phase 06 full gate."
     }
   ]
 }
