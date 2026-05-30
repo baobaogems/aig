@@ -134,6 +134,50 @@ export async function pollAttestation(
 }
 
 // -------------------------------------------------------------------------
+// pollAttestationV2 (CCTPv2)
+//
+// Iris v2 indexes messages by (sourceDomain, transactionHash) — NOT by
+// messageHash like v1. Single endpoint returns both the raw message bytes
+// AND the attestation signature, so v2 callers skip the on-chain
+// extractMessageHash/extractRawMessage step entirely.
+// Sandbox base for testnet; swap to https://iris-api.circle.com/v2 for mainnet.
+// -------------------------------------------------------------------------
+const IRIS_V2_BASE =
+  process.env.CIRCLE_IRIS_API_V2 ?? "https://iris-api-sandbox.circle.com/v2";
+
+interface IrisV2Message {
+  status: string;
+  message: string;
+  attestation: string;
+}
+
+export async function pollAttestationV2(
+  txHash: string,
+  sourceDomain: number,
+  timeoutMs = 180_000,
+): Promise<{ message: `0x${string}`; attestation: `0x${string}` }> {
+  const url = `${IRIS_V2_BASE}/messages/${sourceDomain}?transactionHash=${txHash}`;
+  const deadline = Date.now() + timeoutMs;
+  const pollInterval = 5_000;
+
+  while (Date.now() < deadline) {
+    const res = await fetch(url);
+    if (res.ok) {
+      const data = (await res.json()) as { messages?: IrisV2Message[] };
+      const m = data.messages?.[0];
+      if (m && m.status === "complete" && m.attestation && m.message) {
+        return {
+          message: m.message as `0x${string}`,
+          attestation: m.attestation as `0x${string}`,
+        };
+      }
+    }
+    await new Promise((r) => setTimeout(r, pollInterval));
+  }
+  throw new Error(`pollAttestationV2: timeout after ${timeoutMs}ms for ${txHash}`);
+}
+
+// -------------------------------------------------------------------------
 // receiveMessage
 //
 // Calls MessageTransmitter.receiveMessage() on Arc Testnet to mint USDC.

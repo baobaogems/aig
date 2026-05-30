@@ -17,10 +17,9 @@ import {
   extractMessageHash,
   extractRawMessage,
   pollAttestation,
+  pollAttestationV2,
   receiveMessage,
-  V2_ETH_SEPOLIA_SOURCE,
   V1_BSC_SOURCE,
-  type SourceChainConfig,
 } from "@/lib/cctp";
 import { pollSwapCompleted, adminRelay } from "@/lib/mock-bridge";
 import { awardPoints } from "@/lib/points";
@@ -57,13 +56,23 @@ export async function POST(req: NextRequest) {
 
   const emit = async (event: string, data: object) => {
     const payload = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    await writer.write(encoder.encode(payload));
+    // Guard: client may have disconnected (SSE closed) mid-pipeline. Writing to a
+    // closed WritableStream throws ERR_INVALID_STATE and crashes the route — swallow it.
+    try {
+      await writer.write(encoder.encode(payload));
+    } catch {
+      /* stream already closed by client — stop emitting */
+    }
   };
 
   runPipeline({ sessionId, swapTxHash, merchantWallet, targetUSDC, emit, writer }).catch(
     async (err) => {
       await emit("error", { message: err instanceof Error ? err.message : String(err) });
-      await writer.close();
+      try {
+        await writer.close();
+      } catch {
+        /* already closed */
+      }
     }
   );
 
@@ -101,13 +110,15 @@ async function runPipeline({
       await updateSessionStatus(sessionId, "BRIDGING");
       await emit("bridging", { mode: "CCTP", source: "eth-sepolia" });
 
-      const source: SourceChainConfig = V2_ETH_SEPOLIA_SOURCE;
-      const [messageHash, rawMessage] = await Promise.all([
-        extractMessageHash(swapTxHash, source),
-        extractRawMessage(swapTxHash, source),
-      ]);
-
-      const attestation = await pollAttestation(messageHash, 120_000);
+      // CCTPv2: Iris v2 returns BOTH raw message + attestation by (sourceDomain, txHash)
+      // lookup, so we skip the v1 extractMessage* path entirely. Sepolia source = domain 0.
+      // Fast Transfer attests at "confirmed" level (~30-90s); 180s gives headroom.
+      const SEPOLIA_DOMAIN = 0;
+      const { message: rawMessage, attestation } = await pollAttestationV2(
+        swapTxHash,
+        SEPOLIA_DOMAIN,
+        180_000,
+      );
       const { txHash: arcTxHash } = await receiveMessage(rawMessage, attestation);
 
       await updateSessionStatus(sessionId, "CONFIRMED", "CCTP");
