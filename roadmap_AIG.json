@@ -5,7 +5,7 @@
   "lastUpdated": "2026-05-30",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
   "currentState": {
-    "phase": "v2 LIVE on Vercel production (Phase 04 DONE 30/05); Phase 06 full + Phase 07 next, gated on 48h prod smoke",
+    "phase": "v2.0-alpha tagged — Phase 03+04+06-partial+07 DONE; Phase 06 full gated on 48h prod smoke (clock from 2026-05-30 12:00)",
     "branch": "main",
     "production": "Deployed on Vercel — v2 (CCTPv2 Sepolia→Arc) active path; first prod e2e payment 30/05 Arc mint 0x240d90f7",
     "merchants": 0,
@@ -207,7 +207,8 @@
         {
           "id": 7,
           "name": "Docs sweep + smoke + v2.0-alpha tag",
-          "status": "pending"
+          "status": "complete",
+          "note": "Done 30/05: README + docs/* rewritten v2-primary, v2-smoke-evidence.md created with on-chain proof, tag v2.0-alpha pushed."
         }
       ]
     },

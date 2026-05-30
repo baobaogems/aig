@@ -753,6 +753,23 @@
       "status": "done",
       "why": "Phase 04 success unblocks Phase 06 full (v1 stack deletes after 48h prod smoke) and Phase 07 (docs sweep + v2.0-alpha tag).",
       "concerns": "(1) Wallet admin private key exposed in this Claude session via IDE selection share — rotate after Phase 04 stable. Testnet so low urgency. (2) 0.36% net loss observed again (1 USDC burn -> 0.996383 received) — confirm Circle protocol fee schedule vs API minimumFee=1bps; either rate is higher in practice or there is an Arc-side gas reimbursement deducted. (3) Vercel env still has legacy v1 vars (BRIDGE_MODE, BSC_*, SWAP_ROUTER_*, etc.) for rollback path -- KEEP until Phase 06 full. (4) Start 48h smoke clock for Phase 06 full gate."
+    },
+    {
+      "timestamp": "2026-05-30T12:30:00+07:00",
+      "type": "docs",
+      "title": "Phase 07 docs sweep + v2.0-alpha tag — public surface aligned to v2",
+      "what": "Rewrote README.md, docs/system-architecture.md, docs/codebase-summary.md, docs/development-roadmap.md to reflect v2 as active path; v1 documented as rollback. Prepended v2.0-alpha entry to docs/project-changelog.md (Phase 1 history preserved). Created docs/v2-smoke-evidence.md with full on-chain proof: Sepolia burn 0x9a620cf2 + 0x061ad3ca, Arc mint 0xc0b4cca9 (local) + 0x240d90f7 (Vercel prod), Iris v2 attestation curl recipes for any reviewer. Phase 07 success grep allows historical v1 references because v1 is documented rollback path. Skipped per plan: brand-guidelines.md (tech-agnostic), assets/writing-styles/* (historical posts), npm run smoke:appkit script (App Kit dropped per ADR). Tagged v2.0-alpha.",
+      "files": [
+        "README.md",
+        "docs/system-architecture.md",
+        "docs/codebase-summary.md",
+        "docs/project-changelog.md",
+        "docs/development-roadmap.md",
+        "docs/v2-smoke-evidence.md"
+      ],
+      "status": "done",
+      "why": "v2.0-alpha tag gate for Stablecoins Commerce Stack Challenge submission; cross-AI canon now reflects truth across JSON anchors + markdown docs.",
+      "concerns": "(1) Phase 07 plan called for npm run smoke:appkit script and App Kit framing in brand-guidelines — both moot post-ADR (App Kit dropped). (2) brand-guidelines.md not touched: brand voice is tech-stack-agnostic. (3) Day 6 X post line 708 in baobao-gems-x-style.md still references v1 architecture as historical; left intact (post is published, frozen). (4) Phase 06 full still pending 48h prod smoke clock from 2026-05-30 12:00."
     }
   ]
 }

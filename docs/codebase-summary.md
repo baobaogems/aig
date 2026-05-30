@@ -1,337 +1,178 @@
-# AIG Codebase Summary
+# AIG Codebase Summary (v2.0-rebuild)
 
-Overview of key files, modules, and their responsibilities.
+Module-by-module map of files and responsibilities. Active path is v2; v1 files remain in tree as rollback until Phase 06 full cleanup.
 
-## Directory Structure
+## Directory tree
 
 ```
 aig_project/
-├── frontend/                              # Next.js 14 App Router
+├── frontend/                          # Next.js 16 App Router (React 19, TS strict)
 │   ├── app/
-│   │   ├── page.tsx                      # Landing page
-│   │   ├── layout.tsx                    # Root layout + WagmiProvider
-│   │   ├── pay/[id]/page.tsx             # Payment page (mobile-first)
-│   │   ├── dashboard/page.tsx            # Merchant dashboard
+│   │   ├── page.tsx                   # redirect → /dashboard
+│   │   ├── layout.tsx                 # WagmiProvider, QueryClientProvider
+│   │   ├── pay/[id]/page.tsx          # PaymentPageWrapper → PaymentPageV2 (active) | PaymentPage (v1 legacy)
+│   │   ├── dashboard/page.tsx         # Merchant dashboard (Pencil UI)
 │   │   └── api/
 │   │       ├── agent/
-│   │       │   ├── quote/route.ts        # POST /api/agent/quote
-│   │       │   └── execute/route.ts      # POST /api/agent/execute (SSE)
-│   │       └── points/route.ts           # GET /api/points
+│   │       │   ├── quote/route.ts     # v1 only (legacy) — returns 500 if called by v2 client
+│   │       │   └── execute/route.ts   # ACTIVE — SSE, ReadableStream-anchored, branches on BRIDGE_BACKEND
+│   │       ├── dashboard/route.ts     # GET /api/dashboard
+│   │       └── points/route.ts        # GET /api/points
 │   ├── components/
-│   │   ├── fee-breakdown-card.tsx        # Quote display component
-│   │   ├── payment-progress-bar.tsx      # SSE-driven progress steps
-│   │   ├── qr-code-generator.tsx         # QR code + refresh logic
-│   │   ├── payment-feed-table.tsx        # Real-time transaction table
-│   │   └── dashboard-stat-cards.tsx      # Analytics stats: revenue, transactions, success rate, volume
+│   │   ├── providers.tsx              # WagmiConfig: bscTestnet + sepolia chains, injected connector
+│   │   ├── payment-progress-bar.tsx   # SSE-driven step indicator (used by both v1 and v2)
+│   │   ├── fee-breakdown-card.tsx     # v1 only — quote display
+│   │   ├── qr-code-generator.tsx      # dashboard
+│   │   ├── payment-feed-table.tsx     # dashboard
+│   │   └── dashboard-stat-cards.tsx   # dashboard
 │   ├── lib/
-│   │   ├── agent.ts                      # fetchSpotPrice, updateSessionStatus, calculateSwapParams
-│   │   ├── chains.ts                     # getArcChain() Arc Testnet definition
-│   │   ├── mock-bridge.ts                # pollSwapCompleted, adminRelay, verifyAdminWalletBalance
-│   │   ├── cctp.ts                       # extractMessageHash, receiveMessage, extractRawMessage, pollAttestation
-│   │   ├── points.ts                     # awardPoints, getPointsBalance
-│   │   └── merchant.ts                   # upsertMerchant, getMerchantStats
-│   ├── tsconfig.json                     # ES2020, strict mode
-│   ├── package.json                      # viem, wagmi, react-query, supabase, qrcode.react deps
-│   └── .env.example                      # All env vars documented
+│   │   ├── payment-flow-v2.ts         # ACTIVE — usePaymentFlowV2 hook (approve + 7-arg depositForBurn Fast)
+│   │   ├── cctp-abi.ts                # ACTIVE — ERC20 approve + TokenMessengerV2 ABI
+│   │   ├── cctp.ts                    # v2: pollAttestationV2, receiveMessage. v1: extract* + pollAttestation
+│   │   ├── chains.ts                  # getArcChain() viem Arc Testnet
+│   │   ├── points.ts                  # awardPoints, getPointsBalance
+│   │   ├── merchant.ts                # upsertMerchant, getMerchantStats
+│   │   ├── agent.ts                   # v1 only — fetchSpotPrice, calculateSwapParams, updateSessionStatus
+│   │   └── mock-bridge.ts             # v1 only — pollSwapCompleted, adminRelay
+│   ├── supabase/migrations/           # 001-003 SQL migrations
+│   ├── package.json                   # next, react 19, viem, wagmi, supabase, qrcode.react, react-query
+│   └── .env.local                     # gitignored — local secrets
 │
-├── contracts/                             # Solidity + Foundry
-│   ├── src/
-│   │   ├── SwapRouter.sol                # Main contract: exactOutputSingle + refund + CCTP/ADMIN_RELAY branching
-│   │   └── interfaces/
-│   │       ├── IERC20.sol
-│   │       ├── IWBNB.sol
-│   │       ├── IPancakeV3Router.sol
-│   │       └── ICCTPTokenMessenger.sol
-│   ├── test/
-│   │   └── SwapRouter.t.sol              # Foundry tests
-│   ├── scripts/
-│   │   └── Deploy.s.sol                  # Deployment script (BRIDGE_MODE-aware)
-│   ├── foundry.toml
-│   └── .env.example
+├── contracts/                         # v1 LEGACY (Foundry) — Phase 06 full deletes this dir
+│   ├── src/SwapRouter.sol             # BSC SwapRouter
+│   ├── src/interfaces/                # IERC20, IWBNB, IPancakeV3Router, ICCTPTokenMessenger
+│   ├── scripts/Deploy.s.sol           # BRIDGE_MODE-aware Foundry script
+│   └── test/SwapRouter.t.sol          # Foundry tests
 │
-├── scripts/                               # Standalone validation scripts
-│   ├── test-cctp-domain7.ts              # 7-step CCTP smoke test (GATE for BRIDGE_MODE)
-│   ├── package.json
-│   └── tsconfig.json
+├── scripts/                           # v1 LEGACY — Phase 06 full deletes
+│   ├── test-cctp-domain7.ts           # 7-step CCTPv1 smoke test
+│   └── package.json, tsconfig.json
 │
-├── plans/
-│   ├── 260312-1301-aig-phase1-implementation/
-│   │   ├── plan.md                       # Phase 1 overview + phase status table
-│   │   ├── phase-01-foundation.md        # Smoke test, quote, session, route refactor
-│   │   ├── phase-02-admin-relay.md       # pollSwapCompleted, adminRelay, balance check
-│   │   ├── phase-03-cctp-path.md         # extractMessageHash, receiveMessage
-│   │   ├── phase-04-ui.md                # Payment page, dashboard, components
-│   │   └── phase-05-deploy.md            # SwapRouter deployment, contract safety
-│   └── reports/
-│       └── (scout/researcher/reviewer reports)
+├── plans/                             # Phased plans + reports
+│   ├── 260312-1301-aig-phase1-implementation/   # v1 Phase 1
+│   └── 260525-2023-aig-v2-app-kit-rebuild/      # v2 rebuild plans (00-07)
 │
-├── docs/
-│   ├── project-changelog.md              # Detailed change history + Phase 1 summary
-│   ├── development-roadmap.md            # Milestones, timeline, Phase 2/3 planning
-│   ├── system-architecture.md            # Architecture diagrams, component breakdown, data flow
-│   └── codebase-summary.md               # This file
+├── docs/                              # Source-of-truth markdown
+│   ├── system-architecture.md         # narrative architecture
+│   ├── codebase-summary.md            # this file
+│   ├── project-changelog.md           # entry-level history
+│   ├── development-roadmap.md         # phase status + timeline
+│   ├── brand-guidelines.md            # voice + visual
+│   ├── v2-smoke-evidence.md           # on-chain proof of v2 e2e
+│   └── arc-*.md                       # Arc Network reference notes
 │
-├── .env.example                          # Root-level env var reference
-├── .gitignore                            # Excludes .env.local, node_modules, etc.
-├── README.md                             # Project overview + quick start
-└── CLAUDE.md                             # Instructions for Claude Code
+├── README.md                          # public-facing intro + quick start
+├── CLAUDE.md                          # Claude Code project rules
+├── CONTRIBUTING.md                    # anchor JSON conventions
+├── AGENTS.md                          # cross-platform agent guidance
+├── architecture_AIG.json              # cross-AI canon — system map (v2.0-rebuild)
+├── roadmap_AIG.json                   # cross-AI canon — phase status
+├── status_AIG.json                    # cross-AI canon — append-only journal
+└── .env.example                       # all env vars documented (root level)
 ```
 
----
+## Active modules (v2)
 
-## Key Files & Responsibilities
+### `frontend/lib/payment-flow-v2.ts`
 
-### Core Business Logic
+Client React hook `usePaymentFlowV2({ sessionId, merchantWallet, targetUSDC })`:
+- `useSwitchChain` → Sepolia (11155111)
+- `writeContractAsync` USDC.approve(TokenMessengerV2, amountWei) — pinned `chainId`, `gas=100_000n`, `maxFeePerGas=50 gwei`, `maxPriorityFeePerGas=2 gwei`
+- `writeContractAsync` TokenMessengerV2.depositForBurn(7 args: amount, destDomain=26, mintRecipient, USDC, destCaller=bytes32(0), maxFee=amountWei/1000n, minFinality=1000) — same pins + `gas=250_000n`
+- POST burn tx hash to `/api/agent/execute`; read SSE → set `step` state
+- Returns `{ step, burnTxHash, errorMessage, handlePay }` for the page
 
-**frontend/lib/agent.ts**
-- `fetchSpotPrice()` — PancakeSwap V3 Quoter query, returns USDC/BNB price
-- `calculateSwapParams()` — applies 0.5% slippage + 0.1% AIG fee
-- `updateSessionStatus()` — Supabase upsert with JSONB swap_params cache
-- Singleton Supabase client initialization
+### `frontend/lib/cctp-abi.ts`
 
-**frontend/lib/chains.ts**
-- `getArcChain()` — viem defineChain for Arc Testnet (ID: 212)
-- Used by both mock-bridge.ts and cctp.ts to avoid duplication
+Minimal ABIs: `ERC20_APPROVE_ABI` (approve only), `CCTP_TOKEN_MESSENGER_ABI` (TokenMessengerV2 depositForBurn — 7 args including `destinationCaller`, `maxFee`, `minFinalityThreshold`).
 
-**frontend/lib/mock-bridge.ts**
-- `pollSwapCompleted(sessionId, txHash, timeout)` — viem receipt parsing, SwapCompleted event extraction
-- `adminRelay(merchantWallet, usdcAmount, sessionId)` — Supabase idempotency + Arc USDC transfer
-- `verifyAdminWalletBalance()` — logs warning if balance < 50 USDC
+### `frontend/lib/cctp.ts`
 
-**frontend/lib/cctp.ts**
-- `extractMessageBytesFromReceipt()` — internal helper, parses MessageSent(bytes) log
-- `extractMessageHash()` — returns keccak256(messageBytes)
-- `extractRawMessage()` — returns raw bytes hex string
-- `receiveMessage(message, attestation)` — Arc MessageTransmitter.receiveMessage() call
-- `pollAttestation()` — Circle API integration (already implemented)
+- `pollAttestationV2(txHash, sourceDomain, timeoutMs=180_000)` → fetches Iris v2 `/v2/messages/{sourceDomain}?transactionHash=...` every 5s until `status === "complete"`, returns `{ message, attestation }`.
+- `receiveMessage(message, attestation)` → admin wallet (`AIG_ADMIN_WALLET_PRIVATE_KEY`) calls Arc MessageTransmitter `receiveMessage`. Returns Arc txHash as soon as `writeContract` resolves; `waitForTransactionReceipt` fires detached (non-blocking).
+- `extractMessageHash`, `extractRawMessage`, `extractMessageBytesFromReceipt`, `pollAttestation`, `V1_BSC_SOURCE`, `SourceChainConfig` → v1 only, kept for `BRIDGE_BACKEND=v1` rollback.
 
-**frontend/lib/points.ts**
-- `awardPoints(merchantWallet, targetUSDC)` — inserts points_ledger row + updates points_balance
-- `getPointsBalance(wallet)` — returns { totalPoints, tier }
-- Trigger on confirmed payments
+### `frontend/app/api/agent/execute/route.ts`
 
-**frontend/lib/merchant.ts**
-- `upsertMerchant(walletAddress, businessName)` — creates or updates merchant profile in merchants table
-- `getMerchantStats(walletAddress)` — returns analytics stats (totalRevenue, transactionCount, successRate, recentVolume)
-- Queries payment_sessions filtered by merchant_wallet + status='CONFIRMED'
+Route segment config: `maxDuration = 60`, `runtime = "nodejs"`, `dynamic = "force-dynamic"`.
 
-### API Routes
+POST handler validates input then returns `new Response(new ReadableStream({ async start(controller) { ... } }))`. Pipeline lives inside the `start` callback so Vercel's serverless function lifetime extends until `controller.close()` runs.
 
-**frontend/app/api/agent/quote/route.ts**
-- `POST /api/agent/quote`
-- Returns: SwapParams (amountInMaximumWei, grossUSDC, fee, netUSDC, poolFee, spotPrice)
-- Caches to Supabase payment_sessions
+`runPipeline` branches on `BRIDGE_BACKEND`:
+- `v2` → `pollAttestationV2(swapTxHash, 0, 180_000)` → `receiveMessage(message, attestation)` → emit `confirmed`
+- `v1` CCTP → `extractMessageHash + extractRawMessage + pollAttestation` → `receiveMessage`
+- `v1` ADMIN_RELAY → `pollSwapCompleted + adminRelay`
 
-**frontend/app/api/agent/execute/route.ts**
-- `POST /api/agent/execute` (SSE streaming response)
-- Body: { sessionId, swapTxHash, merchantWallet, targetUSDC }
-- Conditional bridge: CCTP vs ADMIN_RELAY
-- Emits: swap_executing → bridging → confirmed (or bridge_delayed)
+Both paths emit SSE events: `swap_executing → bridging → confirmed` (or `bridge_delayed` on v1 timeout).
 
-**frontend/app/api/points/route.ts**
-- `GET /api/points?wallet=0x...`
-- Returns: { totalPoints, tier }
+### `frontend/app/pay/[id]/page.tsx`
 
-**frontend/app/api/dashboard/route.ts**
-- `GET /api/dashboard?wallet=0x...`
-- Returns: { merchantProfile, analyticsStats }
-- merchantProfile: { wallet, businessName, createdAt }
-- analyticsStats: { totalRevenue, transactionCount, successRate, recentVolume }
+`PaymentPageWrapper` (Suspense boundary) dispatches:
+- `BRIDGE_BACKEND === "v2"` → `<PaymentPageV2 />` (active)
+- else → `<PaymentPage />` (v1 legacy, deleted in Phase 06 full)
 
-### UI Pages
+`PaymentPageV2` reads `merchant` + `amount` from query params, calls `usePaymentFlowV2`, renders connect button + Pay button + `PaymentProgressBar`.
 
-**frontend/app/page.tsx**
-- Landing page with hero, features, CTA
+### `frontend/app/dashboard/page.tsx`
 
-**frontend/app/pay/[id]/page.tsx**
-- `'use client'` — client-side only
-- Wagmi `useAccount`, `useWriteContract`
-- Load session from URL [id]
-- Call `/api/agent/quote` on mount → FeeBreakdownCard
-- Submit SwapRouter.swapAndBridge() tx → open EventSource
-- PaymentProgressBar tracks SSE events
-- Receipt screen on confirmed
+Unchanged from Phase 1: wagmi connect → upsertMerchant → GET `/api/dashboard` (profile + `analyticsStats`) → Supabase real-time subscription on `payment_sessions` → GET `/api/points`. Pencil UI components, QR generator, payment feed table, stat cards.
 
-**frontend/app/dashboard/page.tsx**
-- `'use client'` — client-side only
-- Wagmi connect button
-- Display merchant profile (business name from /api/dashboard)
-- DashboardStatCards with analytics data (total revenue, transactions, success rate, recent volume)
-- QRCodeGenerator with 60s refresh
-- Supabase real-time subscription to payment_sessions
-- Points balance via `/api/points`
+## v1 legacy modules (rollback only)
 
-### UI Components
+| File | Purpose | Deleted in |
+|---|---|---|
+| `contracts/` (entire dir) | SwapRouter.sol + Foundry stack | Phase 06 full |
+| `frontend/lib/mock-bridge.ts` | pollSwapCompleted, adminRelay | Phase 06 full |
+| `frontend/lib/agent.ts` | fetchSpotPrice (PancakeSwap Quoter), calculateSwapParams | Phase 06 full |
+| `frontend/app/api/agent/quote/route.ts` | v1 quote endpoint (returns 500 if called — viem checksum on hardcoded Quoter fallback) | Phase 06 full |
+| `cctp.ts` v1 helpers (extract*, pollAttestation, V1_BSC_SOURCE, SourceChainConfig) | v1 BSC source path | Phase 06 full (partial trim of `cctp.ts`, not full delete) |
+| `scripts/test-cctp-domain7.ts` | v1 CCTP smoke | Phase 06 full |
+| v1 PaymentPage component in `pay/[id]/page.tsx` | v1 UI branch | Phase 06 full |
 
-**components/fee-breakdown-card.tsx**
-- Props: { grossUSDC, aigFee, netUSDC, amountBNB, targetUSDC }
-- Displays quote breakdown before signing
+Phase 06 partial (done 30/05, commit `836b584`) already removed: `lib/appkit.server.ts`, `app/api/dev/appkit-ping/route.ts`, `@circle-fin/app-kit` + `@circle-fin/adapter-viem-v2` deps, unused `V2_ETH_SEPOLIA_SOURCE` export, `KIT_KEY` env entry.
 
-**components/payment-progress-bar.tsx**
-- Props: SSE event stream
-- Displays: Swap → Bridge → Confirmed steps
-- Lights up each step as events arrive
+## Database schema
 
-**components/qr-code-generator.tsx**
-- Props: { merchantWallet, targetUSDC }
-- Uses qrcode.react
-- Auto-refresh every 60s
-- Encodes: { sessionId, merchantWallet, targetUSDC, expiry }
-
-**components/payment-feed-table.tsx**
-- Props: transactions array (from Supabase real-time)
-- Columns: timestamp, amount, bridge mode, tx hash, status
-
-### Smart Contracts
-
-**contracts/src/SwapRouter.sol**
-- Constructor args: wbnb, usdc, pancakeRouter, cctpMessenger (or 0x0), revenuePool
-- `swapAndBridge(sessionId, grossUSDC, aigFee, amountInMax, poolFee, merchantBytes32, merchantAddr)` payable
-- Logic:
-  1. Wrap BNB → WBNB
-  2. Approve WBNB to PancakeSwap V3 Router
-  3. Call exactOutputSingle (output = grossUSDC)
-  4. Emit SwapCompleted event
-  5. Refund unused WBNB
-- Dual-mode: CCTP-aware (checks cctpMessenger != address(0))
-
-**contracts/src/interfaces/**
-- IERC20.sol — ERC-20 standard (balanceOf, transfer, approve, etc.)
-- IWBNB.sol — WBNB deposit/withdraw
-- IPancakeV3Router.sol — exactOutputSingle interface
-- ICCTPTokenMessenger.sol — CCTP messenger interface
-
-**contracts/scripts/Deploy.s.sol**
-- Foundry Script contract
-- Reads all constructor args from env vars
-- Conditional logic: if BRIDGE_MODE=ADMIN_RELAY, pass address(0) as cctpMessenger
-- Logs deployed address
-
-### Test Files
-
-**scripts/test-cctp-domain7.ts**
-- 7-step smoke test:
-  1. Initial Arc USDC balance
-  2. Approve TokenMessenger
-  3. depositForBurn on BSC
-  4. Extract MessageSent log → compute hash
-  5. Poll Circle attestation API (5s interval, 120s timeout)
-  6. receiveMessage on Arc
-  7. Verify balance increased
-- Exit 0 (PASS) → BRIDGE_MODE=CCTP
-- Exit 1 (FAIL) → BRIDGE_MODE=ADMIN_RELAY
-
-**contracts/test/SwapRouter.t.sol**
-- Foundry unit tests for SwapRouter.sol
-
----
+Unchanged from Phase 1 — see `frontend/supabase/migrations/`. Tables: `payment_sessions`, `merchants`, `points_ledger`, `points_balance`.
 
 ## Dependencies
 
-### Frontend
-- `next@16.1.6` — React 19 framework
-- `react@19` — UI library
-- `typescript@5` — type safety
-- `tailwindcss@4` — CSS framework
-- `viem` — blockchain interaction (Ethereum client)
-- `wagmi` — wallet connection + contract writes (v2)
-- `@supabase/supabase-js` — Supabase client
-- `@tanstack/react-query` — required by wagmi v2
-- `qrcode.react` — QR code rendering
+| Layer | Key deps |
+|---|---|
+| Frontend runtime | next@16.1.6, react@19, viem, wagmi@3, @supabase/supabase-js, @tanstack/react-query, qrcode.react |
+| Frontend build | typescript@5, tailwindcss@4, eslint-config-next |
+| v1 contracts | Foundry (forge, cast) — legacy |
 
-### Scripts
-- `ts-node` — TypeScript runner
-- `viem` — blockchain client
+Removed in Phase 06 partial: `@circle-fin/app-kit`, `@circle-fin/adapter-viem-v2`.
 
-### Contracts
-- Foundry — Solidity compilation, testing, deployment
+## Configuration
 
----
+| File | Purpose |
+|---|---|
+| `frontend/tsconfig.json` | ES2020, strict, path alias `@/` |
+| `frontend/next.config.ts` | minimal — Next 16 defaults |
+| `frontend/vercel.json` | `installCommand`, `buildCommand`, `framework: nextjs` |
+| `vercel.json` (root) | (none — Vercel project rooted in frontend/) |
+| `.env.example` | reference for all env vars |
 
-## Configuration Files
+## Code standards
 
-**tsconfig.json** (frontend)
-- Target: ES2020
-- Strict mode: true
-- Path aliases: `@/` → `./`
-
-**foundry.toml** (contracts)
-- Solidity version: ^0.8.24
-- Optimizer: enabled
-
-**.env.example** (root + frontend)
-- RPC URLs: BSC_TESTNET_RPC_URL, ARC_TESTNET_RPC_URL, NEXT_PUBLIC_BSC_TESTNET_RPC_URL
-- Contract addresses: WBNB_ADDRESS_BSC, USDC_ADDRESS_BSC_TESTNET, PANCAKESWAP_V3_QUOTER_BSC, PANCAKESWAP_V3_ROUTER_BSC
-- CCTP: CCTP_TOKEN_MESSENGER_BSC, CCTP_MESSAGE_TRANSMITTER_ARC
-- Supabase: NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY
-- Keys: AIG_ADMIN_WALLET_PRIVATE_KEY, AIG_ADMIN_WALLET_ADDRESS, DEPLOYER_PRIVATE_KEY
-- Bridge mode: BRIDGE_MODE (CCTP or ADMIN_RELAY)
-- Revenue: AIG_REVENUE_POOL_ADDRESS
-
----
-
-## Code Standards
-
-### Naming
-- Files: kebab-case with descriptive names (e.g., `payment-progress-bar.tsx`)
+- File names: kebab-case with descriptive names (`payment-flow-v2.ts`, `cctp-abi.ts`)
 - Functions: camelCase
 - Constants: UPPER_SNAKE_CASE
-- Types/Interfaces: PascalCase
+- Types/interfaces: PascalCase
+- TypeScript strict mode
+- File size: <200 lines preferred — split larger files (`pay/[id]/page.tsx` currently 348 lines; strangler-fig transition exception, cleaned in Phase 06 full)
 
-### Error Handling
-- try/catch for async operations
-- Supabase: check for .error before returning
-- viem: catches timeouts automatically, wrapped in error handlers
-- SSE: emit error event on exception
+## Known limitations
 
-### Type Safety
-- TypeScript strict mode enabled
-- Interfaces for API request/response bodies
-- Type-safe Supabase queries (generated schema types if available)
+- Testnet only (Arc + Sepolia testnets; Circle CCTP V2 sandbox API).
+- Merchant receives `amount − ~1bps` under v2 Fast Transfer (gross-up is a v2.1 refinement).
+- Single source chain (Sepolia); multi-chain support (Base/Avalanche/Linea) would need additional `payment-flow-vN` hooks + chain registration in `components/providers.tsx`.
+- Phase 06 full pending 48h prod smoke gate.
 
-### Testing
-- Foundry tests for contracts (forge test)
-- Smoke test for CCTP (test-cctp-domain7.ts) — gates BRIDGE_MODE
+## Deployment
 
----
-
-## Performance & Optimization
-
-- Quote caching: swap_params stored in Supabase → no recalculation
-- Polling intervals: 2-5s for SSE, 5s for Circle attestation, 2s for Quoter cache
-- RPC optimization: batch calls where possible (Promise.all)
-- Component splitting: pay page and dashboard are separate routes
-
----
-
-## Security Summary
-
-✓ Private keys in env vars only (never hardcoded)
-✓ Service role key server-side only (never client-side)
-✓ Atomic idempotency guard in adminRelay()
-✓ Input validation on all API endpoints
-✓ Transaction finality checks (waitForTransactionReceipt)
-✓ Timeout guards on all polling (30-120s)
-
----
-
-## Known Limitations
-
-- Phase 1 PoC: ADMIN_RELAY disabled on mainnet
-- QR expiry: 60s (no persistent session storage)
-- Dashboard: wallet-based identity (no auth system)
-- Points: placeholder logic (no distribution mechanism yet)
-- Multi-chain: BSC Testnet only (Arc Testnet for bridge destination)
-
----
-
-## Deployment Checklist
-
-- [ ] `.env.local` populated (all vars from .env.example)
-- [ ] Supabase tables created (payment_sessions, points_ledger, points_balance)
-- [ ] Smoke test passed or acknowledged as FAIL
-- [ ] BRIDGE_MODE set (CCTP or ADMIN_RELAY)
-- [ ] SwapRouter deployed to BSC Testnet (save address to env)
-- [ ] Admin wallet funded with testUSDC on Arc (for ADMIN_RELAY mode)
-- [ ] `npm run dev` starts without errors
-- [ ] Manual end-to-end test: QR → payment → SSE → confirmed
+- Vercel auto-deploys on `git push origin main`.
+- `/api/agent/execute` requires `maxDuration ≥ ~30s`; current config sets 60 (Pro plan default cap).
+- After env changes on Vercel, manual `Redeploy` (uncheck Build Cache) — env updates do not trigger auto-build.
