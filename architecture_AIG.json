@@ -2,65 +2,91 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "tagline": "Pay with anything. Receive USDC. Invisibly.",
-  "version": "1.0.0",
-  "lastUpdated": "2026-05-04",
+  "version": "2.0.0-rebuild",
+  "lastUpdated": "2026-05-30",
   "sourceOfTruth": "docs/system-architecture.md",
-
   "overview": {
     "domain": "Cross-chain payment infrastructure",
-    "flow": "Customer pays any token on BSC → AIG swaps to USDC → bridges to Arc Network → merchant receives USDC",
-    "uxPromise": "Invisible: customer never sees swap/bridge mechanics"
+    "activePath": "v2 — Customer signs CCTPv2 burn on Ethereum Sepolia → Iris v2 attestation (~30-90s Fast Transfer) → server admin wallet calls receiveMessage on Arc → merchant receives USDC",
+    "legacyPath": "v1 (still in code for rollback) — BSC swap via SwapRouter.swapAndBridge → CCTP or ADMIN_RELAY → Arc mint",
+    "strangler": "NEXT_PUBLIC_BRIDGE_BACKEND=v2|v1 toggle; rollback = flip 2 env vars on Vercel + redeploy (~2 min)",
+    "uxPromise": "Invisible: customer signs 2 txs (approve + depositForBurn), watches progress bar, merchant receives USDC on Arc"
   },
-
   "monorepo": {
     "frontend": {
-      "stack": ["Next.js 16 App Router", "React 19", "TypeScript ES2020 strict", "Tailwind 4", "wagmi v2", "viem", "@supabase/supabase-js", "@tanstack/react-query", "qrcode.react"],
+      "stack": [
+        "Next.js 16 App Router",
+        "React 19",
+        "TypeScript ES2020 strict",
+        "Tailwind 4",
+        "wagmi v2",
+        "viem",
+        "@supabase/supabase-js",
+        "@tanstack/react-query",
+        "qrcode.react"
+      ],
       "deployedOn": "Vercel"
     },
     "contracts": {
-      "stack": ["Solidity ^0.8.24", "Foundry"],
-      "deployedOn": "BSC Testnet"
+      "stack": [
+        "Solidity ^0.8.24",
+        "Foundry"
+      ],
+      "deployedOn": "BSC Testnet",
+      "status": "LEGACY (v1) — scheduled for deletion in Phase 06 full after Vercel v2 + 48h smoke"
     },
     "scripts": {
-      "stack": ["TypeScript", "viem", "ts-node"],
+      "stack": [
+        "TypeScript",
+        "viem",
+        "ts-node"
+      ],
       "purpose": "Standalone validation + smoke tests"
     }
   },
-
   "components": {
     "smartContracts": {
       "SwapRouter.sol": {
         "chain": "BSC Testnet",
         "entryFn": "swapAndBridge(sessionId, grossUSDC, aigFee, amountInMax, poolFee, merchantBytes32, merchantAddr)",
-        "logic": ["wrap BNB→WBNB", "approve WBNB to PancakeSwap V3", "exactOutputSingle to USDC", "emit SwapCompleted", "refund unused WBNB"],
+        "logic": [
+          "wrap BNB→WBNB",
+          "approve WBNB to PancakeSwap V3",
+          "exactOutputSingle to USDC",
+          "emit SwapCompleted",
+          "refund unused WBNB"
+        ],
         "dualMode": "CCTP-aware (cctpMessenger != address(0)) OR ADMIN_RELAY fallback"
       },
-      "interfaces": ["IERC20", "IWBNB", "IPancakeV3Router", "ICCTPTokenMessenger"],
+      "interfaces": [
+        "IERC20",
+        "IWBNB",
+        "IPancakeV3Router",
+        "ICCTPTokenMessenger"
+      ],
       "deploy": "contracts/scripts/Deploy.s.sol — BRIDGE_MODE-aware Foundry script"
     },
-
     "apiRoutes": {
-      "POST /api/agent/quote": "fetch spot price → calc swap params (0.5% slippage + 0.1% AIG fee) → cache to Supabase → return SwapParams",
-      "POST /api/agent/execute": "SSE stream: swap_executing → bridging → confirmed (or bridge_delayed)",
-      "GET /api/points": "{ totalPoints, tier } from points_balance table",
-      "GET /api/dashboard": "{ merchantProfile, analyticsStats } — server-side aggregation"
+      "POST /api/agent/quote": "v1 ONLY (legacy) — fetch PancakeSwap spot price + calc fees; v2 PaymentPageV2 does not call this. Currently returns 500 if invoked due to viem checksum on hardcoded Quoter fallback address.",
+      "POST /api/agent/execute": "SSE stream (v1 OR v2 branch on BRIDGE_BACKEND env). v2 (active): pollAttestationV2 (CCTPv2 Iris) → receiveMessage on Arc (non-blocking receipt). v1 (rollback): pollSwapCompleted (BSC) → CCTP or admin relay. Pipeline anchored in ReadableStream.start() callback for Vercel serverless function lifetime safety.",
+      "GET /api/points": "unchanged",
+      "GET /api/dashboard": "unchanged"
     },
-
     "libModules": {
-      "lib/agent.ts": "fetchSpotPrice (PancakeSwap Quoter), calculateSwapParams, updateSessionStatus (Supabase upsert + JSONB cache)",
-      "lib/chains.ts": "getArcChain() — viem defineChain Arc Testnet ID 212",
-      "lib/mock-bridge.ts": "pollSwapCompleted, adminRelay (atomic idempotency), verifyAdminWalletBalance",
-      "lib/cctp.ts": "extractMessageHash, extractRawMessage, receiveMessage (Arc MessageTransmitter), pollAttestation (Circle API)",
-      "lib/points.ts": "awardPoints (insert ledger + update balance), getPointsBalance",
-      "lib/merchant.ts": "upsertMerchant, getMerchantStats (totalRevenue, transactionCount, successRate, recentVolume)"
+      "lib/agent.ts": "v1 only — fetchSpotPrice (PancakeSwap Quoter), calculateSwapParams, updateSessionStatus (Supabase upsert)",
+      "lib/chains.ts": "getArcChain() — viem defineChain Arc Testnet",
+      "lib/mock-bridge.ts": "v1 only — pollSwapCompleted, adminRelay, verifyAdminWalletBalance",
+      "lib/cctp.ts": "pollAttestationV2 (CCTPv2 Iris v2 endpoint, used by v2), receiveMessage (Arc MessageTransmitter, non-blocking receipt wait). v1 helpers (extractMessageHash, extractRawMessage, pollAttestation, V1_BSC_SOURCE, SourceChainConfig) retained for rollback.",
+      "lib/cctp-abi.ts": "minimal ERC20 approve + CCTPv2 TokenMessengerV2 depositForBurn (7-arg Fast Transfer) ABI",
+      "lib/payment-flow-v2.ts": "usePaymentFlowV2 client hook: switchChain → USDC.approve(TokenMessenger) → TokenMessenger.depositForBurn(amount, ARC_DOMAIN=26, mintRecipient, USDC, destCaller=bytes32(0), maxFee=amount/1000, minFinality=1000) → POST /api/agent/execute",
+      "lib/points.ts": "awardPoints, getPointsBalance — unchanged",
+      "lib/merchant.ts": "upsertMerchant, getMerchantStats — unchanged"
     },
-
     "pages": {
-      "/": "Landing page",
-      "/pay/[id]": "Customer payment page — wagmi connect, fee breakdown, SSE progress, mobile-first",
+      "/": "redirect → /dashboard",
+      "/pay/[id]": "dispatch on NEXT_PUBLIC_BRIDGE_BACKEND: PaymentPageV2 (active) or PaymentPage v1 (legacy). v1 component to be deleted in Phase 06 full.",
       "/dashboard": "Merchant dashboard — Pencil UI, QR generator, real-time payment feed, points tier, stat cards"
     },
-
     "uiComponents": [
       "fee-breakdown-card.tsx",
       "payment-progress-bar.tsx",
@@ -69,7 +95,6 @@
       "dashboard-stat-cards.tsx",
       "points-tier-card.tsx"
     ],
-
     "database": {
       "provider": "Supabase",
       "tables": {
@@ -84,7 +109,6 @@
         "003_create_merchants_table.sql"
       ]
     },
-
     "external": {
       "PancakeSwap V3 (BSC Testnet)": "Quoter (spot price) + Router (exactOutputSingle swap)",
       "Circle CCTP": "Domain 7 (Arc) — TokenMessenger.depositForBurn → MessageTransmitter.receiveMessage; attestation via Circle API",
@@ -92,34 +116,36 @@
       "Vercel": "Frontend hosting"
     }
   },
-
   "bridgeModes": {
-    "CCTP (primary)": {
-      "gate": "scripts/test-cctp-domain7.ts must exit 0",
-      "flow": "BSC SwapCompleted → extract MessageSent log → keccak256 hash → poll Circle attestation (5s interval, 120s timeout) → Arc MessageTransmitter.receiveMessage(message, attestation) → USDC mint"
+    "v2 CCTPv2 Fast Transfer (PRIMARY, active path)": {
+      "sourceChain": "Ethereum Sepolia (CCTP domain 0)",
+      "destinationChain": "Arc Testnet (CCTP domain 26 — NOT 7 which is Polygon)",
+      "flow": "client approve(USDC->TokenMessengerV2) + depositForBurn(amount, 26, mintRecipient, USDC, destCaller=0, maxFee=amount/1000, minFinality=1000) → server pollAttestationV2(iris-api-sandbox.circle.com/v2/messages/0?transactionHash=tx) → server admin wallet receiveMessage(message, attestation) on Arc MessageTransmitter",
+      "fee": "~1bps protocol fee deducted at mint (merchant receives amount - ~0.01% on standard route)",
+      "timing": "attestation ~30-90s; total ~60-120s end-to-end"
     },
-    "ADMIN_RELAY (fallback)": {
-      "gate": "smoke test FAIL or dev mode",
-      "flow": "BSC SwapCompleted → poll receipt 30s → Supabase atomic guard (status=PENDING) → admin wallet USDC.transfer on Arc",
-      "constraint": "Disabled on mainnet — testnet only"
+    "v1 CCTP (BSC, LEGACY)": {
+      "flow": "BSC SwapRouter.swapAndBridge → SwapCompleted event → extract MessageSent log → keccak256 hash → poll Circle v1 API (5s interval, 120s timeout) → Arc receiveMessage",
+      "status": "rollback path only; v2 is default backend post Phase 04"
+    },
+    "v1 ADMIN_RELAY (BSC, LEGACY)": {
+      "flow": "BSC SwapCompleted → 30s receipt poll → Supabase atomic guard (status=PENDING) → admin wallet USDC.transfer on Arc",
+      "status": "testnet-only fallback for v1"
     }
   },
-
   "dataFlow": {
-    "paymentInitiation": [
-      "Customer → /pay/[id]",
-      "POST /api/agent/quote → fetchSpotPrice + calc + cache",
-      "FeeBreakdownCard renders quote",
-      "Customer signs SwapRouter.swapAndBridge() via MetaMask"
+    "paymentInitiationV2": [
+      "Merchant generates payment URL: /pay/<sessionId>?merchant=<arc-addr>&amount=<usdc>",
+      "Customer opens URL → PaymentPageV2 renders amount + Connect button",
+      "Customer connects wallet (wagmi injected) → switchChain to Sepolia (11155111)"
     ],
-    "paymentExecution": [
-      "Frontend opens EventSource: POST /api/agent/execute",
-      "Backend: load cached swap_params, emit swap_executing",
-      "pollSwapCompleted(swapTxHash) — 30s timeout",
-      "emit bridging — branch on BRIDGE_MODE",
-      "CCTP: extractMessageHash → pollAttestation → receiveMessage on Arc",
-      "ADMIN_RELAY: adminRelay(merchant, netUSDC, sessionId) — atomic guard",
-      "emit confirmed → awardPoints → close stream"
+    "paymentExecutionV2": [
+      "Customer clicks Pay → usePaymentFlowV2.handlePay()",
+      "Tx 1: USDC.approve(TokenMessengerV2, amount) — Sepolia",
+      "Tx 2: TokenMessengerV2.depositForBurn(7-arg Fast Transfer) — Sepolia",
+      "Client POST /api/agent/execute with burn txHash → SSE stream",
+      "Server emit swap_executing → bridging → pollAttestationV2 → receiveMessage on Arc → emit confirmed(arcTxHash)",
+      "awardPoints → controller.close() → stream EOF"
     ],
     "merchantDashboard": [
       "Connect wallet (wagmi) → upsertMerchant",
@@ -128,37 +154,72 @@
       "GET /api/points → display tier"
     ]
   },
-
   "keyDesignDecisions": {
-    "BRIDGE_MODE_abstraction": "Graceful fallback CCTP↔ADMIN_RELAY without code change — env var at deploy",
-    "atomicIdempotency": "Supabase .eq('status','PENDING') prevents duplicate transfers on retry",
-    "quoteCaching": "swap_params JSONB cache → /execute uses cached values (no recalculation drift)",
-    "offChainMath": "All floating-point in TypeScript (lib/agent.ts) — Solidity sees only integer wei",
-    "clientSideOnly": "Payment + dashboard pages are 'use client' — wagmi needs browser env"
+    "stranglerFigToggle": "NEXT_PUBLIC_BRIDGE_BACKEND=v1|v2 + BRIDGE_BACKEND mirror — codebase carries both paths until Phase 06 full cleanup; rollback = 2 env flips on Vercel + redeploy",
+    "sseInReadableStreamStart": "/api/agent/execute pipeline runs INSIDE ReadableStream.start() callback so Vercel serverless function lifetime ties to controller.close(); fire-and-forget runPipeline-after-return pattern was cut at ~2-3s on prod (Vercel docs: function ends when handler returns)",
+    "nonBlockingArcReceipt": "receiveMessage returns Arc txHash as soon as writeContract resolves; waitForTransactionReceipt fires detached. SSE confirmed event means \"tx submitted to Arc mempool\", not \"tx mined\" — keeps total SSE under ~3s within Vercel limits",
+    "cctpV2FastTransfer": "maxFee = amountWei/1000n (>0 required) + minFinalityThreshold=1000 enables Fast attestation (~30-90s) vs Standard finalized wait (~15min)",
+    "irisV2Endpoint": "pollAttestationV2 queries /v2/messages/{sourceDomain}?transactionHash — returns BOTH raw message + attestation; replaces v1 extract-from-receipt + poll-by-messageHash chain",
+    "atomicIdempotency": "Supabase .eq(\"status\",\"PENDING\") prevents duplicate transfers on retry (v1 admin relay)",
+    "clientSideOnly": "Payment + dashboard pages are use client — wagmi needs browser env"
   },
-
   "security": {
     "auth": "Wallet-based identity (Phase 1 PoC, no auth system)",
-    "privateKeys": "AIG_ADMIN_WALLET_PRIVATE_KEY env-only, server-side only",
-    "inputValidation": "sessionId (hex 32B), walletAddress (checksum), targetUSDC (positive bounded)",
-    "txFinality": "waitForTransactionReceipt before bridging",
-    "timeouts": "pollSwapCompleted 30s, pollAttestation 120s"
+    "privateKeys": "AIG_ADMIN_WALLET_PRIVATE_KEY env-only, server-side only; required for receiveMessage on Arc",
+    "inputValidation": "sessionId (string), swapTxHash (0x[64hex]), merchantWallet (0x[40hex]), targetUSDC (positive number) at /api/agent/execute boundary",
+    "txFinality": "v2 SSE confirmed = tx submitted (mint mines on Arc asynchronously); merchant should reconcile via dashboard polling",
+    "timeouts": "pollAttestation v1=120s; pollAttestationV2=180s; v1 pollSwapCompleted=30s; receiveMessage receipt wait=60s (detached)",
+    "routeConfig": "/api/agent/execute: maxDuration=60, runtime=nodejs, dynamic=force-dynamic, X-Accel-Buffering=no"
   },
-
   "performance": {
     "quoteEndpoint": "<500ms",
     "ssePolling": "2-5s (viem default)",
     "supabaseQueries": "<200ms (indexed on session_id)",
     "qrRefresh": "60s"
   },
-
   "envVars": {
-    "rpc": ["BSC_TESTNET_RPC_URL", "ARC_TESTNET_RPC_URL", "NEXT_PUBLIC_BSC_TESTNET_RPC_URL"],
-    "contracts": ["WBNB_ADDRESS_BSC", "USDC_ADDRESS_BSC_TESTNET", "PANCAKESWAP_V3_QUOTER_BSC", "PANCAKESWAP_V3_ROUTER_BSC", "NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC"],
-    "cctp": ["CCTP_TOKEN_MESSENGER_BSC", "CCTP_MESSAGE_TRANSMITTER_ARC"],
-    "supabase": ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
-    "keys": ["AIG_ADMIN_WALLET_PRIVATE_KEY", "AIG_ADMIN_WALLET_ADDRESS", "DEPLOYER_PRIVATE_KEY"],
-    "bridge": ["BRIDGE_MODE"],
-    "revenue": ["AIG_REVENUE_POOL_ADDRESS"]
+    "v2_active": [
+      "NEXT_PUBLIC_BRIDGE_BACKEND",
+      "BRIDGE_BACKEND",
+      "NEXT_PUBLIC_SOURCE_CHAIN_ID",
+      "NEXT_PUBLIC_USDC_ADDRESS_SOURCE",
+      "NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE",
+      "NEXT_PUBLIC_ARC_CCTP_DOMAIN",
+      "ETHEREUM_SEPOLIA_RPC_URL",
+      "CCTP_MESSAGE_TRANSMITTER_ARC",
+      "AIG_ADMIN_WALLET_PRIVATE_KEY",
+      "AIG_ADMIN_WALLET_ADDRESS",
+      "ARC_TESTNET_RPC_URL"
+    ],
+    "v2_optional": [
+      "CIRCLE_IRIS_API_V2 (override default sandbox base)"
+    ],
+    "v1_rollback_only": [
+      "BSC_TESTNET_RPC_URL",
+      "USDC_ADDRESS_BSC_TESTNET",
+      "PANCAKESWAP_V3_ROUTER_BSC",
+      "PANCAKESWAP_V3_QUOTER_BSC",
+      "WBNB_ADDRESS_BSC",
+      "CCTP_TOKEN_MESSENGER_BSC",
+      "NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC",
+      "SWAP_ROUTER_ADDRESS_BSC",
+      "BRIDGE_MODE",
+      "CIRCLE_ATTESTATION_API"
+    ],
+    "supabase": [
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "SUPABASE_SERVICE_ROLE_KEY"
+    ],
+    "removed_in_phase06_partial": [
+      "KIT_KEY (@circle-fin/app-kit dropped per ADR)",
+      "ARC_CCTP_DOMAIN_ID=7 (was Polygon domain bug; v2 uses NEXT_PUBLIC_ARC_CCTP_DOMAIN=26)"
+    ]
+  },
+  "external": {
+    "PancakeSwap V3 (BSC Testnet)": "v1 only — Quoter + Router; not used by v2",
+    "Circle CCTPv2 (active)": "Sepolia source domain=0, Arc dest domain=26. Iris sandbox https://iris-api-sandbox.circle.com/v2. Fast Transfer allowance ~100k USDC available 30/05",
+    "Arc Network": "Settlement chain — USDC mint destination via MessageTransmitter 0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275",
+    "Vercel": "Frontend hosting; serverless function maxDuration=60 needed on /api/agent/execute for SSE pipeline"
   }
 }

@@ -726,6 +726,23 @@
       "status": "done",
       "why": "User needs a one-shot paste-ready Vercel checklist so the env flip is mechanical, not interpretive — and the doc had to catch up to Phase 03 e2e proof + Phase 06 partial cleanup.",
       "concerns": "(1) Phase 04 execution itself (paste env vars + redeploy + 4-step prod smoke) is USER step; I cannot access Vercel dashboard. (2) Exact PaymentPageV2 header wording not verified against the rendered UI — smoke gate now uses Sepolia-vs-BSC as the loose signal; tighten later if needed. (3) Did not add CIRCLE_IRIS_API_V2 to .env.example since default works on testnet sandbox."
+    },
+    {
+      "timestamp": "2026-05-30T11:50:00+07:00",
+      "type": "fix",
+      "title": "v2 prod brought online: pushed 8 commits, fixed SSE Vercel lifetime, surfaced missing admin key",
+      "what": "User completed Vercel env flip + redeploy but prod still failed at bridge step. Diagnosed in sequence: (1) origin/main was 8 commits behind local — Vercel was building stale code with v1 4-arg depositForBurn against v2 7-arg TokenMessenger contract (silent revert in OKX simulation, \"Third-party contract execution error\"). Pushed 7b3f335..0e9cf5f. (2) After push + auto-build, prod SSE stream got cut at ~2.3s after the \"bridging\" event — well before receiveMessage could send the Arc mint tx (verified by Arc admin nonce staying at 1). Root cause: route handler returned Response while runPipeline ran fire-and-forget — Vercel serverless tears down the function when handler returns, killing the background pipeline. Refactored execute/route.ts to anchor pipeline in ReadableStream.start() callback so Vercel keeps function alive until controller.close(). Also added maxDuration=60, runtime=nodejs, dynamic=force-dynamic route segment config; X-Accel-Buffering: no header to disable proxy buffering. Made receiveMessage non-blocking on Arc receipt (writeContract returns tx hash, waitForTransactionReceipt fires detached) so SSE response can close in ~2s. (3) After SSE refactor, prod now correctly delivered an error event: \"receiveMessage: AIG_ADMIN_WALLET_PRIVATE_KEY missing or malformed\". Vercel is missing the admin private key env var (or it has wrong name — user has PRIVATE_KEY and TEST_PRIVATE_KEY flagged \"Needs Attention\" but code reads AIG_ADMIN_WALLET_PRIVATE_KEY exactly). Salvageable test burn pending: 0x061ad3cafdb7844482e59e1ded5855aa9819620abaac05fc6601fb8e1e4e399a (Iris status complete; will mint instantly once env added + redeployed). Commits e46fe15 (route config + non-blocking receipt) + 013f43f (ReadableStream refactor) pushed.",
+      "files": [
+        "frontend/app/api/agent/execute/route.ts",
+        "frontend/lib/cctp.ts"
+      ],
+      "status": "done_with_concerns",
+      "commits": [
+        "e46fe15",
+        "013f43f"
+      ],
+      "why": "Phase 04 user-step in progress; needed prod end-to-end verification gated on Vercel actually running the new code AND completing the full SSE pipeline within serverless function lifetime.",
+      "concerns": "(1) BLOCKER: AIG_ADMIN_WALLET_PRIVATE_KEY missing on Vercel. User must add via dashboard (key value lives in local frontend/.env.local; never paste in chat). After add + redeploy, mint should run on first attempt — burn 0x061ad3ca... attestation is ready. (2) PRIVATE_KEY and TEST_PRIVATE_KEY env vars on Vercel show \"Needs Attention\" — likely wrong-named historical leftovers; code reads AIG_ADMIN_WALLET_PRIVATE_KEY specifically. After Phase 04 success, audit and remove. (3) Production \"confirmed\" SSE event now means \"mint tx submitted\" not \"mint tx mined\" — client/dashboard should poll Arc explorer or re-check Supabase session for finality. (4) Vercel x-vercel-id sin1::iad1::... shows Singapore→Virginia routing — acceptable latency for testnet demo."
     }
   ]
 }
