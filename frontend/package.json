@@ -9,8 +9,6 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@circle-fin/adapter-viem-v2": "^1.11.1",
-    "@circle-fin/app-kit": "^1.6.1",
     "@supabase/supabase-js": "^2.99.1",
     "@tanstack/react-query": "^5.90.21",
     "next": "16.1.6",
