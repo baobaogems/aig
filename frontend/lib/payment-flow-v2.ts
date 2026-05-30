@@ -35,12 +35,14 @@ const USDC_DECIMALS = 6;
 const MAX_FEE_PER_GAS = parseGwei("50");
 const MAX_PRIORITY_FEE_PER_GAS = parseGwei("2");
 
-// CCTPv2 depositForBurn extra args (vs v1):
+// CCTPv2 depositForBurn extra args (vs v1's 4):
 // - destinationCaller = bytes32(0): anyone (our admin relay) can call receiveMessage on Arc
-// - maxFee = 0n: only consumed by Fast Transfer (threshold 2000); Standard ignores it
-// - minFinalityThreshold = 1000: Standard transfer, waits hard finality, no extra fee
+// - minFinalityThreshold = 1000: Fast Transfer — Circle attests at the "confirmed" level
+//   (~30-90s) instead of waiting ~15min for Sepolia hard finality (2000 = Standard).
+// - maxFee (per-tx, derived from amount in handlePay): MUST be > 0 to qualify as Fast,
+//   else Circle downgrades to Standard. Circle's actual Sepolia->Arc rate is ~1bps; this
+//   is the ceiling we're willing to pay, not the charged amount.
 const DESTINATION_CALLER_ANY = `0x${"00".repeat(32)}` as `0x${string}`;
-const MAX_FEE = 0n;
 const MIN_FINALITY_THRESHOLD = 1000;
 
 export interface PaymentFlowV2Args {
@@ -120,6 +122,9 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
 
       const amountWei = parseUnits(targetUSDC.toFixed(USDC_DECIMALS), USDC_DECIMALS);
       const mintRecipient = pad(merchantWallet, { size: 32 }) as `0x${string}`;
+      // Fast Transfer fee ceiling: 0.1% of amount (actual charge ~0.01%/1bps). Must be
+      // > 0 or Circle downgrades to Standard (~15min finality). Floor 1 unit for dust.
+      const maxFee = amountWei / 1000n || 1n;
 
       // Step 1: approve TokenMessenger to spend the customer's USDC.
       // chainId pinned so wagmi estimates against the right chain.
@@ -152,7 +157,7 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
           mintRecipient,
           USDC,
           DESTINATION_CALLER_ANY,
-          MAX_FEE,
+          maxFee,
           MIN_FINALITY_THRESHOLD,
         ],
         gas: 250_000n,
