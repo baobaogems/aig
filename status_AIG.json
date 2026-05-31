@@ -770,6 +770,23 @@
       "status": "done",
       "why": "v2.0-alpha tag gate for Stablecoins Commerce Stack Challenge submission; cross-AI canon now reflects truth across JSON anchors + markdown docs.",
       "concerns": "(1) Phase 07 plan called for npm run smoke:appkit script and App Kit framing in brand-guidelines — both moot post-ADR (App Kit dropped). (2) brand-guidelines.md not touched: brand voice is tech-stack-agnostic. (3) Day 6 X post line 708 in baobao-gems-x-style.md still references v1 architecture as historical; left intact (post is published, frozen). (4) Phase 06 full still pending 48h prod smoke clock from 2026-05-30 12:00."
+    },
+    {
+      "timestamp": "2026-05-31T10:35:00+07:00",
+      "type": "feature",
+      "title": "banner-cli tool added + Builder Tap Su Telegram cover",
+      "what": "Built tools/banner/banner-cli.py — self-contained Pillow banner generator for @baobao_gems standard format (dark theme, white headline + red *...* emphasis, optional yellow eyebrow via pilmoji for color emoji, logo centered top, handle bottom-right). Bundled Montserrat Bold/Medium/Regular TTFs (Julieta Ulanovsky repo) + real baobao_logo.png (3375x3375). Iterated 4 layouts before landing on user-approved variant: (1) initial PIL light theme, (2) full dark-format-chuan with sub-card + amber bar, (3) without sub-card, (4) centered logo + no eyebrow/bar. Final cover at assets/banners/builder-tapsu-cover.png (1080x1080, ~55 KB) for the Telegram channel. Cleanup: removed legacy scripts/banner-cli.py + scripts/fonts/ (superseded), removed assets/banners/builder-tapsu/_html/ (abandoned chrome-devtools path), removed root test.png artifact. Dependencies installed system python3: Pillow 12.2.0 + pilmoji (Twemoji sprite fallback for color emoji over Montserrat).",
+      "files": [
+        "tools/banner/banner-cli.py",
+        "tools/banner/Montserrat-Bold.ttf",
+        "tools/banner/Montserrat-Medium.ttf",
+        "tools/banner/Montserrat-Regular.ttf",
+        "tools/banner/baobao_logo.png",
+        "assets/banners/builder-tapsu-cover.png"
+      ],
+      "status": "done",
+      "why": "User needs reusable branded-banner tool for Telegram channel cover (and future X/IG posts). Iteration produced a flexible CLI plus the first concrete deliverable (Builder Tap Su cover).",
+      "concerns": "(1) baobao_logo.png at 3375x3375 is ~6 MB; large but it is the source-of-truth brand asset, committed for reproducibility. (2) Font files ~1.3 MB total in repo; tradeoff for zero-network-fetch self-contained tool. (3) Old PIL light-theme variant (scripts/banner-cli.py) removed — if light theme is wanted back, add a --theme flag to current tool."
     }
   ]
 }
