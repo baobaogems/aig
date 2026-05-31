@@ -2,15 +2,15 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "version": "1.0.0",
-  "lastUpdated": "2026-05-30",
+  "lastUpdated": "2026-05-31",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
   "currentState": {
-    "phase": "v2.0-alpha tagged — Phase 03+04+06-partial+07 DONE; Phase 06 full gated on 48h prod smoke (clock from 2026-05-30 12:00)",
+    "phase": "v2.0-alpha COMPLETE — Phase 03+04+06(full)+07 all done; v1 stack removed from main; rollback via git revert + v1.0 tag preserved",
     "branch": "main",
     "production": "Deployed on Vercel — v2 (CCTPv2 Sepolia→Arc) active path; first prod e2e payment 30/05 Arc mint 0x240d90f7",
     "merchants": 0,
     "users": 0,
-    "blockerForGrowth": "None on the tech path — Phase 06 full + Phase 07 cleanup/docs gated by self-imposed 48h smoke. GTM remains: no traction yet, need first merchant."
+    "blockerForGrowth": "None on tech path. GTM: no traction yet, need first merchant + content/launch motion."
   },
   "phases": [
     {
@@ -158,10 +158,10 @@
     {
       "id": "v2-cctp-rebuild",
       "name": "AIG v2 — Direct CCTP rebuild (App Kit pivot)",
-      "status": "in_progress",
+      "status": "complete",
       "priority": "P0",
       "startDate": "2026-05-25",
-      "endDate": null,
+      "endDate": "2026-05-31",
       "planFile": "plans/260525-2023-aig-v2-app-kit-rebuild/plan.md",
       "subPhases": [
         {
@@ -201,8 +201,8 @@
         {
           "id": 6,
           "name": "Cleanup v1 dead code",
-          "status": "partial",
-          "note": "App Kit dead code removed 30/05 (commit 836b584); v1 stack deletes still gated on 48h Vercel v2 smoke."
+          "status": "complete",
+          "note": "FULL done 31/05: deleted contracts/, mock-bridge, v1 PaymentPage, /api/agent/quote, FeeBreakdownCard, BRIDGE_BACKEND dispatch, bscTestnet chain. Trimmed agent.ts to v2-only Supabase helpers. tsc + build green."
         },
         {
           "id": 7,

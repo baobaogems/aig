@@ -1,6 +1,38 @@
 # Phase 06 — v1 cleanup
 
-**Priority:** P0 (for v2 ship) · **Status:** PARTIAL DONE (30/05) — App Kit dead code shipped; v1 stack waits on Vercel flip · **Target day:** 01-03/06/2026
+**Priority:** P0 (for v2 ship) · **Status:** ✅ FULL DONE (31/05) — App Kit dead code (partial 30/05) + v1 stack rip-out (full 31/05) · **Target day:** 30-31/05/2026
+
+## Full done — 31/05 (gate overridden by user)
+
+Self-imposed 48h smoke gate not formally met (~22h elapsed, 1/3 prod payments verified) but user authorized full deletion. Rollback now requires `git revert` + Vercel redeploy (~5 min) instead of env flip (~2 min); v1.0 git tag still preserves the pre-pivot codebase.
+
+**Deleted:**
+- `contracts/` entire dir (Foundry, SwapRouter.sol, deploy scripts, forge-std submodule, .gitmodules entry)
+- `scripts/test-cctp-domain7.ts`, `scripts/test-e2e-admin-relay.ts`
+- `frontend/lib/mock-bridge.ts` (v1 admin relay helpers)
+- `frontend/app/api/agent/quote/route.ts` (v1-only; returned 500 in v2 mode)
+- `frontend/components/fee-breakdown-card.tsx` (v1-only quote display, orphan after PaymentPage v1 removal)
+
+**Refactored to v2-only:**
+- `frontend/app/api/agent/execute/route.ts` — dropped `BRIDGE_BACKEND`/`BRIDGE_MODE` dispatch + v1 branch; ~85 lines vs 200+
+- `frontend/app/pay/[id]/page.tsx` — dropped v1 `PaymentPage` component + dispatcher; renders `PaymentPageV2` only; ~118 lines vs 348
+- `frontend/lib/cctp.ts` — dropped `extractMessage*`, v1 `pollAttestation`, `V1_BSC_SOURCE`, `SourceChainConfig`, `MESSAGE_SENT_TOPIC`; keeps `pollAttestationV2` + `receiveMessage` (non-blocking receipt)
+- `frontend/lib/agent.ts` — dropped `fetchSpotPrice`, `calculateSwapParams`, PancakeSwap Quoter ABI, `SwapParams`, `AgentRequest`; keeps `updateSessionStatus` (signature no longer takes `swapParams` arg) + `BridgeMode`/`SessionStatus` types + Supabase singleton
+- `frontend/components/providers.tsx` — dropped `bscTestnet` chain; wagmi config is sepolia-only
+
+**Env (frontend/.env.local — gitignored):**
+- Removed: `BRIDGE_BACKEND`, `NEXT_PUBLIC_BRIDGE_BACKEND`, `BRIDGE_MODE`, `BSC_TESTNET_RPC_URL`, `USDC_ADDRESS_BSC_TESTNET`, `WBNB_ADDRESS_BSC`, `CCTP_TOKEN_MESSENGER_BSC`, `PANCAKESWAP_V3_ROUTER_BSC`, `PANCAKESWAP_V3_QUOTER_BSC`, `SWAP_ROUTER_ADDRESS_BSC`, `NEXT_PUBLIC_SWAP_ROUTER_ADDRESS_BSC`, `ARC_CCTP_DOMAIN_ID`, `AIG_REVENUE_POOL_ADDRESS`, `TEST_PRIVATE_KEY`, `CIRCLE_ATTESTATION_API`
+- 14 vars left (Supabase + Arc + Sepolia source + admin wallet)
+
+**Root `package.json`:** removed `test:cctp` script.
+
+**Verification:**
+- `tsc --noEmit` clean
+- `npm run build` green (7 routes — was 8 with /api/agent/quote)
+- `grep -rln "SwapRouter|cctp(v1)?|mock-bridge|BRIDGE_(MODE|BACKEND)|pollSwapCompleted|adminRelay|extractMessage|V1_BSC_SOURCE|SourceChainConfig|bscTestnet|FeeBreakdownCard" frontend/{lib,app,components}` → 0 hits
+- Vercel still has stale v1 env vars (noop now; recommend manual cleanup for hygiene)
+
+## Partial done — 30/05 (safe-now subset)
 
 ## Partial done — 30/05 (safe-now subset)
 
