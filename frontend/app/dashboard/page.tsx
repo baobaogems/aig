@@ -31,7 +31,7 @@ export default function DashboardPage() {
   const { disconnect } = useDisconnect();
 
   const [mounted, setMounted] = useState(false);
-  const [targetUSDC] = useState<number>(50);
+  const [targetUSDC, setTargetUSDC] = useState<number>(5);
   const [qrKey, setQrKey] = useState(0);
   const qrCardRef = useRef<HTMLDivElement>(null);
   const [points, setPoints] = useState<PointsData | null>(null);
@@ -192,6 +192,43 @@ export default function DashboardPage() {
               </div>
               {/* QR card body */}
               <div className="px-6 py-6 flex flex-col items-center">
+                {/* Amount picker — retail clerk sets price per customer */}
+                <div className="w-full mb-5">
+                  <label className="block text-[10px] uppercase tracking-wider text-[#666] mb-2 font-[family-name:var(--font-jetbrains-mono)]">
+                    Amount (USDC)
+                  </label>
+                  <div className="relative mb-3">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666] text-lg font-medium pointer-events-none">$</span>
+                    <input
+                      type="number"
+                      min="0.01"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={targetUSDC}
+                      onChange={(e) => {
+                        const v = parseFloat(e.target.value);
+                        setTargetUSDC(Number.isFinite(v) && v > 0 ? v : 0.01);
+                      }}
+                      className="w-full pl-8 pr-3 py-2.5 text-2xl font-semibold text-[#111] bg-white border border-[#CBCCC9] rounded-md focus:outline-none focus:border-[#FF8400] focus:ring-1 focus:ring-[#FF8400]"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 5, 10, 20, 50, 100].map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        onClick={() => setTargetUSDC(v)}
+                        className={`flex-1 min-w-[42px] px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
+                          targetUSDC === v
+                            ? "bg-[#111] text-white border-[#111]"
+                            : "bg-white text-[#111] border-[#CBCCC9] hover:bg-[#F2F3F0]"
+                        }`}
+                      >
+                        ${v}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {address && (
                   <QRCodeGenerator key={qrKey} merchantWallet={address} targetUSDC={targetUSDC} />
                 )}
