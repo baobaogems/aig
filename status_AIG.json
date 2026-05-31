@@ -814,6 +814,16 @@
       "status": "done_with_concerns",
       "why": "User wanted full Phase 06 immediately rather than waiting another ~24h for the 48h smoke gate. Tradeoff accepted: rollback now requires git revert + redeploy rather than 2-min env flip.",
       "concerns": "(1) Rollback fallback degraded from env-flip (2 min) to git revert + Vercel redeploy (~5 min) since v1 code no longer exists in tree. v1.0 git tag still preserves the full v1 codebase if needed. (2) Vercel still has stale v1 env vars (BRIDGE_BACKEND=v2, SWAP_ROUTER_*, BSC_*, etc.). They are now NOOPs — code does not read them — but recommend manual cleanup via Vercel dashboard for hygiene. Non-blocking. (3) Smoke gate metrics not formally hit before deletion: only 1 prod payment confirmed (0x240d90f7) vs gate of 3, and ~22h elapsed vs 48h required. Risk: an issue discovered in prod after this push needs git revert. (4) Admin private key still not rotated (testnet, low urgency)."
+    },
+    {
+      "timestamp": "2026-05-31T23:20:00+07:00",
+      "type": "ops",
+      "title": "Post-Phase 06 cleanup: salvaged orphan burn + resolved 0.36% fee mystery",
+      "what": "(1) Salvaged orphan Standard burn 0x43182ad74e9297894e1fdce8d7ecc7ad2fce41c33c18080b7ad9c6866b97f081 (1 USDC pending since 30/05). POST /api/agent/execute -> SSE confirmed Arc mint 0xb42c1faba0a83e5176d0397849e7712d88905a961e73c5fe41e59052cf24bceb. Standard burn finalized fine -- our pollAttestationV2 works for both Fast and Standard messages from Iris v2 endpoint. (2) Decoded the actual CCTPv2 fee structure from Iris message body + Arc mint receipt: amount=1_000_000 units, maxFee=1000 (our ceiling), feeExecuted=100 = 1bps exactly as Circle API minimumFee said. Arc mint emits 2 USDC Transfer logs: 999,900 units (0.9999 USDC) to merchant + 100 units (0.0001 USDC) to Circle fee recipient 0xc17d06b6.... The earlier 0.36% observation was a measurement artifact (initial Arc merchant balance was not exactly 40.000000 -- residue from earlier test activity). Confirmed: Circle CCTPv2 protocol fee is 1bps on Sepolia->Arc route, matches docs.",
+      "files": [],
+      "status": "done",
+      "why": "Wrap up loose ends from Phase 06 full + remove the open question about fee structure before any mainnet planning.",
+      "concerns": "(1) Vercel env still has 15+ stale v1 vars (BRIDGE_BACKEND, SWAP_ROUTER_*, BSC_*, PANCAKESWAP_*, BRIDGE_MODE, CIRCLE_ATTESTATION_API, etc.) -- all NOOPs in current build. Manual cleanup via dashboard recommended for hygiene. (2) Admin wallet 0x0809a724... private key still not rotated -- testnet, low urgency, but key leaked twice via IDE selection share in chat. (3) Vercel auto-deploy from git push may be slow; /api/agent/quote still returning old 400 response (stale lambda). Force redeploy if immediate prod sync needed."
     }
   ]
 }
