@@ -787,6 +787,33 @@
       "status": "done",
       "why": "User needs reusable branded-banner tool for Telegram channel cover (and future X/IG posts). Iteration produced a flexible CLI plus the first concrete deliverable (Builder Tap Su cover).",
       "concerns": "(1) baobao_logo.png at 3375x3375 is ~6 MB; large but it is the source-of-truth brand asset, committed for reproducibility. (2) Font files ~1.3 MB total in repo; tradeoff for zero-network-fetch self-contained tool. (3) Old PIL light-theme variant (scripts/banner-cli.py) removed — if light theme is wanted back, add a --theme flag to current tool."
+    },
+    {
+      "timestamp": "2026-05-31T11:00:00+07:00",
+      "type": "refactor",
+      "title": "Phase 06 FULL — v1 stack ripped out, codebase collapsed to v2-only",
+      "what": "User overrode the self-imposed 48h smoke gate (only ~22h elapsed, 1/3 prod payments verified) to push through the full v1 deletion. Rollback fallback now switches from \"env flip 2min\" to \"git revert\". Deletions: contracts/ entire dir + .gitmodules submodule entry; scripts/test-cctp-domain7.ts + test-e2e-admin-relay.ts; frontend/lib/mock-bridge.ts; frontend/app/api/agent/quote/route.ts; frontend/components/fee-breakdown-card.tsx. Refactors: execute/route.ts collapsed to v2-only (no BRIDGE_BACKEND dispatch, no v1 branch, ~85 lines vs 200+); pay/[id]/page.tsx collapsed to PaymentPageV2 only (~118 lines vs 348); lib/cctp.ts collapsed to pollAttestationV2 + receiveMessage only (no extract*, no v1 pollAttestation, no V1_BSC_SOURCE/SourceChainConfig); lib/agent.ts trimmed to updateSessionStatus + types + Supabase singleton (no fetchSpotPrice, no calculateSwapParams, no PancakeSwap Quoter ABI); components/providers.tsx dropped bscTestnet chain (wagmi now sepolia-only). Env: trimmed v1 vars from frontend/.env.local (gitignored, 14 vars left: AIG_ADMIN_*, ARC_*, CCTP_MESSAGE_TRANSMITTER_ARC, ETHEREUM_SEPOLIA_RPC_URL, NEXT_PUBLIC_{ARC_CCTP_DOMAIN,CCTP_TOKEN_MESSENGER_SOURCE,SOURCE_CHAIN_ID,USDC_ADDRESS_SOURCE,SUPABASE_*}, SUPABASE_SERVICE_ROLE_KEY, USDC_ADDRESS_ARC_TESTNET). Root package.json: dropped test:cctp script. Verified: tsc --noEmit clean; npm run build green (7 routes — quote route gone); grep for v1 keywords across frontend/{lib,app,components} returns 0 hits.",
+      "files": [
+        "contracts/* (deleted)",
+        ".gitmodules (deleted)",
+        "scripts/test-cctp-domain7.ts (deleted)",
+        "scripts/test-e2e-admin-relay.ts (deleted)",
+        "frontend/lib/mock-bridge.ts (deleted)",
+        "frontend/app/api/agent/quote/route.ts (deleted)",
+        "frontend/components/fee-breakdown-card.tsx (deleted)",
+        "frontend/app/api/agent/execute/route.ts",
+        "frontend/app/pay/[id]/page.tsx",
+        "frontend/lib/cctp.ts",
+        "frontend/lib/agent.ts",
+        "frontend/lib/chains.ts",
+        "frontend/lib/cctp-abi.ts",
+        "frontend/components/providers.tsx",
+        "frontend/.env.local",
+        "package.json"
+      ],
+      "status": "done_with_concerns",
+      "why": "User wanted full Phase 06 immediately rather than waiting another ~24h for the 48h smoke gate. Tradeoff accepted: rollback now requires git revert + redeploy rather than 2-min env flip.",
+      "concerns": "(1) Rollback fallback degraded from env-flip (2 min) to git revert + Vercel redeploy (~5 min) since v1 code no longer exists in tree. v1.0 git tag still preserves the full v1 codebase if needed. (2) Vercel still has stale v1 env vars (BRIDGE_BACKEND=v2, SWAP_ROUTER_*, BSC_*, etc.). They are now NOOPs — code does not read them — but recommend manual cleanup via Vercel dashboard for hygiene. Non-blocking. (3) Smoke gate metrics not formally hit before deletion: only 1 prod payment confirmed (0x240d90f7) vs gate of 3, and ~22h elapsed vs 48h required. Risk: an issue discovered in prod after this push needs git revert. (4) Admin private key still not rotated (testnet, low urgency)."
     }
   ]
 }
