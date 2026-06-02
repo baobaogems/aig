@@ -48,7 +48,7 @@ export const ERC20_APPROVE_ABI = [
 // (charges maxFee). Demo uses standard. destinationCaller=bytes32(0) lets
 // anyone call receiveMessage on Arc (our admin relay does it).
 // mintRecipient is bytes32 (left-pad EVM address with zeros).
-// destinationDomain: Arc Testnet = 26 (NOT 7 — v1 SwapRouter constant was wrong).
+// destinationDomain: Arc Testnet = 26.
 export const CCTP_TOKEN_MESSENGER_ABI = [
   {
     name: "depositForBurn",

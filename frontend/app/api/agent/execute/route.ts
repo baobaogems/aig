@@ -1,37 +1,23 @@
 // =============================================================================
-// /app/api/agent/execute/route.ts — SSE execution endpoint
+// /app/api/agent/execute/route.ts — SSE execution endpoint (v2-only)
 //
 // POST /api/agent/execute
 // Body: { sessionId, swapTxHash, merchantWallet, targetUSDC }
 // Response: Server-Sent Events stream
 //
-// Accepts customer's on-chain swap tx hash, then orchestrates the bridge
-// path (CCTP or ADMIN_RELAY) and streams real-time status events.
+// Customer's depositForBurn tx on Ethereum Sepolia → server polls Circle Iris
+// v2 attestation → admin wallet calls receiveMessage on Arc MessageTransmitter.
 //
-// SSE events emitted: swap_executing → bridging → confirmed | bridge_delayed | error
+// SSE events emitted: swap_executing → bridging → confirmed | error
 // =============================================================================
 
 import { NextRequest } from "next/server";
-import { updateSessionStatus, type BridgeMode } from "@/lib/agent";
-import {
-  extractMessageHash,
-  extractRawMessage,
-  pollAttestation,
-  pollAttestationV2,
-  receiveMessage,
-  V1_BSC_SOURCE,
-} from "@/lib/cctp";
-import { pollSwapCompleted, adminRelay } from "@/lib/mock-bridge";
+import { updateSessionStatus } from "@/lib/agent";
+import { pollAttestationV2, receiveMessage } from "@/lib/cctp";
 import { awardPoints } from "@/lib/points";
 
-// Strangler-fig switch (server-side mirror of NEXT_PUBLIC_BRIDGE_BACKEND).
-// v1 = SwapRouter → BSC CCTP/ADMIN_RELAY (legacy). v2 = customer signs CCTP burn
-// on Ethereum Sepolia directly; server polls Circle attestation + mints on Arc.
-const BRIDGE_BACKEND = process.env.BRIDGE_BACKEND ?? "v1";
-const BRIDGE_MODE = (process.env.BRIDGE_MODE as BridgeMode) ?? "CCTP";
-
-// Vercel route config: SSE stream needs to stay open long enough for Iris
-// attestation poll + Arc mint submit. Default streaming timeout is short
+// Vercel route segment config: SSE stream stays open for ~Iris attestation
+// (~30-90s Fast) + Arc mint submission. Default streaming timeout is too short
 // (~3-5s observed); 60s is the Pro plan ceiling and ample for the fast path.
 export const maxDuration = 60;
 export const runtime = "nodejs";
@@ -39,11 +25,11 @@ export const dynamic = "force-dynamic";
 
 const TX_HASH_RE = /^0x[0-9a-fA-F]{64}$/;
 const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+const SEPOLIA_DOMAIN = 0;
 
 export async function POST(req: NextRequest) {
   const { sessionId, swapTxHash, merchantWallet, targetUSDC } = await req.json();
 
-  // Input validation — these flow into blockchain calls and DB queries
   if (!sessionId || typeof sessionId !== "string") {
     return Response.json({ error: "sessionId required" }, { status: 400 });
   }
@@ -58,10 +44,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ReadableStream + start() keeps the pipeline running inside Vercel's
-  // serverless function lifetime. Fire-and-forget after `return new Response()`
-  // gets killed early on Vercel (observed ~2-3s) — the runtime closes the
-  // stream once the handler returns. Anchoring the pipeline in start() ties
-  // it to the stream's lifecycle until controller.close() runs.
+  // serverless function lifetime (tied to controller.close()). Fire-and-forget
+  // after `return new Response()` gets killed by the runtime at ~2-3s.
   const stream = new ReadableStream({
     async start(controller) {
       const enc = new TextEncoder();
@@ -117,85 +101,32 @@ async function runPipeline({
   targetUSDC: number;
   emit: (event: string, data: object) => Promise<void>;
 }) {
-    // v2 (strangler-fig): customer burned CCTP directly on Ethereum Sepolia.
-    // Server polls + mints on Arc, same pattern as v1 CCTP path but Eth Sepolia source.
-    if (BRIDGE_BACKEND === "v2") {
-      await updateSessionStatus(sessionId, "SWAP_EXECUTING", "CCTP");
-      await emit("swap_executing", { txHash: swapTxHash, source: "eth-sepolia" });
+  await updateSessionStatus(sessionId, "SWAP_EXECUTING", "CCTP");
+  await emit("swap_executing", { txHash: swapTxHash, source: "eth-sepolia" });
 
-      await updateSessionStatus(sessionId, "BRIDGING");
-      await emit("bridging", { mode: "CCTP", source: "eth-sepolia" });
+  await updateSessionStatus(sessionId, "BRIDGING");
+  await emit("bridging", { mode: "CCTP", source: "eth-sepolia" });
 
-      // CCTPv2: Iris v2 returns BOTH raw message + attestation by (sourceDomain, txHash)
-      // lookup, so we skip the v1 extractMessage* path entirely. Sepolia source = domain 0.
-      // Fast Transfer attests at "confirmed" level (~30-90s); 180s gives headroom.
-      const SEPOLIA_DOMAIN = 0;
-      const { message: rawMessage, attestation } = await pollAttestationV2(
-        swapTxHash,
-        SEPOLIA_DOMAIN,
-        180_000,
-      );
-      const { txHash: arcTxHash } = await receiveMessage(rawMessage, attestation);
+  // Iris v2 returns both raw message + attestation by (sourceDomain, txHash).
+  // Fast Transfer attests at "confirmed" level (~30-90s); 180s gives headroom.
+  const { message, attestation } = await pollAttestationV2(
+    swapTxHash,
+    SEPOLIA_DOMAIN,
+    180_000,
+  );
+  const { txHash: arcTxHash } = await receiveMessage(message, attestation);
 
-      await updateSessionStatus(sessionId, "CONFIRMED", "CCTP");
-      await emit("confirmed", { txHash: arcTxHash, bridgeMode: "CCTP", backend: "v2" });
+  await updateSessionStatus(sessionId, "CONFIRMED", "CCTP");
+  await emit("confirmed", { txHash: arcTxHash, bridgeMode: "CCTP", backend: "v2" });
 
-      // Fall through to points award (shared with v1 path below)
-    } else {
-
-    await updateSessionStatus(sessionId, "SWAP_EXECUTING", BRIDGE_MODE);
-    await emit("swap_executing", { txHash: swapTxHash });
-
-    await updateSessionStatus(sessionId, "BRIDGING");
-    await emit("bridging", { mode: BRIDGE_MODE });
-
-    if (BRIDGE_MODE === "CCTP") {
-      // PRIMARY PATH: BSC burn → Circle attestation → Arc mint (default v1 BSC source)
-      const [messageHash, rawMessage] = await Promise.all([
-        extractMessageHash(swapTxHash, V1_BSC_SOURCE),
-        extractRawMessage(swapTxHash, V1_BSC_SOURCE),
-      ]);
-
-      const attestation = await pollAttestation(messageHash, 120_000);
-      const { txHash: arcTxHash } = await receiveMessage(rawMessage, attestation);
-
-      await updateSessionStatus(sessionId, "CONFIRMED", "CCTP");
-      await emit("confirmed", { txHash: arcTxHash, bridgeMode: "CCTP" });
-    } else {
-      // FALLBACK PATH: poll BSC SwapCompleted event → admin wallet relay on Arc
-      const swapEvent = await pollSwapCompleted(sessionId, swapTxHash);
-
-      if (!swapEvent) {
-        await updateSessionStatus(sessionId, "BRIDGE_DELAYED");
-        await emit("bridge_delayed", { reason: "SwapCompleted event not found within 30s" });
-        return;
-      }
-
-      const { txHash: relayTxHash } = await adminRelay(
-        merchantWallet,
-        swapEvent.netUSDCAmount,
-        sessionId
-      );
-
-      if (!relayTxHash) {
-        // Idempotency guard fired — session already processed
-        return;
-      }
-
-      await updateSessionStatus(sessionId, "CONFIRMED", "ADMIN_RELAY");
-      await emit("confirmed", { txHash: relayTxHash, bridgeMode: "ADMIN_RELAY" });
-    }
-
-    } // end v1 branch
-
-    // Award points after CONFIRMED
-    // TODO: fetch merchantCreatedAt, isFirstChain, isReferred from DB in Phase 2
-    await awardPoints(
-      merchantWallet,
-      sessionId,
-      targetUSDC,
-      new Date().toISOString(),
-      false,
-      false
-    );
+  // Award points after CONFIRMED
+  // TODO: fetch merchantCreatedAt, isFirstChain, isReferred from DB in Phase 2
+  await awardPoints(
+    merchantWallet,
+    sessionId,
+    targetUSDC,
+    new Date().toISOString(),
+    false,
+    false,
+  );
 }

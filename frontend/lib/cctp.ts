@@ -1,140 +1,23 @@
 // =============================================================================
-// cctp.ts — CCTP helper (primary bridge path)
-// Uses Circle BridgeKit / CCTP contracts directly
+// cctp.ts — CCTPv2 helpers (Sepolia → Arc)
 //
-// Activated when: BRIDGE_MODE=CCTP (Domain 7 smoke test PASS)
-// Arc Testnet CCTP Domain ID: 7
+// v2 active path. Iris v2 returns BOTH raw message + attestation by
+// (sourceDomain, txHash) lookup, so no on-chain extraction is needed.
 // =============================================================================
 
 import {
   createPublicClient,
   createWalletClient,
   http,
-  decodeAbiParameters,
-  keccak256,
-  type Chain,
 } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { bscTestnet } from "viem/chains";
 import { getArcChain } from "./chains";
-
-// Circle CCTP MessageSent(bytes) topic0 — precomputed keccak256
-// keccak256("MessageSent(bytes)") = 0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036
-const MESSAGE_SENT_TOPIC =
-  "0x8c5261668696ce22758910d05bab8f186d6eb247ceac2af2e82c7dc17669b036" as `0x${string}`;
-
-// Circle Attestation API response shape
-interface AttestationResponse {
-  status: "complete" | "pending_confirmations";
-  attestation: string | null;
-}
-
-// -------------------------------------------------------------------------
-// extractMessageBytesFromReceipt (internal)
-//
-// Fetches BSC Testnet tx receipt and extracts the raw CCTP message bytes
-// from the MessageSent(bytes) event log. Single RPC call — used by both
-// extractMessageHash() and extractRawMessage() to avoid duplicate fetches.
-// -------------------------------------------------------------------------
-// Source-chain config — which chain the customer's burn tx happened on.
-// v1 = BSC Testnet (existed but was dead code), v2 = Ethereum Sepolia.
-export interface SourceChainConfig {
-  chain: Chain;
-  rpcUrl: string;
-}
-
-// Convenience builders for the two real source chains AIG knows about.
-// Phase 03 adds Eth Sepolia for the v2 CCTP path; BSC stays for v1 compat.
-export const V1_BSC_SOURCE: SourceChainConfig = {
-  chain: bscTestnet,
-  rpcUrl: process.env.BSC_TESTNET_RPC_URL ?? "",
-};
-
-async function extractMessageBytesFromReceipt(
-  txHash: string,
-  source: SourceChainConfig = V1_BSC_SOURCE,
-): Promise<`0x${string}`> {
-  const client = createPublicClient({
-    chain: source.chain,
-    transport: http(source.rpcUrl),
-  });
-
-  const receipt = await client.waitForTransactionReceipt({
-    hash: txHash as `0x${string}`,
-    timeout: 60_000,
-  });
-
-  const msgLog = receipt.logs.find(
-    (l) => l.topics[0]?.toLowerCase() === MESSAGE_SENT_TOPIC.toLowerCase()
-  );
-
-  if (!msgLog) {
-    throw new Error(`extractMessageBytes: MessageSent log not found in tx ${txHash}`);
-  }
-
-  // Log data is ABI-encoded: abi.encode(bytes message)
-  const [messageBytes] = decodeAbiParameters([{ type: "bytes" }], msgLog.data);
-  return messageBytes as `0x${string}`;
-}
-
-// -------------------------------------------------------------------------
-// extractMessageHash / extractRawMessage
-//
-// Returns keccak256(messageBytes) and raw bytes respectively.
-// v1-only helper — v2 reads message + attestation directly from Iris v2.
-// -------------------------------------------------------------------------
-export async function extractMessageHash(
-  txHash: string,
-  source: SourceChainConfig = V1_BSC_SOURCE,
-): Promise<string> {
-  const messageBytes = await extractMessageBytesFromReceipt(txHash, source);
-  return keccak256(messageBytes);
-}
-
-export async function extractRawMessage(
-  txHash: string,
-  source: SourceChainConfig = V1_BSC_SOURCE,
-): Promise<string> {
-  return extractMessageBytesFromReceipt(txHash, source);
-}
-
-// -------------------------------------------------------------------------
-// pollAttestation
-//
-// Polls Circle Attestation API until attestation is available or timeout.
-// Called after depositForBurn() tx is confirmed on BSC Testnet.
-// -------------------------------------------------------------------------
-export async function pollAttestation(
-  messageHash: string,
-  timeoutMs = 120_000 // PRD F-002: 120s timeout before BRIDGE_DELAYED
-): Promise<string> {
-  const apiBase = process.env.CIRCLE_ATTESTATION_API;
-  if (!apiBase) throw new Error("CIRCLE_ATTESTATION_API not set");
-
-  const deadline = Date.now() + timeoutMs;
-  const pollInterval = 5_000; // 5s between polls
-
-  while (Date.now() < deadline) {
-    const res = await fetch(`${apiBase}/${messageHash}`);
-    if (res.ok) {
-      const data: AttestationResponse = await res.json();
-      if (data.status === "complete" && data.attestation) {
-        return data.attestation;
-      }
-    }
-    await new Promise((r) => setTimeout(r, pollInterval));
-  }
-
-  throw new Error(`pollAttestation: timeout after ${timeoutMs}ms for ${messageHash}`);
-}
 
 // -------------------------------------------------------------------------
 // pollAttestationV2 (CCTPv2)
 //
-// Iris v2 indexes messages by (sourceDomain, transactionHash) — NOT by
-// messageHash like v1. Single endpoint returns both the raw message bytes
-// AND the attestation signature, so v2 callers skip the on-chain
-// extractMessageHash/extractRawMessage step entirely.
+// Iris v2 indexes messages by (sourceDomain, transactionHash). Single
+// endpoint returns both the raw message bytes AND the attestation signature.
 // Sandbox base for testnet; swap to https://iris-api.circle.com/v2 for mainnet.
 // -------------------------------------------------------------------------
 const IRIS_V2_BASE =
@@ -175,12 +58,13 @@ export async function pollAttestationV2(
 // -------------------------------------------------------------------------
 // receiveMessage
 //
-// Calls MessageTransmitter.receiveMessage() on Arc Testnet to mint USDC.
-// Called after attestation is confirmed via pollAttestation().
+// Admin wallet calls MessageTransmitter.receiveMessage on Arc to mint USDC.
+// Returns Arc txHash as soon as writeContract resolves; waitForTransactionReceipt
+// fires detached so the SSE response can close inside Vercel's function window.
 // -------------------------------------------------------------------------
 export async function receiveMessage(
   message: string,
-  attestation: string
+  attestation: string,
 ): Promise<{ txHash: string }> {
   const pk = process.env.AIG_ADMIN_WALLET_PRIVATE_KEY;
   if (!pk || !pk.startsWith("0x") || pk.length !== 66) {
