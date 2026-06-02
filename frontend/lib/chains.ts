@@ -1,6 +1,6 @@
 // =============================================================================
 // chains.ts — Custom viem chain definitions
-// Shared by mock-bridge.ts (ADMIN_RELAY) and cctp.ts (CCTP path)
+// Used by cctp.ts (v2 receiveMessage on Arc)
 // =============================================================================
 
 import { defineChain } from "viem";
