@@ -16,6 +16,7 @@
 
 import { BatchFacilitatorClient } from "@circle-fin/x402-batching/server";
 import { NextRequest, NextResponse } from "next/server";
+import { getSupabaseClient } from "./agent";
 
 // Arc Testnet constants (match @circle-fin/x402-batching SDK + AIG env).
 const ARC_TESTNET_NETWORK = "eip155:5042002"; // CAIP-2 (= ARC_CHAIN_ID 5042002)
@@ -135,10 +136,33 @@ export function withGateway(
 
       const amountUsdc = (Number(requirements.amount) / 1e6).toString();
       const payer = settleResult.payer ?? verifyResult.payer ?? "unknown";
-      // Phase 1: LOG only (no DB, no points — those are P2/P3).
       console.log(
         `[nanopay] SETTLED ${endpoint} — ${amountUsdc} USDC from ${payer} | tx=${settleResult.transaction}`,
       );
+
+      // Phase 2: record one session row so it shows in the existing merchant
+      // dashboard feed (reuses v2.2 payment_sessions; bridge_mode='NANOPAY' is
+      // the source discriminator — no schema change). Best-effort: a DB error
+      // must not fail an already-settled on-chain payment.
+      try {
+        const sessionId = settleResult.transaction ?? `nano-${Date.now()}`;
+        await getSupabaseClient()
+          .from("payment_sessions")
+          .upsert(
+            {
+              session_id: sessionId,
+              status: "CONFIRMED",
+              bridge_mode: "NANOPAY",
+              merchant_wallet: sellerAddress.toLowerCase(),
+              target_usdc: Number(amountUsdc),
+            },
+            { onConflict: "session_id" },
+          );
+      } catch (dbErr) {
+        console.error(
+          `[nanopay] session record failed (payment OK): ${dbErr instanceof Error ? dbErr.message : dbErr}`,
+        );
+      }
 
       const response = await handler(req);
       response.headers.set(
