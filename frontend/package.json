@@ -9,8 +9,11 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@circle-fin/x402-batching": "^3.0.4",
     "@supabase/supabase-js": "^2.99.1",
     "@tanstack/react-query": "^5.90.21",
+    "@x402/core": "^2.15.0",
+    "@x402/evm": "^2.15.0",
     "next": "16.1.6",
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
