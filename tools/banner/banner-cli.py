@@ -113,20 +113,26 @@ def wrap_with_spans(draw, parts, font, max_w):
     return lines
 
 
-def draw_logo(img, draw, PAD, W, H, f_eyebrow):
-    """Render logo centered horizontally at top. Returns (logo_w, logo_h)."""
+def draw_logo(img, draw, PAD, W, H, f_eyebrow, with_amber_bar=True):
+    """Render logo top-left + (optional) decorative amber bar. Returns (logo_w, logo_h)."""
     if not LOGO_PATH.exists():
-        # Fallback: centered handle text
-        hw = draw.textlength(HANDLE, font=f_eyebrow)
-        draw.text(((W - hw) // 2, PAD), HANDLE, fill=TEXT_COLOR, font=f_eyebrow)
+        draw.text((PAD, PAD), HANDLE, fill=TEXT_COLOR, font=f_eyebrow)
         return 0, int(H * 0.055)
     try:
         logo = Image.open(LOGO_PATH).convert("RGBA")
         is_wide = (logo.width / logo.height) >= 1.4
-        target_h = int(H * (0.080 if is_wide else 0.140))
+        target_h = int(H * (0.080 if is_wide else 0.120))
         ratio = target_h / logo.height
         logo = logo.resize((int(logo.width * ratio), target_h), Image.LANCZOS)
-        img.paste(logo, ((W - logo.width) // 2, PAD), logo)
+        img.paste(logo, (PAD, PAD), logo)
+        if with_amber_bar and not is_wide:
+            bar_y = PAD + target_h // 2 - 2
+            bar_x = PAD + logo.width + 24
+            bar_w = int(W * 0.10)
+            draw.rounded_rectangle(
+                (bar_x, bar_y, bar_x + bar_w, bar_y + 4),
+                radius=2, fill=EYEBROW_COLOR,
+            )
         return logo.width, target_h
     except Exception as e:
         print(f"[warn] logo load failed: {e}", file=sys.stderr)

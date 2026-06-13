@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-05-26T09:50:00+07:00",
+  "lastUpdated": "2026-06-13T07:40:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -824,6 +824,94 @@
       "status": "done",
       "why": "Wrap up loose ends from Phase 06 full + remove the open question about fee structure before any mainnet planning.",
       "concerns": "(1) Vercel env still has 15+ stale v1 vars (BRIDGE_BACKEND, SWAP_ROUTER_*, BSC_*, PANCAKESWAP_*, BRIDGE_MODE, CIRCLE_ATTESTATION_API, etc.) -- all NOOPs in current build. Manual cleanup via dashboard recommended for hygiene. (2) Admin wallet 0x0809a724... private key still not rotated -- testnet, low urgency, but key leaked twice via IDE selection share in chat. (3) Vercel auto-deploy from git push may be slow; /api/agent/quote still returning old 400 response (stale lambda). Force redeploy if immediate prod sync needed."
+    },
+    {
+      "timestamp": "2026-06-02T21:30:00+07:00",
+      "type": "ops",
+      "title": "Production deploy — pushed v2-only frontend to main (Vercel auto-deploy)",
+      "what": "Verified local production build green (Next 16.1.6 Turbopack, 7 routes). Committed working-tree frontend changes (execute route, pay page, providers, cctp/agent/chains libs — net -557 lines, residual v1 trim) as 60ef983 and pushed 35fb47b..60ef983 to origin/main to trigger Vercel auto-deploy to the existing project (prj_bb8qWFGB5TRWlA2eN98vbzbYHxXU / team_FY7O). Target: free *.vercel.app subdomain per user choice. Confirmed code is v2-only: 0 BRIDGE_BACKEND refs; server env reads = AIG_ADMIN_WALLET_PRIVATE_KEY, ARC_CHAIN_ID, ARC_TESTNET_RPC_URL, CCTP_MESSAGE_TRANSMITTER_ARC, CIRCLE_IRIS_API_V2, NEXT_PUBLIC_{ARC_CCTP_DOMAIN,CCTP_TOKEN_MESSENGER_SOURCE,SOURCE_CHAIN_ID,USDC_ADDRESS_SOURCE,SUPABASE_URL}, SUPABASE_SERVICE_ROLE_KEY (+ NEXT_PUBLIC_SUPABASE_ANON_KEY, USDC_ADDRESS_ARC_TESTNET client/shared). Prod env already configured (prior prod payments confirm parity).",
+      "files": [
+        "frontend/app/api/agent/execute/route.ts",
+        "frontend/app/pay/[id]/page.tsx",
+        "frontend/components/providers.tsx",
+        "frontend/lib/agent.ts",
+        "frontend/lib/cctp.ts",
+        "frontend/lib/cctp-abi.ts",
+        "frontend/lib/chains.ts"
+      ],
+      "status": "done_with_concerns",
+      "why": "User requested running AIG live on a domain via Vercel git-push auto-deploy on the free vercel.app subdomain.",
+      "concerns": "(1) SECURITY: AIG_ADMIN_WALLET_PRIVATE_KEY exposed a 3rd time via IDE selection-share in chat this session — strongly recommend rotating the admin key (testnet, low urgency but repeated exposure). (2) Could not verify Vercel dashboard state from this machine (CLI not installed/logged in) — assumed GitHub integration connected based on prior auto-deploy history in logs. (3) NEXT_PUBLIC_* vars are inlined at build time; if any are missing in Vercel Production scope the client breaks silently — user should confirm the 14 v2 keys present. (4) Stale v1 env vars still on Vercel (NOOPs) — optional hygiene cleanup."
+    },
+    {
+      "timestamp": "2026-06-02T23:45:00+07:00",
+      "type": "ops",
+      "title": "Verified production live at aig-frontend-blond.vercel.app",
+      "what": "Auto-deploy of 60ef983 confirmed live. curl checks: / -> 307 /dashboard; /dashboard 200 (8KB); /pay/[id] 200 (9KB); /api/dashboard?wallet 200 returning merchant+stats with a fresh Supabase merchant row auto-created (service-role write works); /api/points?wallet 200 {tier:Builder}; APIs without wallet return 400 validation (no crash). Resolves prior concern #3 — all 14 v2 env vars present and functional in Production scope.",
+      "files": [],
+      "status": "done",
+      "why": "User asked to confirm AIG is launched on Vercel.",
+      "concerns": "AIG_ADMIN_WALLET_PRIVATE_KEY rotation still recommended (testnet, exposed 3x in chat). Stale v1 env vars on Vercel remain (NOOPs)."
+    },
+    {
+      "timestamp": "2026-06-10T20:50:00+07:00",
+      "type": "plan",
+      "title": "Retro-logged the content/GTM operating system — 30-day calendar v2 + feedback workflow + Arc reference docs + Day 0/1 published",
+      "what": "Captured a body of GTM work produced 26/05 onward that was never logged in the anchors (all still untracked in git as of this entry). (1) NEW 30-day content calendar v2 plans/260526-1034-aig-v2-30day-content-calendar.md (window 26/05->24/06) + companion progress-tracker.md scoreboard. North-star = Arc House Architects tier (3,500 pts) by Day 30 + Community Mod VN seat. Anchors = Circle Developer Grant application (wk 2-3) + Stablecoins Commerce Stack Challenge submission (wk 4, final deadline 13/07). (2) Feedback/learning workflow system: content/_signals-log.md (append-only high-value interaction log, gated by target-whitelist), content/_learnings-log.md (3-line post-publish reflection), references/target-whitelist.md (HIGH/MEDIUM signal handles), content/_template-per-day/{metrics,comments}.md, scripts/scaffold-day.sh (generates content/day-NN-published/ from template), plus per-day published folders. (3) Arc reference docs: docs/arc-knowledge-base.md (5 foundational Q&A in plain VN), references/arc-house-event-transcript-summary.md (Architects launch event paraphrase — Architects=ambassador program, points tracked in Gradual, leadership-role apply reviewed in ~1wk), references/arc-engagement-amplification-guide-summary.md (Circle editorial rules to qualify for @Arc/@Circle amplification). (4) Published: Day 0 (21/05 — the day6-final 'I'M NOT OPEN-SOURCING AIG TO SHOW OFF' post, 151 imp / 24 eng / 15.9% rate) + Day 1 (content/day-01-final.md EN + day-01-draft-vn.md + day-01-published/ with annotated analytics PNG). (5) Supporting: tools/banner/banner-cli.py update + assets/banners/arc-local-lead-cover.png; assets/writing-styles/baobao-gems-x-style.md further additions; package.json dropped dead test:cctp script (Phase 06 residue).",
+      "files": [
+        "plans/260526-1034-aig-v2-30day-content-calendar.md",
+        "plans/260526-1034-aig-v2-30day-progress-tracker.md",
+        "plans/260526-handoff-day1-followup.md",
+        "content/_signals-log.md",
+        "content/_learnings-log.md",
+        "content/_template-per-day/",
+        "content/day-00-published/",
+        "content/day-01-final.md",
+        "content/day-01-draft-vn.md",
+        "content/day-01-published/",
+        "references/target-whitelist.md",
+        "references/arc-house-event-transcript-summary.md",
+        "references/arc-engagement-amplification-guide-summary.md",
+        "docs/arc-knowledge-base.md",
+        "scripts/scaffold-day.sh",
+        "tools/banner/banner-cli.py",
+        "assets/banners/arc-local-lead-cover.png",
+        "assets/writing-styles/baobao-gems-x-style.md",
+        "package.json"
+      ],
+      "status": "in_progress",
+      "why": "v2.0-alpha shipped (Phase 06/07 done) so the work shifted from code to GTM. roadmap_AIG.json blockerForGrowth was 'need content/launch motion' — this is that motion, now executing (Day 1 of 30). Logging it so the anchors stop lagging reality by two weeks.",
+      "concerns": "(1) Entire content engine is UNTRACKED in git (content/, references/, docs/arc-knowledge-base.md, scripts/scaffold-day.sh, plans/260526-*) — not committed; one machine loss = total loss. Recommend a content commit. (2) VOICE CONFLICT: Arc amplification guide bans ALL-CAPS + emoji + financial language and mandates '@Arc' (never 'ARC'/'$ARC') + 'onchain' one-word — this directly collides with the established @baobao_gems voice (ALL-CAPS reversal hooks, VN crypto slang). Posts targeting Circle amplification must be voice-split from personal VN long-form; voice-routing not yet reconciled against this guide. (3) Calendar template assumed Day 1 = 26/05 but Day 0 actually published 21/05 — timeline skew documented in day-00 metrics, not yet propagated through the calendar. (4) Anchor handles in target-whitelist.md are placeholders (@arc_devrel etc.) — verify before any outreach."
+    },
+    {
+      "timestamp": "2026-06-10T20:53:00+07:00",
+      "type": "docs",
+      "title": "Synced 3 anchor JSONs to reality — architecture v1 remnants purged, roadmap GTM phase added",
+      "what": "User asked to bring all 3 anchor files current ('s: o do website'=architecture, status, roadmap). (1) architecture_AIG.json: removed the dead components.smartContracts block (SwapRouter.sol / BSC Testnet / PancakeSwap interfaces — contracts/ dir deleted in Phase 06 full 31/05); removed 'PancakeSwap V3 (BSC Testnet)' from components.external; fixed components.external Circle CCTP 'Domain 7 (Arc)' -> 'Domain 26 (Arc)' (bridgeModes already correct at 26); softened Arc 'chain ID 212' to env-driven note; added retail amount-picker (number input + quick-pick chips, commit 35fb47b) to the /dashboard page + qr-code-generator description; lastUpdated -> 2026-06-10. (2) roadmap_AIG.json: currentState.blockerForGrowth rewritten (content motion now LIVE, not pending); appended new in_progress initiative 'gtm-30day-content-v2' (North-star Architects 3,500 pts + Mod VN seat; anchors Circle Developer Grant + Stablecoins Commerce Stack Challenge 13/07); refreshed openQuestions; lastUpdated -> 2026-06-10. (3) status_AIG.json: prior content-engine entry + this entry appended.",
+      "files": [
+        "architecture_AIG.json",
+        "roadmap_AIG.json",
+        "status_AIG.json"
+      ],
+      "status": "done",
+      "why": "Anchors had drifted since 31/05-02/06: architecture still described the deleted v1 SwapRouter/PancakeSwap stack and the wrong CCTP domain, and roadmap claimed 'no content motion' while a full 30-day engine was already executing.",
+      "concerns": "(1) architecture chain-ID left as note (value comes from ARC_CHAIN_ID env, not hardcoded — not independently verified here). (2) Content-ops artifacts referenced by the new roadmap phase are still untracked in git — anchors now point at uncommitted files. (3) amount-picker entry added to architecture from commit message 35fb47b; exact component file (qr-code-generator vs dashboard page) inferred, not line-verified."
+    },
+    {
+      "timestamp": "2026-06-13T07:40:00+07:00",
+      "type": "research",
+      "title": "Grant-readiness code audit + v2 phase confirm + git tag pre-change-12jun + content reality-check",
+      "what": "Read-only audit of v2 codebase for grant honesty (no code changed). CONFIRMED REAL: CCTP burn/mint e2e — server admin relay calls MessageTransmitter.receiveMessage on Arc (CCTP_MESSAGE_TRANSMITTER_ARC=0xE737e5cEBEEBa77EFE34D4aa090756590b1CE275, key AIG_ADMIN_WALLET_PRIVATE_KEY, cctp.ts:65-104); user signs ONLY approve+depositForBurn on Sepolia (payment-flow-v2.ts:136,149). QR engine real (qrcode.react QRCodeSVG encodes real payURL, qr-code-generator.tsx:64,77). SSE session FSM swap_executing->bridging->confirmed (route.ts:105,108,120). Merchant dashboard + points tables real (supabase/migrations/001-003, dashboard/points API wired). GAPS / NOT-IMPLEMENTED (grant overclaim risks): (a) NO AI/LLM in /api/agent — pure orchestration/relay, no openai/anthropic/langchain dep; do NOT call it 'AI agent'. (b) NO AIG service-fee/revenue mechanism — v1 SwapRouter skim removed with swap; merchant nets burn amount minus Circle CCTP fee. (c) Fee-breakdown UI placeholder — pay/[id]/page.tsx:88-92 'Merchant receives' hardcoded == 'You pay'; real net ~0.36% less (smoke). (d) Points multiplier disabled — awardPoints called with hardcoded isFirstChain=false/isReferred=false (route.ts:124-131) => x1.0 only. (e) Single source chain Sepolia (domain 0) only. (f) Session states EXPIRED/REFUNDED/BRIDGE_DELAYED defined (agent.ts:14-21) but never written. (g) Stale wrong comment cctp-abi.ts:46-48 says 1000=Standard; code uses 1000=Fast. V2 PHASE STATUS: 8-phase plan (260525-2023-aig-v2-app-kit-rebuild) 00-07 complete — 02 COLLAPSED (server-side quote impossible, folded into 03), 05 DEFERRED (unified balance, SDK constraint); v2.0-alpha tagged; live on Vercel. OPS: created lightweight git tag pre-change-12jun at HEAD 60ef983 (rollback marker). CONTENT: only Day 0 (21/05) live; Day 1 drafted but NEVER published (~22-day silence). Drafted resume/comeback post content/day-01-resume-260612-draft-vn.md; rendered 30-day plan HTML plans/visuals/aig-30day-plan.html.",
+      "why": "User requested all 3 anchor files brought current after a grant-readiness audit; roadmap also falsely claimed 'Day 1 published'.",
+      "files": [
+        "status_AIG.json",
+        "roadmap_AIG.json",
+        "architecture_AIG.json",
+        "content/day-01-resume-260612-draft-vn.md",
+        "plans/visuals/aig-30day-plan.html"
+      ],
+      "status": "done",
+      "concerns": "Audit only — gaps (a)-(g) still open, no code fixed. Supabase migrations present in repo but live-apply not independently verified (inferred from prod e2e DB write success). ~0.36% effective CCTP fee vs 1bps Iris-reported still unexplained (docs/v2-smoke-evidence.md open item). Anchors point at still-untracked content artifacts."
     }
   ]
 }

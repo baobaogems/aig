@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "version": "1.0.0",
-  "lastUpdated": "2026-05-31",
+  "lastUpdated": "2026-06-13",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
   "currentState": {
     "phase": "v2.0-alpha COMPLETE — Phase 03+04+06(full)+07 all done; v1 stack removed from main; rollback via git revert + v1.0 tag preserved",
@@ -10,7 +10,8 @@
     "production": "Deployed on Vercel — v2 (CCTPv2 Sepolia→Arc) active path; first prod e2e payment 30/05 Arc mint 0x240d90f7",
     "merchants": 0,
     "users": 0,
-    "blockerForGrowth": "None on tech path. GTM: no traction yet, need first merchant + content/launch motion."
+    "blockerForGrowth": "None on tech path (v2.0-alpha live). REALITY CORRECTION: content/GTM motion is STALLED, not live — only Day 0 (21/05) is published; Day 1 was drafted but NEVER posted, so ~22-day silence since 21/05. Resume/comeback post drafted 12/06 (content/day-01-resume-260612-draft-vn.md), awaiting publish. Open need: resume cadence, convert visibility into first real merchant + land a HIGH-tier Arc/Circle signal.",
+    "contentMotion": "STALLED — only Day 0 (21/05) live; ~22-day silence; resume post drafted 12/06 awaiting publish. North-star Architects tier (3,500 pts) + Mod VN seat by 24/06."
   },
   "phases": [
     {
@@ -213,6 +214,38 @@
       ]
     },
     {
+      "id": "gtm-30day-content-v2",
+      "name": "GTM — 30-Day Content Calendar v2 (Architects tier push)",
+      "status": "in_progress",
+      "priority": "P0",
+      "startDate": "2026-05-26",
+      "targetEndDate": "2026-06-24",
+      "planFile": "plans/260526-1034-aig-v2-30day-content-calendar.md",
+      "tracker": "plans/260526-1034-aig-v2-30day-progress-tracker.md",
+      "northStar": "Arc House Architects tier (3,500 pts) by Day 30 + Community Mod VN seat consideration",
+      "anchors": [
+        "Circle Developer Grant application (week 2-3)",
+        "Stablecoins Commerce Stack Challenge submission (week 4, final deadline 2026-07-13)"
+      ],
+      "kpiWeights": [
+        "Arc House points cumulative -> 3,500 (40%)",
+        "Anchor milestones 2/2 Grant+Challenge (30%)",
+        "HIGH-tier signals >=3 from Arc/Circle/judge (20%)"
+      ],
+      "system": {
+        "calendar": "30 posts across pillars (Build-in-Public / Arc Explainer VN / Use Case Demo / VN Community) + @baobao_gems narrative confessions",
+        "feedbackLoop": "content/_signals-log.md + content/_learnings-log.md + references/target-whitelist.md + content/_template-per-day/ + scripts/scaffold-day.sh per-day folders",
+        "references": "docs/arc-knowledge-base.md, references/arc-house-event-transcript-summary.md, references/arc-engagement-amplification-guide-summary.md, assets/writing-styles/baobao-gems-x-style.md"
+      },
+      "progress": "Day 0 published 21/05 (151 imp / 24 eng / 15.9%); Day 1 published (EN final + VN draft + annotated analytics). Subsequent days drafted in content/.",
+      "concerns": [
+        "Entire content engine still untracked in git as of 2026-06-10 — recommend a content commit",
+        "Voice conflict: Circle amplification guide bans ALL-CAPS/emoji/financial-language + mandates '@Arc'/'onchain' — collides with @baobao_gems ALL-CAPS-hook voice; Arc-amplifiable posts must be voice-split",
+        "Calendar template assumed Day 1=26/05 but Day 0 shipped 21/05 — timeline skew not yet propagated",
+        "target-whitelist Arc handles are placeholders — verify before outreach"
+      ]
+    },
+    {
       "id": "phase-2-scaling",
       "name": "Phase 2 — Scaling & Optimization",
       "status": "planned",
@@ -284,6 +317,10 @@
   "openQuestions": [
     "When to formalize Phase 2 plan? (waiting for first merchant traction signal)",
     "Vercel stabilization series + brand v1 still missing from project-changelog.md",
-    "3 deferred items from Pencil redesign report: Generate QR USDC modal, Export CSV, persist targetUSDC in merchant profile"
+    "3 deferred items from Pencil redesign report: Generate QR USDC modal, Export CSV, persist targetUSDC in merchant profile",
+    "Commit the untracked content engine (content/, references/, docs/arc-knowledge-base.md, scripts/scaffold-day.sh, plans/260526-*) — currently one machine loss away from gone",
+    "Reconcile @baobao_gems voice vs Circle amplification guide before posts targeting @Arc/@Circle amplification",
+    "When to apply for Community Mod VN seat? (Arc reviews leadership-role apps in ~1 week per Architects event — apply after qualifying activity)",
+    "Pre-grant/pre-mainnet PRD gaps to close (from 13/06 audit): AIG service-fee/revenue model (no skim point in v2), fee-breakdown UI accuracy (pay page hardcodes merchant-receives == pay), points multiplier wiring (currently x1.0), multi-chain source (Sepolia only), session states EXPIRED/REFUNDED/BRIDGE_DELAYED (defined, never written). Also: do NOT describe /api/agent as an 'AI agent' (no LLM in path)."
   ]
 }
