@@ -17,6 +17,7 @@
 import { BatchFacilitatorClient } from "@circle-fin/x402-batching/server";
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabaseClient } from "./agent";
+import { awardPoints } from "./points";
 
 // Arc Testnet constants (match @circle-fin/x402-batching SDK + AIG env).
 const ARC_TESTNET_NETWORK = "eip155:5042002"; // CAIP-2 (= ARC_CHAIN_ID 5042002)
@@ -158,6 +159,19 @@ export function withGateway(
             },
             { onConflict: "session_id" },
           );
+
+        // Phase 3: award points to the seller (merchant) for the nanopayment,
+        // reusing the v2.2 points pipeline (points_ledger). Flat x1.0: an old
+        // merchantCreatedAt avoids the early-bird 2x, and isFirstChain/isReferred
+        // are false — sub-cent volume should not be multiplier-inflated or gamed.
+        await awardPoints(
+          sellerAddress.toLowerCase(),
+          sessionId,
+          Number(amountUsdc),
+          "2020-01-01T00:00:00.000Z",
+          false,
+          false,
+        );
       } catch (dbErr) {
         console.error(
           `[nanopay] session record failed (payment OK): ${dbErr instanceof Error ? dbErr.message : dbErr}`,
