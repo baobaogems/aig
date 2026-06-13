@@ -415,9 +415,55 @@ Theo dõi thêm thông tin tại TG: @baobaogemschat
 
 **Mapping recommendation** (locked sau khi anh confirm):
 - AIG Build-in-Public posts (40%) → **AIG voice**. Nếu EN thread technical (CCTP/contract/debugging) post từ @baobao_gems handle → xem **§11 EN Thread Format**.
-- AIG Arc Explainer VN (25%) → có thể blend — dùng template C (philosophical framework) + AIG technical proof points
+- AIG Arc Explainer VN (25%) → có thể blend:
+  - **Template C** (philosophical framework) cho "what is X, how does X work" educational posts (CCTP/Arc explainers)
+  - **Template A** (narrative confession) cho pivot/debug/rebuild stories — xem **§10.1** sub-pattern below
 - AIG Use Case Demo (20%) → **AIG voice**
 - AIG VN Community (15%) → có thể dùng style này nếu post từ @baobao_gems brand kéo về AIG, nhưng phải declare context rõ
+
+### 10.1 Sub-pattern — Template A + AIG technical proof (NEW 2026-05-26, derived from Day 2 calendar pivot post)
+
+**Use case**: VN long-form retrospective on a build mistake / pivot / dead-end with concrete technical artifacts. Author admits wrong choice, shows code-level proof of the lesson. NOT news-jacking (no 24-48h news anchor — see §12). NOT pure mindset (Template C). Hybrid: confession story + numbered lessons + dev proof.
+
+**Reference implementation**: `plans/260526-1034-aig-v2-30day-content-calendar.md` §2.1 (App Kit pivot post, 28/05).
+
+**Structure (8 beats)**:
+```
+[Beat 1 — ALL-CAPS reversal hook, 2 sentences, no final period: setup decision → reversal of that decision]
+[=====]
+[Beat 2 — Time-anchored setup with concrete ship data: "Tháng X mình ship Y. Z dòng code. Deploy. Chạy được."]
+[Beat 3 — Trigger event with `@handle` mention + raw LOC contrast: "Tháng X+1 @company ra thứ mới. 10 dòng thay được 800 dòng."]
+[Beat 4 — Emotional self-disclosure (1 short paragraph): "Phản ứng đầu tiên: hoang mang/kỳ/lo. Setup of bad decision."]
+[Beat 5 — The bad decision + collapse: enumerate phase-by-phase work (Phase 0, Phase 1...) until the dead-end. Diagnosis = 1 short paragraph with technical specifics + `Dead end.` as standalone line.]
+[Beat 6 — The actual fix path: "Mình bỏ X. Không quay lại Y. Chọn đường thứ 3." + technical specifics + LOC of the working solution.]
+[Beat 7 — Bonus revelation (cay-er finding): "Trong quá trình sửa còn lòi ra..." — additional concrete bug/wrong-config the rebuild surfaced.]
+[Beat 8 — Live-status disclosure (mandatory for build-in-public credibility): "v2 chưa xong. Đang loay hoay fix X. Mình đăng bài lúc đang chiến với bug, không phải lúc đã thắng."]
+[Numbered lessons — plain `1. 2. 3.` (philosophical/reflection per §4), NOT ⚡️ NOT 1️⃣]
+[Closing principle — vivid verb + `!` per §4.1]
+[Repo / proof URL — bare]
+[Engagement Q + 👇 with `bạn` pronoun per §8.2 personal confession]
+[`=====` + hashtag tail — `#vibecode` swap-in OK for identity-marker posts]
+```
+
+**Critical rules** (diff from generic Template A):
+1. **LOC contrast is the hook fuel**: every pivot post needs raw line-count numbers (`800 dòng vs 173 dòng`) — concrete, scannable, irreducible.
+2. **`Dead end.` as a one-word paragraph** — load-bearing punctuation beat. Don't merge into surrounding prose.
+3. **Bonus revelation beat is non-negotiable** — every pivot/rebuild surfaces ≥1 other bug the original missed. Naming it adds credibility ("không rebuild thì không bao giờ biết").
+4. **Live-status disclosure beat is non-negotiable** — "đang loay hoay" / "chưa thắng" prevents the post reading as victory lap. Anti-hype DNA.
+5. **EN-loan density higher than Template A baseline**: `SDK`, `dead end`, `repo`, `bridge`, `contract`, `attestation`, `payment gateway`, `vibecode`, `testnet` — dev audience signal. Translate only what has natural VN form.
+6. **`vọc vạch` / `bốc cuốc` / `cay` / `lòi ra` density** — Beat 5-7 needs the colloquial-debugger slang stack to keep voice intact under technical density.
+7. **Numbered lessons stay plain `1. 2. 3.`** — these are reflections, not action-plan (so not 1️⃣) and not analysis-of-market (so not ⚡️). Per §4 hierarchy.
+
+**Difference from §12 news-jacking format**:
+| Trait | §10.1 Pivot story | §12 News-jacking |
+|---|---|---|
+| Time anchor | Author's build timeline | 24-48h hot news |
+| Hook style | Reversal of past decision | Title-style ĐỪNG X - HÃY Y |
+| Self-positioning | Embedded (build-in-public is the point) | Removed (market-gap reframe) |
+| Audience pronoun | `bạn` (intimate confession) | `anh em` (tactical community) |
+| Action-plan section | None — replaced by numbered lessons | 🛠 1️⃣ 2️⃣ 3️⃣ action items |
+| Community invite | Optional, soft | Mandatory 📌 + Hub upgrade |
+| Hashtag tail | Identity-marker swap OK (`#vibecode`) | Signature combo (`#kiemtien`) |
 
 **Cross-post strategy idea (cần anh confirm trong content calendar phase)**:
 - @baobao_gems X kể câu chuyện cá nhân về việc build AIG → kết nối với AIG GitHub / Vercel demo (dùng template A — narrative confession nhưng ending xoay sang "lần này mình không quên — đây là proof")
