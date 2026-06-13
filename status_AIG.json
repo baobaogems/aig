@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-06-13T07:40:00+07:00",
+  "lastUpdated": "2026-06-13T23:10:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -912,6 +912,26 @@
       ],
       "status": "done",
       "concerns": "Audit only — gaps (a)-(g) still open, no code fixed. Supabase migrations present in repo but live-apply not independently verified (inferred from prod e2e DB write success). ~0.36% effective CCTP fee vs 1bps Iris-reported still unexplained (docs/v2-smoke-evidence.md open item). Anchors point at still-untracked content artifacts."
+    },
+    {
+      "timestamp": "2026-06-13T23:10:00+07:00",
+      "type": "feature",
+      "title": "AIG v3 Phase 1 — x402 nanopayment receive on Arc (shipped + e2e proven)",
+      "what": "Branch feat/agentic. Added agentic nanopayment as a SECOND payment source on top of frozen v2.2 (CCTP). Mechanism = Circle Nanopayments: x402 (HTTP 402) + Circle Gateway batched settlement via @circle-fin/x402-batching v3.0.4 (+ peers @x402/core, @x402/evm). NOT CCTP. New files: frontend/lib/nanopay.ts (withGateway wrapper: 402 -> BatchFacilitatorClient.verify -> settle, log-only, no DB/points yet), frontend/app/api/nanopay/quote/route.ts (x402 endpoint $0.001 USDC, Arc eip155:5042002), scripts/nano-agent.mts (mock buyer: deposit + pay one nanopayment, polls Gateway deposit-credit lag before paying). Seller = reused AIG admin wallet 0x0809... (single-seller demo). E2E PASS on Arc testnet: buyer 0xBF2DCFa2C09726DFF0DdD6b5273f6F4D91500B91 funded 20 USDC; Gateway deposit on-chain tx 0x52f78a885d3190aa6360573976a402ffbe7d98eb6f1be0fed6338517030e6d23; 2 nanopayments status 200 / 0.001 USDC (settle ids 242f14ed-1736-4a42-8c83-e2cc5f9fbc3e, 016a43a8-57b3-4f77-b6f4-a41676caea39). Per-nanopayment has Gateway settlement UUID (batched), not an individual on-chain hash (by design). Evidence: docs/nano-smoke-evidence.md. Regression: tsc --noEmit exit 0, next build green, frozen files payment-flow-v2.ts/cctp.ts byte-identical. Committed fda0397, pushed origin/feat/agentic.",
+      "why": "PRD_v3 Phase 1 — make AIG agent-payable in sub-cent USDC. AIG is the seller/gateway; no LLM in AIG (do not overclaim 'AI agent').",
+      "files": [
+        "frontend/lib/nanopay.ts",
+        "frontend/app/api/nanopay/quote/route.ts",
+        "scripts/nano-agent.mts",
+        "frontend/package.json",
+        "docs/nano-smoke-evidence.md",
+        "plans/reports/brainstorm-260613-0743-aig-v3-agentic-nanopayments.md"
+      ],
+      "commits": [
+        "fda0397"
+      ],
+      "status": "done",
+      "concerns": "P1 = receive+log only; no DB row, no points (P2/P3). Single-seller demo — multi-merchant nano routing on Circle Gateway unresolved (v3.1). Deposit-credit lag handled by poll. P2 will need a payment_sessions schema change (source discriminator + sub-cent precision) -> stop+confirm per PRD before editing."
     }
   ]
 }
