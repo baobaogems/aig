@@ -45,6 +45,7 @@ function relativeTime(isoString: string): string {
 
 // Map bridge_mode → Source label
 function sourceLabel(bridgeMode: string | null): string {
+  if (bridgeMode === "NANOPAY") return "Arc (agent)";
   if (!bridgeMode) return "BSC Testnet";
   return "BSC Testnet";
 }
