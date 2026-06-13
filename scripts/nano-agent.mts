@@ -23,6 +23,13 @@ const ENV_PATH = path.resolve(import.meta.dirname, "../frontend/.env.local");
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 const ENDPOINT = `${BASE_URL}/api/nanopay/quote`;
 const DEPOSIT_AMOUNT = process.env.DEPOSIT_AMOUNT ?? "0.1";
+// --calls N : how many per-use nanopayments to make (default 1). Demonstrates
+// the metered, pay-per-call nature of agentic nanopayments.
+const CALLS = (() => {
+  const i = process.argv.indexOf("--calls");
+  const n = i >= 0 ? parseInt(process.argv[i + 1], 10) : 1;
+  return Number.isFinite(n) && n > 0 ? n : 1;
+})();
 
 // Read a key from frontend/.env.local (script doesn't depend on run flags).
 function readEnvLocal(key: string): string | undefined {
@@ -96,13 +103,25 @@ async function main() {
     }
   }
 
-  console.log(`Paying ${ENDPOINT} ...`);
-  const res = await gateway.pay(ENDPOINT, { method: "GET" });
-  console.log("\n=== NANOPAYMENT OK ===");
-  console.log(`  status:      ${res.status}`);
-  console.log(`  paid:        ${res.formattedAmount} USDC`);
-  console.log(`  settle tx:   ${res.transaction}`);
-  console.log(`  resource:    ${JSON.stringify(res.data)}`);
+  console.log(`\nAgent paying ${CALLS} nanopayment(s) -> ${ENDPOINT}\n`);
+  const settled: string[] = [];
+  let total = 0;
+  for (let i = 1; i <= CALLS; i++) {
+    const res = await gateway.pay(ENDPOINT, { method: "GET" });
+    total += parseFloat(res.formattedAmount);
+    settled.push(res.transaction);
+    console.log(
+      `  #${i}  HTTP ${res.status}  paid ${res.formattedAmount} USDC  settle=${res.transaction}`,
+    );
+  }
+
+  const seller = readEnvLocal("NANOPAY_SELLER_ADDRESS") ?? "(unset)";
+  console.log("\n=== DEMO SUMMARY ===");
+  console.log(`  buyer (agent): ${gateway.address}`);
+  console.log(`  seller:        ${seller}`);
+  console.log(`  payments:      ${CALLS}  ·  total ${total.toFixed(6)} USDC`);
+  console.log(`  settle ids:    ${settled.join(", ")}`);
+  console.log(`  dashboard:     ${BASE_URL}/dashboard  (connect seller wallet -> feed + points)`);
 }
 
 main().catch((e) => {
