@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-06-13T23:10:00+07:00",
+  "lastUpdated": "2026-06-14T08:00:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -932,6 +932,26 @@
       ],
       "status": "done",
       "concerns": "P1 = receive+log only; no DB row, no points (P2/P3). Single-seller demo — multi-merchant nano routing on Circle Gateway unresolved (v3.1). Deposit-credit lag handled by poll. P2 will need a payment_sessions schema change (source discriminator + sub-cent precision) -> stop+confirm per PRD before editing."
+    },
+    {
+      "timestamp": "2026-06-14T08:00:00+07:00",
+      "type": "feature",
+      "title": "AIG v3 Phases 2-4 — nanopayment wired to dashboard + points + demo polish (v3 alpha complete)",
+      "what": "Branch feat/agentic, on top of frozen v2.2. P2: after Gateway settle, nanopay.ts upserts a payment_sessions row (status CONFIRMED, bridge_mode='NANOPAY', merchant=seller, target_usdc) — NO schema change (numeric col + free-text status/bridge_mode already fit); payment-feed-table.tsx shows source 'Arc (agent)'. Verified: settle 40d5d2bc -> row target_usdc=0.001. P3: nanopay.ts calls awardPoints (reuse points.ts) flat x1.0 (old merchantCreatedAt avoids early-bird, no isFirstChain/referral) to avoid sub-cent inflation/gaming. Verified: points_ledger 0.001 earned -> points_balance total_points 0.001. P4: scripts/nano-agent.mts polished — --calls N metered per-use demo, narrated output + summary (settle ids, total, dashboard URL). Verified: --calls 3 -> 3x HTTP 200 (cf6bd506, baa5ef48, 9af5ec16). All 5 phases (P0-P4) of PRD_v3 done. Commits fda0397(P1) 7eb7c69(P2) 458b681(P3) c8db705(P4), pushed origin/feat/agentic. Regression: tsc/build green each phase; payment-flow-v2.ts/cctp.ts byte-identical throughout.",
+      "why": "PRD_v3 agentic nanopayments — make AIG agent-payable in sub-cent USDC, settling into the existing merchant gateway (sessions/dashboard/points).",
+      "files": [
+        "frontend/lib/nanopay.ts",
+        "frontend/components/payment-feed-table.tsx",
+        "scripts/nano-agent.mts",
+        "docs/nano-smoke-evidence.md"
+      ],
+      "commits": [
+        "7eb7c69",
+        "458b681",
+        "c8db705"
+      ],
+      "status": "done",
+      "concerns": "Single-seller demo (AIG admin) — multi-merchant nano routing on Circle Gateway unresolved (v3.1). Sub-cent points gaming + dashboard flooding at scale not yet mitigated (aggregation/anti-abuse = future). Pre-existing v2 mismatch: points_balance view tier ('bronze') vs points.ts computeTier ('Builder/...'). Not yet pushed: anchor/doc updates in this same change set."
     }
   ]
 }

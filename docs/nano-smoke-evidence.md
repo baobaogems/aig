@@ -33,6 +33,17 @@ tx hash — settlement is batched. The on-chain artifact at this phase is the Ga
 | Resource returned | `{"quote":"AIG nanopayment OK — agent paid sub-cent USDC on Arc.", ...}` |
 | Buyer balance | 20 USDC → wallet 19.897 / Gateway available 0.098 after deposit + 2 pays |
 
+## Run — 2026-06-14, per-call demo (`--calls 3`)
+Metered pay-per-use: 3 sequential nanopayments, each settled + recorded + points-awarded.
+| # | Result |
+|---|---|
+| 1 | HTTP 200 · 0.001 USDC · settle `cf6bd506-0e25-4fb5-8268-705d87826c57` |
+| 2 | HTTP 200 · 0.001 USDC · settle `baa5ef48-c0c2-4b86-8d77-13bcbab76a28` |
+| 3 | HTTP 200 · 0.001 USDC · settle `9af5ec16-3d10-4bc2-91cc-b78c986bcf02` |
+| total | 0.003 USDC · each row in `payment_sessions` (bridge_mode=NANOPAY) + `points_ledger` |
+
+Command: `npx tsx scripts/nano-agent.mts --calls 3`
+
 ## Verify (any reviewer can reproduce)
 ```bash
 # 402 challenge (no payment)

@@ -2,10 +2,10 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "version": "1.0.0",
-  "lastUpdated": "2026-06-13",
+  "lastUpdated": "2026-06-14",
   "sourceOfTruth": "docs/development-roadmap.md + plans/",
   "currentState": {
-    "phase": "v2.0-alpha COMPLETE — Phase 03+04+06(full)+07 all done; v1 stack removed from main; rollback via git revert + v1.0 tag preserved",
+    "phase": "v2.0-alpha COMPLETE (CCTP gateway, frozen as v2.2) + v3-agentic-nanopayments alpha COMPLETE on feat/agentic (x402 + Circle Gateway sub-cent USDC on Arc, P0-P4 done, e2e proven). v2.2 untouched.",
     "branch": "main",
     "production": "Deployed on Vercel — v2 (CCTPv2 Sepolia→Arc) active path; first prod e2e payment 30/05 Arc mint 0x240d90f7",
     "merchants": 0,
@@ -296,6 +296,17 @@
         "Audit passed",
         "Compliance review"
       ]
+    },
+    {
+      "id": "v3-agentic-nanopayments",
+      "name": "AIG v3 — Agentic Nanopayments (x402 + Circle Gateway)",
+      "status": "complete",
+      "priority": "high",
+      "targetQuarter": "2026-Q2",
+      "dependencies": [
+        "v2-cctp-rebuild"
+      ],
+      "note": "Built ON TOP of frozen v2.2. Second payment source: autonomous agent pays sub-cent USDC nanopayment on Arc via @circle-fin/x402-batching -> records as payment_sessions row (bridge_mode='NANOPAY') -> dashboard feed + points. P0-P4 done, branch feat/agentic. Evidence docs/nano-smoke-evidence.md. Open: multi-merchant routing (v3.1), sub-cent points anti-abuse."
     }
   ],
   "successMetrics": {
