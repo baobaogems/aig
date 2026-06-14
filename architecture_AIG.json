@@ -3,7 +3,7 @@
   "project": "ARC Invisible Gateway (AIG)",
   "tagline": "Pay with anything. Receive USDC. Invisibly.",
   "version": "2.0.0",
-  "lastUpdated": "2026-06-13",
+  "lastUpdated": "2026-06-14",
   "sourceOfTruth": "docs/system-architecture.md",
   "overview": {
     "domain": "Cross-chain payment infrastructure",
@@ -46,7 +46,8 @@
     "apiRoutes": {
       "POST /api/agent/execute": "SSE stream — server-side CCTPv2 attestation poll + Arc mint. Pipeline anchored in ReadableStream.start() for Vercel serverless function lifetime safety. Route segment config: maxDuration=60, runtime=nodejs, dynamic=force-dynamic.",
       "GET /api/points": "{ totalPoints, tier } from points_balance table",
-      "GET /api/dashboard": "{ merchantProfile, analyticsStats } — server-side aggregation"
+      "GET /api/dashboard": "{ merchantProfile, analyticsStats } — server-side aggregation",
+      "GET /api/nanopay/quote": "v3 x402-protected nanopayment endpoint. Unpaid->402+PAYMENT-REQUIRED; paid->BatchFacilitatorClient verify+settle (Circle Gateway testnet) then upsert payment_sessions row (bridge_mode='NANOPAY')+awardPoints. Price $0.001 USDC on Arc (eip155:5042002). Separate from v2.2 CCTP."
     },
     "libModules": {
       "lib/payment-flow-v2.ts": "usePaymentFlowV2 client hook — switchChain→Sepolia, USDC.approve(TokenMessenger), TokenMessengerV2.depositForBurn(7-arg Fast Transfer), POST burn tx to /api/agent/execute",
@@ -55,7 +56,8 @@
       "lib/chains.ts": "getArcChain() — viem defineChain Arc Testnet",
       "lib/agent.ts": "updateSessionStatus + BridgeMode/SessionStatus types + Supabase singleton",
       "lib/points.ts": "awardPoints, getPointsBalance",
-      "lib/merchant.ts": "upsertMerchant, getMerchantStats"
+      "lib/merchant.ts": "upsertMerchant, getMerchantStats",
+      "lib/nanopay.ts": "v3 agentic nanopayment (x402 + Circle Gateway via @circle-fin/x402-batching). withGateway() wraps a Next route: builds payment requirements, verifies+settles, records CONFIRMED session + points. Seller = reused AIG admin wallet. Does NOT touch v2.2 cctp.ts/payment-flow-v2.ts."
     },
     "pages": {
       "/": "redirect → /dashboard",
@@ -127,7 +129,8 @@
     "clientSideOnly": "Payment + dashboard pages are \"use client\" — wagmi needs browser env",
     "agentRouteIsOrchestrationNotAI": "/api/agent/* is a server-side CCTP relay/orchestrator — NO LLM/AI in the path (no openai/anthropic/langchain dependency). The name 'agent' is historical only; do not describe it as an AI agent (audit 13/06).",
     "noServiceFeeV2": "v2 has NO AIG fee/skim point — the v1 SwapRouter skim was removed with the swap. Merchant nets (burn amount - Circle CCTP protocol fee); ~0.36% observed on testnet. Revenue model is future work.",
-    "singleSourceChainV2": "Source = Ethereum Sepolia only (CCTP domain 0) -> Arc (domain 26). Multi-chain source expansion deferred (Phase 2/v3)."
+    "singleSourceChainV2": "Source = Ethereum Sepolia only (CCTP domain 0) -> Arc (domain 26). Multi-chain source expansion deferred (Phase 2/v3).",
+    "nanopaymentsAreX402Gateway": "v3 nanopayments use x402 (HTTP 402) + Circle Gateway batched off-chain-auth settlement — NOT CCTP burn/mint. Per-nanopayment yields a Gateway settlement UUID (batched), not an individual on-chain hash; the on-chain artifact is the buyer's Gateway deposit. Recorded into existing payment_sessions via bridge_mode='NANOPAY' discriminator (no schema change)."
   },
   "security": {
     "auth": "Wallet-based identity (PoC); no auth system",
