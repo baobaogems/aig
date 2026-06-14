@@ -141,37 +141,34 @@ export function withGateway(
         `[nanopay] SETTLED ${endpoint} — ${amountUsdc} USDC from ${payer} | tx=${settleResult.transaction}`,
       );
 
-      // Phase 2: record one session row so it shows in the existing merchant
-      // dashboard feed (reuses v2.2 payment_sessions; bridge_mode='NANOPAY' is
-      // the source discriminator — no schema change). Best-effort: a DB error
-      // must not fail an already-settled on-chain payment.
+      // v3.1: aggregate, do NOT write a per-call row. nano_record() atomically
+      // upserts the (agent, merchant) rolling row (call_count++, total_usdc+=)
+      // and flushes points only once unawarded volume reaches $0.01 — kills row
+      // flooding and micro-spam point farming. Best-effort: a DB error must not
+      // fail an already-settled on-chain payment.
       try {
         const sessionId = settleResult.transaction ?? `nano-${Date.now()}`;
-        await getSupabaseClient()
-          .from("payment_sessions")
-          .upsert(
-            {
-              session_id: sessionId,
-              status: "CONFIRMED",
-              bridge_mode: "NANOPAY",
-              merchant_wallet: sellerAddress.toLowerCase(),
-              target_usdc: Number(amountUsdc),
-            },
-            { onConflict: "session_id" },
-          );
+        const { data, error } = await getSupabaseClient().rpc("nano_record", {
+          p_buyer: payer.toLowerCase(),
+          p_merchant: sellerAddress.toLowerCase(),
+          p_amount: Number(amountUsdc),
+        });
+        if (error) throw error;
 
-        // Phase 3: award points to the seller (merchant) for the nanopayment,
-        // reusing the v2.2 points pipeline (points_ledger). Flat x1.0: an old
-        // merchantCreatedAt avoids the early-bird 2x, and isFirstChain/isReferred
-        // are false — sub-cent volume should not be multiplier-inflated or gamed.
-        await awardPoints(
-          sellerAddress.toLowerCase(),
-          sessionId,
-          Number(amountUsdc),
-          "2020-01-01T00:00:00.000Z",
-          false,
-          false,
-        );
+        // Flush batched points to the seller via the v2.2 points pipeline when
+        // nano_record signals a positive delta (flat 1 point per $1 volume).
+        const row = Array.isArray(data) ? data[0] : data;
+        const pointsDelta = Number(row?.points_delta ?? 0);
+        if (pointsDelta > 0) {
+          await awardPoints(
+            sellerAddress.toLowerCase(),
+            sessionId,
+            pointsDelta,
+            "2020-01-01T00:00:00.000Z",
+            false,
+            false,
+          );
+        }
       } catch (dbErr) {
         console.error(
           `[nanopay] session record failed (payment OK): ${dbErr instanceof Error ? dbErr.message : dbErr}`,
