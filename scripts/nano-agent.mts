@@ -21,7 +21,14 @@ import path from "node:path";
 
 const ENV_PATH = path.resolve(import.meta.dirname, "../frontend/.env.local");
 const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
-const ENDPOINT = `${BASE_URL}/api/nanopay/quote`;
+// --to 0x... : pay a specific merchant via the v3.2 multi-merchant route.
+const TO = (() => {
+  const i = process.argv.indexOf("--to");
+  return i >= 0 ? process.argv[i + 1] : null;
+})();
+const ENDPOINT = TO
+  ? `${BASE_URL}/api/nanopay/m/${TO}`
+  : `${BASE_URL}/api/nanopay/quote`;
 const DEPOSIT_AMOUNT = process.env.DEPOSIT_AMOUNT ?? "0.1";
 // --calls N : how many per-use nanopayments to make (default 1). Demonstrates
 // the metered, pay-per-call nature of agentic nanopayments.
