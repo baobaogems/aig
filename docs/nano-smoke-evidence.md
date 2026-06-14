@@ -71,6 +71,19 @@ E2E `--calls 12`:
 Result: 12 sub-cent payments → 1 aggregate row + 1 points row. Spam can't farm points
 (points track real USD, batched). Migrations 004+005 applied to live Supabase.
 
+## v3.2 — multi-merchant routing (2026-06-14)
+`payTo` is now dynamic (the `[merchant]` in `/api/nanopay/m/[merchant]`), not a fixed env
+seller. E2E paid a BRAND-NEW random merchant `0x05aa71C8e03cf3F015906a07dc45eECE142848A8`
+(never registered) `--calls 3`:
+| Check | Result |
+|---|---|
+| 3 payments | HTTP 200 settled (95f71c3e, 95919236, 75d447c6) |
+| `nano_agents` (new merchant) | row: call_count=3, total_usdc=0.003 |
+
+Proves Circle Gateway settles to an **arbitrary, unregistered payTo** (address-keyed
+pending balance). AIG is a true multi-merchant nano gateway; each merchant withdraws its
+own Gateway balance with its own key. Command: `npx tsx scripts/nano-agent.mts --to 0x... --calls 3`
+
 ## Known wrinkles (non-blocking)
 - **Deposit credit lag**: Gateway credits a deposit to `available` a few seconds AFTER the
   on-chain deposit confirms. First run pre-fix failed `settlement failed` (settle raced the

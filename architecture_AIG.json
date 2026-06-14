@@ -48,7 +48,8 @@
       "GET /api/points": "{ totalPoints, tier } from points_balance table",
       "GET /api/dashboard": "{ merchantProfile, analyticsStats } — server-side aggregation",
       "GET /api/nanopay/quote": "v3 x402-protected nanopayment endpoint. Unpaid->402+PAYMENT-REQUIRED; paid->BatchFacilitatorClient verify+settle (Circle Gateway testnet) then upsert payment_sessions row (bridge_mode='NANOPAY')+awardPoints. Price $0.001 USDC on Arc (eip155:5042002). Separate from v2.2 CCTP.",
-      "GET /api/nanopay/agents": "v3.1 read-only: aggregated nano_agents rows per merchant (one rolling row per paying agent) for the dashboard Agent Nanopayments card."
+      "GET /api/nanopay/agents": "v3.1 read-only: aggregated nano_agents rows per merchant (one rolling row per paying agent) for the dashboard Agent Nanopayments card.",
+      "GET /api/nanopay/m/[merchant]": "v3.2 multi-merchant x402 endpoint: payTo = [merchant] in URL. One gateway routes nanopayments to any merchant wallet (Gateway settles to arbitrary address; merchant withdraws with own key)."
     },
     "libModules": {
       "lib/payment-flow-v2.ts": "usePaymentFlowV2 client hook — switchChain→Sepolia, USDC.approve(TokenMessenger), TokenMessengerV2.depositForBurn(7-arg Fast Transfer), POST burn tx to /api/agent/execute",
@@ -132,7 +133,8 @@
     "noServiceFeeV2": "v2 has NO AIG fee/skim point — the v1 SwapRouter skim was removed with the swap. Merchant nets (burn amount - Circle CCTP protocol fee); ~0.36% observed on testnet. Revenue model is future work.",
     "singleSourceChainV2": "Source = Ethereum Sepolia only (CCTP domain 0) -> Arc (domain 26). Multi-chain source expansion deferred (Phase 2/v3).",
     "nanopaymentsAreX402Gateway": "v3 nanopayments use x402 (HTTP 402) + Circle Gateway batched off-chain-auth settlement — NOT CCTP burn/mint. Per-nanopayment yields a Gateway settlement UUID (batched), not an individual on-chain hash; the on-chain artifact is the buyer's Gateway deposit. Recorded into existing payment_sessions via bridge_mode='NANOPAY' discriminator (no schema change).",
-    "nanoAggregationV31": "v3.1: nanopayments aggregate into nano_agents (unique buyer+merchant) via atomic nano_record() plpgsql (INSERT..ON CONFLICT increment); points flushed to points_ledger only per $0.01 volume. Kills row flooding + sub-cent point farming. No per-call payment_sessions rows."
+    "nanoAggregationV31": "v3.1: nanopayments aggregate into nano_agents (unique buyer+merchant) via atomic nano_record() plpgsql (INSERT..ON CONFLICT increment); points flushed to points_ledger only per $0.01 volume. Kills row flooding + sub-cent point farming. No per-call payment_sessions rows.",
+    "multiMerchantPayToV32": "v3.2: nanopayment recipient is dynamic (payTo = merchant from URL), not a fixed env seller. Verified empirically that Circle Gateway settles to an arbitrary, unregistered payTo (address-keyed pending balance). Makes AIG a true multi-merchant nano gateway."
   },
   "security": {
     "auth": "Wallet-based identity (PoC); no auth system",
