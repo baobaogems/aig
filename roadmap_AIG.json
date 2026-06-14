@@ -306,7 +306,7 @@
       "dependencies": [
         "v2-cctp-rebuild"
       ],
-      "note": "Built ON TOP of frozen v2.2. Second payment source: autonomous agent pays sub-cent USDC nanopayment on Arc via @circle-fin/x402-batching -> records as payment_sessions row (bridge_mode='NANOPAY') -> dashboard feed + points. P0-P4 done, branch feat/agentic. Evidence docs/nano-smoke-evidence.md. Open: multi-merchant routing (v3.1), sub-cent points anti-abuse."
+      "note": "Built ON TOP of frozen v2.2. Second payment source: autonomous agent pays sub-cent USDC nanopayment on Arc via @circle-fin/x402-batching -> records as payment_sessions row (bridge_mode='NANOPAY') -> dashboard feed + points. P0-P4 done, branch feat/agentic. Evidence docs/nano-smoke-evidence.md. Open: multi-merchant routing (v3.1), sub-cent points anti-abuse. v3.1: aggregation+anti-spam shipped — nano_agents rolling rows (migration 004) + atomic nano_record() with batched points (005); dashboard Agent Nanopayments card. No per-call flooding."
     }
   ],
   "successMetrics": {

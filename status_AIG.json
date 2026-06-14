@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-06-14T08:00:00+07:00",
+  "lastUpdated": "2026-06-14T15:35:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -952,6 +952,23 @@
       ],
       "status": "done",
       "concerns": "Single-seller demo (AIG admin) — multi-merchant nano routing on Circle Gateway unresolved (v3.1). Sub-cent points gaming + dashboard flooding at scale not yet mitigated (aggregation/anti-abuse = future). Pre-existing v2 mismatch: points_balance view tier ('bronze') vs points.ts computeTier ('Builder/...'). Not yet pushed: anchor/doc updates in this same change set."
+    },
+    {
+      "timestamp": "2026-06-14T15:35:00+07:00",
+      "type": "feature",
+      "title": "AIG v3.1 — nanopayment aggregation + anti-spam (rolling agent rows, batched points)",
+      "what": "Branch feat/agentic. Fixes v3 P2/P3 scale flaw (1 payment_sessions + 1 points_ledger row PER sub-cent call -> flooding + point farming). New: migrations 004 (nano_agents table: buyer,merchant,call_count,total_usdc,points_awarded, unique(buyer,merchant)) + 005 (nano_record() plpgsql: atomic INSERT..ON CONFLICT increment + flush points only when unawarded volume>=$0.01). nanopay.ts: dropped per-call payment_sessions insert + per-call awardPoints; now calls rpc('nano_record') and awards the returned points_delta (flat 1pt/$1). New /api/nanopay/agents route + nano-agents-card.tsx + dashboard wire to show aggregates. Migrations applied to live Supabase via Management API (CLI keychain token) + schema reload. E2E verified: --calls 12 -> nano_agents ONE row (count=12,total=0.012,awarded=0.010), points_ledger ONE batched row (0.01), payment_sessions NANOPAY=0, /api/nanopay/agents returns aggregate. tsc+build green; frozen files untouched.",
+      "why": "Brainstorm risk #2 (sub-cent flooding/gaming). User chose new table + drop per-call.",
+      "files": [
+        "frontend/supabase/migrations/004_create_nano_agents.sql",
+        "frontend/supabase/migrations/005_nano_record_function.sql",
+        "frontend/lib/nanopay.ts",
+        "frontend/app/api/nanopay/agents/route.ts",
+        "frontend/components/nano-agents-card.tsx",
+        "frontend/app/dashboard/page.tsx"
+      ],
+      "status": "done",
+      "concerns": "Old test rows cleaned during verify. points_balance is a materialized view refreshed on insert (deletes don't refresh) — recovers on next award. Multi-merchant routing still v3.x. Not yet committed at time of log."
     }
   ]
 }

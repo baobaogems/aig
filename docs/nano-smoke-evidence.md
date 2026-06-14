@@ -57,6 +57,20 @@ curl -s -X POST https://rpc.testnet.arc.network -H "Content-Type: application/js
 npx tsx scripts/nano-agent.mts
 ```
 
+## v3.1 — aggregation + anti-spam (2026-06-14)
+Per-call rows replaced by ONE rolling `nano_agents` row per (agent, merchant) via atomic
+`nano_record()` (migration 005); points flushed to `points_ledger` only per $0.01 volume.
+E2E `--calls 12`:
+| Check | Result |
+|---|---|
+| `nano_agents` | 1 row: call_count=12, total_usdc=0.012, points_awarded=0.010 |
+| `points_ledger` | 1 batched row (0.01) — NOT 12 |
+| `payment_sessions` NANOPAY | 0 (per-call dropped) |
+| `GET /api/nanopay/agents` | aggregate {12 calls, $0.012} |
+
+Result: 12 sub-cent payments → 1 aggregate row + 1 points row. Spam can't farm points
+(points track real USD, batched). Migrations 004+005 applied to live Supabase.
+
 ## Known wrinkles (non-blocking)
 - **Deposit credit lag**: Gateway credits a deposit to `available` a few seconds AFTER the
   on-chain deposit confirms. First run pre-fix failed `settlement failed` (settle raced the
