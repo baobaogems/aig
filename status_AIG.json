@@ -2,7 +2,7 @@
   "$schema": "anchor-context/v1",
   "project": "ARC Invisible Gateway (AIG)",
   "purpose": "Append-only work journal. Read first to understand recent context. Each new task → append entry to logs[]. NEVER delete past entries.",
-  "lastUpdated": "2026-06-14T15:35:00+07:00",
+  "lastUpdated": "2026-06-14T15:50:00+07:00",
   "owner": "Bao Bao (hoangcaaa555@gmail.com)",
   "usage": {
     "readBeforeStart": "Always read this file + architecture_AIG.json + roadmap_AIG.json BEFORE doing any work, to load context.",
@@ -969,6 +969,20 @@
       ],
       "status": "done",
       "concerns": "Old test rows cleaned during verify. points_balance is a materialized view refreshed on insert (deletes don't refresh) — recovers on next award. Multi-merchant routing still v3.x. Not yet committed at time of log."
+    },
+    {
+      "timestamp": "2026-06-14T15:50:00+07:00",
+      "type": "feature",
+      "title": "AIG v3.2 — multi-merchant nanopayment routing (dynamic payTo)",
+      "what": "Branch feat/agentic. Spike (Circle Gateway docs) inconclusive on arbitrary payTo, so verified empirically. nanopay.ts: buildPaymentRequirements(price, payTo) + withGateway opts.resolveSeller -> seller resolved per-request (validated as address); nano_record/awardPoints use resolved seller. New route /api/nanopay/m/[merchant] sets payTo = URL merchant. nano-agent.mts --to <merchant>. E2E: paid a BRAND-NEW random merchant 0x05aa71C8e03cf3F015906a07dc45eECE142848A8 (never registered) --calls 3 -> all HTTP 200 settled, nano_agents row for that merchant (count=3, total=0.003). PROVES Gateway settles to arbitrary payTo (address-keyed pending balance) -> AIG is a true multi-merchant nano gateway, not single-seller. tsc+build green; frozen files untouched.",
+      "why": "Resolve the single-seller limitation flagged in v3 brainstorm risk #1.",
+      "files": [
+        "frontend/lib/nanopay.ts",
+        "frontend/app/api/nanopay/m/[merchant]/route.ts",
+        "scripts/nano-agent.mts"
+      ],
+      "status": "done",
+      "concerns": "Merchant withdraws its own Gateway balance with its own key (out of AIG scope). Static /api/nanopay/quote (env seller) kept for the simple demo."
     }
   ]
 }
