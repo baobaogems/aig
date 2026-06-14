@@ -13,6 +13,7 @@ import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { PaymentFeedTable } from "@/components/payment-feed-table";
 import { DashboardStatCards } from "@/components/dashboard-stat-cards";
 import { PointsTierCard } from "@/components/points-tier-card";
+import { NanoAgentsCard } from "@/components/nano-agents-card";
 import type { DashboardStats } from "@/lib/merchant";
 
 interface PointsData {
@@ -242,6 +243,9 @@ export default function DashboardPage() {
             />
           </div>
         </div>
+
+        {/* ── 4. Agent Nanopayments (v3.1 aggregate) ──────────────────────── */}
+        <NanoAgentsCard merchantWallet={address ?? ""} />
 
       </div>
     </main>
