@@ -43,8 +43,10 @@ interface PaymentPayload {
   extensions?: Record<string, unknown>;
 }
 
-// Build x402 payment requirements for a given dollar price.
-function buildPaymentRequirements(price: string) {
+const ADDR = /^0x[0-9a-fA-F]{40}$/;
+
+// Build x402 payment requirements for a given dollar price + recipient.
+function buildPaymentRequirements(price: string, payTo: string) {
   // dollars -> USDC atomic units (6 decimals)
   const amount = Math.round(parseFloat(price.replace("$", "")) * 1_000_000);
   return {
@@ -52,7 +54,7 @@ function buildPaymentRequirements(price: string) {
     network: ARC_TESTNET_NETWORK,
     asset: ARC_TESTNET_USDC,
     amount: amount.toString(),
-    payTo: sellerAddress,
+    payTo,
     maxTimeoutSeconds: 345600,
     extra: {
       name: "GatewayWalletBatched",
@@ -64,20 +66,26 @@ function buildPaymentRequirements(price: string) {
 
 // Wrap a Next.js App Router GET handler with Gateway x402 verification.
 // Unpaid -> 402 + PAYMENT-REQUIRED. Paid -> verify + settle, then run handler.
+// opts.resolveSeller lets a dynamic route choose the recipient per request
+// (v3.2 multi-merchant: payTo = the merchant in the URL). Default = env seller.
+type RouteCtx = { params: Promise<Record<string, string>> } | undefined;
+
 export function withGateway(
   handler: (req: NextRequest) => Promise<NextResponse>,
   price: string,
   endpoint: string,
+  opts?: { resolveSeller?: (req: NextRequest, ctx: RouteCtx) => Promise<string | undefined> | string | undefined },
 ) {
-  const requirements = buildPaymentRequirements(price);
-
-  return async (req: NextRequest) => {
-    if (!sellerAddress) {
+  return async (req: NextRequest, ctx?: RouteCtx) => {
+    const resolved = opts?.resolveSeller ? await opts.resolveSeller(req, ctx) : sellerAddress;
+    const seller = (resolved ?? "") as `0x${string}`;
+    if (!seller || !ADDR.test(seller)) {
       return NextResponse.json(
-        { error: "NANOPAY_SELLER_ADDRESS not set" },
-        { status: 500 },
+        { error: opts?.resolveSeller ? "invalid merchant address" : "NANOPAY_SELLER_ADDRESS not set" },
+        { status: opts?.resolveSeller ? 400 : 500 },
       );
     }
+    const requirements = buildPaymentRequirements(price, seller);
 
     const paymentSignature = req.headers.get("payment-signature");
 
@@ -150,7 +158,7 @@ export function withGateway(
         const sessionId = settleResult.transaction ?? `nano-${Date.now()}`;
         const { data, error } = await getSupabaseClient().rpc("nano_record", {
           p_buyer: payer.toLowerCase(),
-          p_merchant: sellerAddress.toLowerCase(),
+          p_merchant: seller.toLowerCase(),
           p_amount: Number(amountUsdc),
         });
         if (error) throw error;
@@ -161,7 +169,7 @@ export function withGateway(
         const pointsDelta = Number(row?.points_delta ?? 0);
         if (pointsDelta > 0) {
           await awardPoints(
-            sellerAddress.toLowerCase(),
+            seller.toLowerCase(),
             sessionId,
             pointsDelta,
             "2020-01-01T00:00:00.000Z",
