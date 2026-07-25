@@ -37,6 +37,7 @@ plans/
 *_AIG.json
 *from claude*
 CONTRIBUTING.md
+lessons.md
 
 # Foundry
 contracts/cache/
