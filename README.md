@@ -1,4 +1,4 @@
-# ARC Invisible Gateway (AIG)
+# Arbiter Invisible Gateway (AIG v4)
 
 > An AI arbiter that holds USDC in escrow on Arc testnet and decides — with measured, explainable confidence — whether a deliverable has earned payment.
 
