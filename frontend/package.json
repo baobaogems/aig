@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "arbiter:dryrun": "tsx scripts/arbiter-dryrun.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",

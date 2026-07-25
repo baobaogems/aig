@@ -1,0 +1,8 @@
+{
+  "id": "fail-01",
+  "note": "Off-topic deliverable (coffee shop marketing) — outside rubric scope, so REFUSE is the correct PRD behavior (not FAIL). MUST NOT reach RELEASE (T1-leak guard). On-topic-but-poor 'clear fail' cases come in Phase 02.",
+  "expected_decision": "REFUSE",
+  "amount_usdc": 10,
+  "brief": "Viết một bài ngắn 250-400 từ bằng tiếng Việt giới thiệu cách merchant Việt Nam nhận thanh toán USDC qua cơ chế CCTP (burn-and-mint của Circle). Yêu cầu: (1) giải thích cơ chế bằng ngôn ngữ dễ hiểu cho người không chuyên, (2) có ít nhất một ví dụ cụ thể về một giao dịch, (3) nêu rõ thời gian hoàn tất giao dịch ước tính, (4) giọng văn trung lập, không hype, không hứa hẹn lợi nhuận.",
+  "deliverable": "5 mẹo marketing cho quán cà phê nhỏ\n\nMở quán cà phê thì phải biết kể chuyện. Thứ nhất, chụp ảnh đồ uống thật đẹp rồi đăng đều đặn lên mạng xã hội. Thứ hai, làm thẻ tích điểm cho khách quen. Thứ ba, hợp tác với các bạn food reviewer địa phương. Thứ tư, tổ chức minigame tặng voucher. Thứ năm, chăm chút không gian để khách muốn chụp ảnh check-in. Làm đủ năm điều này thì quán chắc chắn đông khách, doanh thu tăng gấp đôi chỉ sau một tháng!"
+}
