@@ -24,12 +24,19 @@ build/
 # Claude Code (local tooling — not project code)
 .claude/
 CLAUDE.md
+.clauderc
 claudekit-marketing
 
 # Sensitive project docs (keep local only)
 AGENTS.md
 PRD final.md
 PRD*.md
+
+# Internal planning & process (local only — not product)
+plans/
+*_AIG.json
+*from claude*
+CONTRIBUTING.md
 
 # Foundry
 contracts/cache/
@@ -53,3 +60,6 @@ contracts/broadcast/
 
 # OS
 Thumbs.db
+
+# Fundraising materials (local only)
+AIG_INVESTOR_DECK.pptx
