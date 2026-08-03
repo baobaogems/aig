@@ -1,9 +1,12 @@
-// run.ts — DRY_RUN orchestrator: brief → rubric gen → grade → verdict → decision.
-// This is the money-independent heart (GATE 1). When DRY_RUN=true (default) it STOPS after
-// the decision — no escrow, no transfers. Phase 03 adds the release() call behind DRY_RUN=false.
+// run.ts — orchestrator: brief → rubric gen → grade → verdict → decision → (money).
+// The judging half is the money-independent heart (GATE 1) and stays importable from a plain
+// node script. The settlement half (GATE 2) lives in judgeAndSettle() below and only touches
+// lib/escrow.ts through a DYNAMIC import, behind DRY_RUN=false — so the dry-run CLI never
+// even loads the money layer.
 
 import { generateRubric, type RubricItem } from "./rubric";
 import { gradeSubmission, type JudgeResult } from "./judge";
+import { liveCaps } from "./spend-ledger";
 import type { SpendCaps } from "./tiers";
 
 export interface DryRunCase {
@@ -71,4 +74,77 @@ export async function runCase(c: DryRunCase): Promise<CaseRunResult> {
   tokens.output += judge.usage.output_tokens;
 
   return { caseId: c.id, rubric, rubricGenerated, judge, elapsedMs: Date.now() - t0, totalTokens: tokens };
+}
+
+// ---------------------------------------------------------------------------
+// GATE 2 — judge a real submission and settle it on Arc.
+// ---------------------------------------------------------------------------
+
+export interface SettleInput {
+  bountyId: string; // uuid — hashed to bytes32 for the contract
+  submissionId: string;
+  brief: string;
+  rubric: RubricItem[]; // frozen at poster approval — never regenerated at judge time
+  deliverable: string; // content snapshot taken at submit time
+  amountUsdc: number;
+}
+
+export interface SettleResult {
+  judge: JudgeResult;
+  dryRun: boolean;
+  /** Present only when USDC actually moved. */
+  release?: { txHash: string; worker: string; amountUsdc: number };
+  /** Why an otherwise-releasable verdict did not pay out (cap, dry-run, or a failed send). */
+  settlementNote?: string;
+}
+
+/**
+ * Judge a submission, then release the escrow if — and only if — the verdict earned it.
+ *
+ * The money decision is NOT the model's: gradeSubmission returns a decision already computed
+ * by tiers.ts from the score/confidence the model proposed, with the spend caps applied.
+ * This function's only added authority is "carry out a RELEASE decision".
+ */
+export async function judgeAndSettle(input: SettleInput): Promise<SettleResult> {
+  const dryRun = isDryRun();
+
+  // Dry-run keeps the deterministic env caps (calibration must not depend on a live ledger);
+  // the money path reads the real 24h ledger, which fails closed when it can't be read.
+  const caps: SpendCaps = dryRun ? capsFromEnv() : await liveCaps();
+
+  const judge = await gradeSubmission({
+    bountyId: input.bountyId,
+    submissionId: input.submissionId,
+    brief: input.brief,
+    rubric: input.rubric,
+    deliverable: input.deliverable,
+    amountUsdc: input.amountUsdc,
+    caps,
+    now: new Date().toISOString(),
+  });
+
+  if (dryRun) {
+    return { judge, dryRun, settlementNote: "DRY_RUN — verdict only, no money moved" };
+  }
+  if (judge.verdict.decision !== "RELEASE") {
+    // ESCALATE / FAIL / REFUSE are human-facing outcomes; Phase 04 flows own what happens next.
+    return { judge, dryRun, settlementNote: `decision=${judge.verdict.decision} — no autonomous release` };
+  }
+
+  // Re-check the day cap immediately before spending. The judge call takes ~15-20s; another
+  // release can land in that window, and the check that authorised this one is already stale.
+  const fresh = await liveCaps();
+  if (input.amountUsdc > fresh.perDayRemainingUsdc) {
+    return {
+      judge,
+      dryRun,
+      settlementNote:
+        `day cap reached at settle time (${fresh.daySpend.spentUsdc}/${fresh.daySpend.capUsdc} USDC` +
+        `${fresh.daySpend.degraded ? ", ledger unreadable — failing closed" : ""}) — escalate to poster instead`,
+    };
+  }
+
+  const { releaseEscrow } = await import("../escrow");
+  const release = await releaseEscrow(input.bountyId, judge.hash);
+  return { judge, dryRun, release };
 }

@@ -18,7 +18,8 @@ const CASES_DIR = join(process.cwd(), "calibration", "cases");
 
 async function main() {
   if (!isDryRun()) {
-    console.error("ABORT: DRY_RUN is false but money path is not wired yet (Phase 03). Set DRY_RUN=true.");
+    // Calibration must never touch the live money path — that's `npm run arbiter:gate2`.
+    console.error("ABORT: DRY_RUN is false. Calibration runs money-disconnected only; set DRY_RUN=true.");
     process.exit(2);
   }
   const onlyCase = process.argv.includes("--case") ? process.argv[process.argv.indexOf("--case") + 1] : null;

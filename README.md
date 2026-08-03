@@ -11,9 +11,10 @@ Testnet only. No real money.
 | Milestone | Status |
 |---|---|
 | Dry-run judging pipeline (brief → rubric → evidence-cited grading → schema-valid verdict → tier decision) | ✅ **Passed** live on calibration cases, 25 Jul — incl. a prompt-injection case correctly neutralized |
+| Escrow contract (`ArbiterEscrow.sol`) live on Arc testnet — lock → release → verdict hash on-chain, 19/19 tests | ✅ **Passed** 3 Aug — [evidence](docs/arbiter-escrow-evidence.md) |
 | Full 10-case calibration (5 pass / 3 fail / 2 ambiguous) | 🔜 in progress |
-| Escrow contract (`ArbiterEscrow.sol`) + verdict-driven release on Arc | 🔜 target 30 Jul |
-| Pilot: real bounties with the VN builder community | 🔜 opens early Aug |
+| Verdict-driven release (AI verdict → on-chain payout, one cycle) | 🔜 wired, awaiting live run |
+| Pilot: real bounties with the VN builder community | 🔜 opens Aug |
 
 ## How a bounty flows
 
@@ -60,6 +61,11 @@ cd frontend && npm run dev             # dashboard at http://localhost:3000
 # arbiter dry-run (no money) over calibration cases — needs ANTHROPIC_API_KEY in .env.local
 npm run arbiter:dryrun                 # all cases
 npm run arbiter:dryrun -- --case pass-01
+
+# escrow contract
+cd contracts && forge test                       # 19 tests
+bash scripts/deploy-arbiter-escrow.sh --broadcast # deploy to Arc testnet
+cd frontend && npm run arbiter:gate2             # read-only wiring check of the live money path
 ```
 
 Copy `.env.example` → `frontend/.env.local` and fill in values. Key groups: Arc/Sepolia RPC + CCTP addresses, Supabase, and the Arbiter block (`ANTHROPIC_API_KEY`, `DRY_RUN=true`, spend caps).

@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "arbiter:dryrun": "tsx scripts/arbiter-dryrun.ts"
+    "arbiter:dryrun": "tsx scripts/arbiter-dryrun.ts",
+    "arbiter:gate2": "NODE_OPTIONS=--conditions=react-server tsx scripts/arbiter-gate2.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
