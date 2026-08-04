@@ -78,6 +78,35 @@ export async function awardPoints(
 }
 
 // -------------------------------------------------------------------------
+// awardBountyPoints — AIG v4 (PRD F5): worker completed an arbiter-judged bounty.
+//
+// Reuses points_ledger with multiplier_reason='bounty_completed' (no schema change,
+// per migration 006 header). session_id carries the bounty id so every award is
+// traceable to one bounty. Flat rate: 50 points per escrowed USDC — kept simple and
+// documented rather than tuned (YAGNI until the pilot says otherwise).
+// Callers only invoke this AFTER a real on-chain release (release_tx present);
+// dry-run verdicts never award points.
+// -------------------------------------------------------------------------
+const BOUNTY_POINTS_PER_USDC = 50;
+
+export async function awardBountyPoints(
+  wallet: string,
+  bountyId: string,
+  amountUsdc: number
+): Promise<void> {
+  const supabase = getSupabaseClient();
+  const { error } = await supabase.from("points_ledger").insert({
+    wallet,
+    session_id: bountyId,
+    usd_volume: amountUsdc,
+    points_earned: amountUsdc * BOUNTY_POINTS_PER_USDC,
+    multiplier: BOUNTY_POINTS_PER_USDC,
+    multiplier_reason: "bounty_completed",
+  });
+  if (error) throw new Error(`awardBountyPoints failed: ${error.message}`);
+}
+
+// -------------------------------------------------------------------------
 // getPointsBalance
 //
 // Returns total points and current tier for a wallet.
