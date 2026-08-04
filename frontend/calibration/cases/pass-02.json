@@ -1,0 +1,9 @@
+{
+  "id": "pass-02",
+  "note": "Clear pass — translation task, faithful VN rendering, keeps EN terms in parens as asked. Expect T1.",
+  "expected_tier": "T1",
+  "expected_decision": "RELEASE",
+  "amount_usdc": 8,
+  "brief": "Dịch đoạn văn tiếng Anh sau sang tiếng Việt tự nhiên, đúng nghĩa, cho độc giả phổ thông. Yêu cầu: (1) giữ các thuật ngữ kỹ thuật gốc tiếng Anh trong ngoặc đơn ngay sau từ dịch, (2) không thêm hoặc bớt ý, (3) giọng văn trung lập. Đoạn gốc: \"An escrow is a neutral holding account: the buyer's money is locked by a smart contract, and neither side can touch it until the agreed condition is met. In our system, an AI arbiter reviews the delivered work against a frozen rubric and decides — with a measured confidence score — whether to release the funds, escalate to a human, or refuse to judge. Every decision is recorded on-chain, so the arbiter's track record is public and auditable.\"",
+  "deliverable": "Ký quỹ (escrow) là một tài khoản giữ hộ trung lập: tiền của người mua được khóa lại bằng hợp đồng thông minh (smart contract), và không bên nào được đụng vào cho đến khi điều kiện đã thỏa thuận được đáp ứng. Trong hệ thống của chúng tôi, một trọng tài AI (AI arbiter) sẽ đối chiếu sản phẩm được bàn giao với bộ tiêu chí đã đóng băng (frozen rubric) và quyết định — kèm theo một điểm tự tin được đo lường (confidence score) — rằng nên giải ngân, chuyển lên cho con người xử lý, hay từ chối chấm. Mọi quyết định đều được ghi lại trên chuỗi (on-chain), vì vậy hồ sơ thành tích của trọng tài này là công khai và có thể kiểm chứng được."
+}

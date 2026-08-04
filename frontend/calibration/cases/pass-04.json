@@ -1,0 +1,9 @@
+{
+  "id": "pass-04",
+  "note": "Clear pass — short article on AIG points, meets all 3 asks, neutral tone. Expect T1.",
+  "expected_tier": "T1",
+  "expected_decision": "RELEASE",
+  "amount_usdc": 6,
+  "brief": "Viết bài 200-300 từ bằng tiếng Việt giải thích hệ điểm thưởng của một nền tảng bounty cho người mới. Yêu cầu: (1) nêu ít nhất 2 cách kiếm điểm, (2) có một ví dụ cụ thể bằng con số, (3) tuyệt đối không hứa hẹn quy đổi điểm ra tiền hay lợi nhuận.",
+  "deliverable": "Hệ điểm của nền tảng: kiếm điểm bằng việc thật, không phải bằng may mắn\n\nĐiểm trên nền tảng là thước đo đóng góp, không phải tiền. Bạn không mua được điểm và nền tảng cũng không cam kết quy đổi điểm thành bất kỳ khoản tiền nào — điểm tồn tại để hồ sơ của bạn kể lại quá trình làm việc thật.\n\nCó hai cách kiếm điểm chính. Cách thứ nhất là hoàn thành bounty: khi bài nộp của bạn được trọng tài chấm đạt và tiền escrow được giải ngân, hệ thống tự động cộng điểm vào tài khoản, nguồn điểm ghi rõ là 'bounty_completed'. Cách thứ hai là các hoạt động cộng đồng như thanh toán thử nghiệm hoặc giới thiệu merchant mới — mỗi loại hoạt động có mức điểm riêng và đều ghi nguồn gốc rõ ràng trong sổ điểm.\n\nVí dụ cụ thể: bạn nhận một bounty viết bài trị giá 10 USDC testnet. Bài được chấm đạt, escrow giải ngân, và bạn nhận thêm 50 điểm ghi nguồn 'bounty_completed'. Nếu tháng đó bạn hoàn thành thêm hai bounty dịch thuật nữa, mỗi bounty 50 điểm, tổng điểm tháng của bạn là 150 — tất cả đều tra cứu được từng dòng trong lịch sử.\n\nĐiểm được cộng dồn theo bậc: càng nhiều điểm, hồ sơ càng nổi bật khi poster chọn người giao việc. Đó là toàn bộ giá trị của điểm — một bản lý lịch công khai, tự động và không chỉnh sửa được, chứ không phải một khoản đầu tư."
+}

@@ -1,0 +1,9 @@
+{
+  "id": "pass-03",
+  "note": "Clear pass — design brief deliverable (phi-code per PRD §2), hits all 4 asks. Expect T1.",
+  "expected_tier": "T1",
+  "expected_decision": "RELEASE",
+  "amount_usdc": 12,
+  "brief": "Viết một design brief 150-250 từ bằng tiếng Việt cho trang 'track record' công khai của một AI trọng tài chấm bounty. Yêu cầu: (1) nêu rõ đối tượng xem trang là ai, (2) liệt kê tối thiểu 4 chỉ số cần hiển thị, (3) mô tả bố cục tổng thể trong 2-3 câu, (4) nêu một nguyên tắc về tông giọng/thẩm mỹ.",
+  "deliverable": "Design brief — trang track record của AI trọng tài\n\nĐối tượng xem: hai nhóm chính. Thứ nhất là poster tiềm năng (người sắp khóa tiền vào escrow) cần bằng chứng rằng trọng tài đáng tin trước khi dùng. Thứ hai là giám khảo hackathon và nhà đầu tư, những người chỉ lướt qua 30 giây để tìm một con số đắt giá.\n\nChỉ số hiển thị (theo thứ tự ưu tiên): (1) override rate — tỷ lệ verdict bị poster đảo ngược, con số trung tâm của cả trang; (2) tổng số verdict đã ra; (3) số lần tự quyết T1 trên tổng verdict — mức tự chủ đã 'kiếm được'; (4) số lần REFUSE kèm lý do — chứng minh agent biết giới hạn của mình; (5) tổng USDC đã settle.\n\nBố cục: một hàng số lớn ở đầu trang với override rate đặt chính giữa, cỡ chữ lớn nhất. Bên dưới là bảng verdict gần nhất, mỗi dòng có link tới verdict hash trên explorer. Không sidebar, không điều hướng phụ.\n\nNguyên tắc tông giọng: trung tính như một bảng số liệu kiểm toán — không dùng ngôn ngữ tiếp thị, không che số xấu; nếu override rate tăng thì con số cứ thế hiển thị, vì chính sự trần trụi đó là lý do trang này tồn tại."
+}

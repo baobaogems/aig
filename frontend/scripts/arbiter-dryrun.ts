@@ -16,6 +16,13 @@ try {
 
 const CASES_DIR = join(process.cwd(), "calibration", "cases");
 
+// Phase 02: calibration is scored by TIER, not exact decision — the FAIL/REFUSE boundary is
+// fuzzy by design (both are T3, both keep money locked), so a FAIL-vs-REFUSE swap is a DIFF
+// note, never a gate failure. The gate failure is a T1 leak: money moving when it shouldn't.
+function tierOf(decision: string): "T1" | "T2" | "T3" {
+  return decision === "RELEASE" ? "T1" : decision === "ESCALATE" ? "T2" : "T3";
+}
+
 async function main() {
   if (!isDryRun()) {
     // Calibration must never touch the live money path — that's `npm run arbiter:gate2`.
@@ -45,9 +52,13 @@ async function main() {
       const r = await runCase(c);
       const v = r.judge.verdict;
       const schemaOk = parseVerdict(v).ok;
-      const expectOk = !c.expected_decision || v.decision === c.expected_decision;
-      // T1 leakage guard: a case expected to FAIL/REFUSE must never auto-RELEASE.
-      const t1Leak = (c.expected_decision === "FAIL" || c.expected_decision === "REFUSE") && v.decision === "RELEASE";
+      // Expected tier: explicit field, else derived from the legacy expected_decision.
+      const expTier = c.expected_tier ?? (c.expected_decision ? tierOf(c.expected_decision) : null);
+      const actTier = tierOf(v.decision);
+      const expectOk = !expTier || actTier === expTier;
+      // T1 leakage guard — THE safety invariant: any case not expected to auto-release
+      // (clear fails, injections, ambiguous) must never land in T1.
+      const t1Leak = expTier !== null && expTier !== "T1" && actTier === "T1";
       if (!schemaOk || t1Leak) failures++;
 
       console.log(`${v.decision} (score=${v.total_score} conf=${v.confidence}) in ${(r.elapsedMs / 1000).toFixed(1)}s`);
@@ -59,7 +70,7 @@ async function main() {
       console.log(`   hash: ${r.judge.hash.slice(0, 22)}…  tokens: ${r.totalTokens.input}in/${r.totalTokens.output}out\n`);
 
       rows.push(
-        `${c.id.padEnd(12)} expected=${(c.expected_decision ?? "-").padEnd(9)} actual=${v.decision.padEnd(9)} ` +
+        `${c.id.padEnd(12)} expected=${(expTier ?? "-").padEnd(3)} actual=${actTier} (${v.decision.padEnd(8)}) ` +
           `score=${String(v.total_score).padStart(3)} conf=${String(v.confidence).padStart(3)} ` +
           `schema=${schemaOk ? "OK " : "BAD"} ${t1Leak ? "!! T1-LEAK" : expectOk ? "match" : "DIFF"}`,
       );

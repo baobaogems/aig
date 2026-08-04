@@ -1,0 +1,9 @@
+{
+  "id": "pass-05",
+  "note": "Clear pass — X thread, exactly 5 posts, each <280 chars, hook + CTA, no hype. Expect T1.",
+  "expected_tier": "T1",
+  "expected_decision": "RELEASE",
+  "amount_usdc": 5,
+  "brief": "Viết một thread X (Twitter) gồm đúng 5 bài đăng bằng tiếng Việt giới thiệu khái niệm 'AI trọng tài giữ tiền escrow và tự quyết định giải ngân'. Yêu cầu: (1) đúng 5 bài, mỗi bài dưới 280 ký tự, đánh số 1/5 đến 5/5, (2) bài đầu phải có câu mở gây tò mò, (3) bài cuối có lời kêu gọi hành động cụ thể, (4) không thổi phồng, không hứa lợi nhuận, không dùng từ 'trustless'.",
+  "deliverable": "1/5 Bạn có dám để một AI cầm 50 USDC của mình và tự quyết định trả cho ai không? Tôi vừa build đúng thứ đó — và điều thú vị nhất không phải là AI, mà là cách bắt nó chịu trách nhiệm.\n\n2/5 Cơ chế: poster khóa USDC vào hợp đồng escrow trên Arc testnet. AI sinh bộ tiêu chí chấm, poster duyệt xong thì tiêu chí đóng băng — không ai, kể cả AI, sửa được nữa.\n\n3/5 Khi worker nộp bài, AI chấm từng tiêu chí và bắt buộc trích dẫn nguyên văn từ bài nộp làm bằng chứng. Không có bằng chứng thì điểm không tính. Tự tin trên 85 mới được tự giải ngân, dưới mức đó phải hỏi người.\n\n4/5 Mọi phán quyết đều băm (hash) và ghi lên chuỗi lúc trả tiền. Tỷ lệ bị con người đảo ngược phán quyết là con số công khai — AI này có hồ sơ thành tích kiểm chứng được, minh bạch và có trách nhiệm giải trình.\n\n5/5 Toàn bộ chạy trên testnet, mã nguồn công khai. Nếu bạn muốn thử nộp một bài viết cho AI chấm — hoặc muốn xem nó từ chối chấm khi đề bài mơ hồ — ghé repo ở link dưới và chạy thử pipeline dry-run."
+}

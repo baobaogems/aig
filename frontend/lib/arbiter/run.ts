@@ -18,6 +18,8 @@ export interface DryRunCase {
   rubric?: RubricItem[];
   /** Expected decision for calibration scoring: RELEASE | ESCALATE | FAIL | REFUSE */
   expected_decision?: string;
+  /** Expected tier for calibration scoring (Phase 02: tiers, not exact decisions — FAIL/REFUSE boundary is fuzzy). */
+  expected_tier?: "T1" | "T2" | "T3";
   note?: string;
 }
 

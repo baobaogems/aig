@@ -4,7 +4,7 @@
 
 import { z } from "zod";
 import { callJson, MODEL, PROMPT_VERSION } from "./client";
-import { GRADE_SYSTEM, gradeUser } from "./prompts/grade-v1";
+import { GRADE_SYSTEM, gradeUser } from "./prompts/grade-v2";
 import type { RubricItem } from "./rubric";
 import { decideTier, applySpendCap, type SpendCaps } from "./tiers";
 import { parseVerdict, verdictHash, type Verdict } from "./verdict-schema";
