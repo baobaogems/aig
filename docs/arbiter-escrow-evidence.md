@@ -89,11 +89,13 @@ no item ≤20 so the split-profile cap did not apply. `verdictHash`
 `0xbb728e339e2589d588bce36f22e6d91d1d3c3d8a8c31948c0d533b6e9e6546b9` — the `Released` event's
 on-chain hash **matches the computed hash exactly** (the AI's reasoning is now anchored on Arc).
 
-Known gap (Phase 04 work, recorded honestly): the gate2 CLI does not yet persist the verdict row
-to Supabase — the canonical verdict JSON for THIS run lives in the run log, and the per-day spend
-ledger therefore does not count this 1 USDC (it reads `verdicts.release_tx` from the DB). The
-`POST /api/judge` route owns persistence; until it lands, autonomous releases are CLI-only and
-under-counted by the ledger — conservative in the wrong direction, fix is first task of Phase 04.
+Known gap (recorded honestly at run time): the gate2 CLI does not persist the verdict row to
+Supabase — the canonical verdict JSON for THIS run lives in the run log, and the per-day spend
+ledger does not count this 1 USDC (it reads `verdicts.release_tx` from the DB).
+**CLOSED same day (Phase 04, commit 42a9303):** `POST /api/judge` now persists every verdict —
+with `release_tx` when money moved — in the same request that produced it; all pilot releases go
+through the API path and are ledger-counted. The GATE 2 CLI run above stays as-is: a historical
+record of the one release that predates persistence.
 
 `DRY_RUN` was flipped back to `true` in the same shell command that ran the cycle (auto-restore
 on exit) — money stays off by default until the pilot.
