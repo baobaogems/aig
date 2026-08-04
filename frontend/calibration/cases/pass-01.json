@@ -5,5 +5,32 @@
   "expected_decision": "RELEASE",
   "amount_usdc": 10,
   "brief": "Viết một bài ngắn 250-400 từ bằng tiếng Việt giới thiệu cách merchant Việt Nam nhận thanh toán USDC qua cơ chế CCTP (burn-and-mint của Circle). Yêu cầu: (1) giải thích cơ chế bằng ngôn ngữ dễ hiểu cho người không chuyên, (2) có ít nhất một ví dụ cụ thể về một giao dịch, (3) nêu rõ thời gian hoàn tất giao dịch ước tính, (4) giọng văn trung lập, không hype, không hứa hẹn lợi nhuận.",
-  "deliverable": "Nhận USDC không cần hiểu blockchain: cách CCTP hoạt động cho chủ shop\n\nHãy tưởng tượng chị Lan bán đồ gốm ở Bát Tràng, khách nước ngoài muốn trả bằng USDC nhưng ví của khách nằm trên mạng Ethereum, còn chị Lan muốn nhận tiền trên mạng Arc — nơi phí gần như bằng không. Bình thường, chuyển tiền giữa hai mạng blockchain giống như chuyển khoản giữa hai ngân hàng không có kết nối: phải qua trung gian, chậm và rủi ro.\n\nCCTP (Cross-Chain Transfer Protocol) của Circle — công ty phát hành đồng USDC — giải quyết việc này bằng cơ chế gọi là burn-and-mint, nghĩa là \"đốt ở đầu này, đúc ở đầu kia\". Khi khách bấm thanh toán, số USDC trên ví của khách bị \"đốt\" (hủy vĩnh viễn) trên mạng gốc. Circle xác nhận việc đốt đó đã xảy ra, rồi \"đúc\" đúng số USDC tương ứng trên mạng đích, thẳng vào ví của chị Lan. Không có tiền bị khóa ở trung gian, không có token thay thế — tổng lượng USDC lưu hành không đổi.\n\nMột giao dịch cụ thể diễn ra như sau: khách hàng ký hai giao dịch trên ví của mình (một lần cho phép, một lần đốt tiền), sau đó hệ thống của cửa hàng tự động theo dõi xác nhận từ Circle và hoàn tất việc đúc tiền bên mạng của chị Lan. Toàn bộ quá trình mất khoảng 60 đến 120 giây với bản Fast Transfer — đủ nhanh để khách đứng chờ tại quầy. Phí giao thức khoảng 0,01% khấu trừ lúc đúc.\n\nĐiểm quan trọng cho chủ shop: chị Lan không cần hiểu gì về đốt hay đúc. Chị chỉ cần một địa chỉ ví và một mã QR. Phần kỹ thuật — theo dõi xác nhận, gọi hợp đồng, xử lý lỗi — là việc của phần mềm gateway. Việc của chị là bán gốm, và kiểm tra tiền đã về ví trên bảng điều khiển, giống như kiểm tra tài khoản ngân hàng cuối ngày.\n\nUSDC vào thẳng ví do chị tự giữ chìa khóa. Không ai — kể cả gateway — có thể giữ hộ hay chặn số tiền đó."
+  "deliverable": "Nhận USDC không cần hiểu blockchain: cách CCTP hoạt động cho chủ shop\n\nHãy tưởng tượng chị Lan bán đồ gốm ở Bát Tràng, khách nước ngoài muốn trả bằng USDC nhưng ví của khách nằm trên mạng Ethereum, còn chị Lan muốn nhận tiền trên mạng Arc — nơi phí gần như bằng không. Bình thường, chuyển tiền giữa hai mạng blockchain giống như chuyển khoản giữa hai ngân hàng không có kết nối: phải qua trung gian, chậm và rủi ro.\n\nCCTP (Cross-Chain Transfer Protocol) của Circle — công ty phát hành đồng USDC — giải quyết việc này bằng cơ chế gọi là burn-and-mint, nghĩa là \"đốt ở đầu này, đúc ở đầu kia\". Khi khách bấm thanh toán, số USDC trên ví của khách bị \"đốt\" (hủy vĩnh viễn) trên mạng gốc. Circle xác nhận việc đốt đó đã xảy ra, rồi \"đúc\" đúng số USDC tương ứng trên mạng đích, thẳng vào ví của chị Lan. Không có tiền bị khóa ở trung gian, không có token thay thế — tổng lượng USDC lưu hành không đổi.\n\nMột giao dịch cụ thể diễn ra như sau: khách hàng ký hai giao dịch trên ví của mình (một lần cho phép, một lần đốt tiền), sau đó hệ thống của cửa hàng tự động theo dõi xác nhận từ Circle và hoàn tất việc đúc tiền bên mạng của chị Lan. Toàn bộ quá trình mất khoảng 60 đến 120 giây với bản Fast Transfer — đủ nhanh để khách đứng chờ tại quầy. Phí giao thức khoảng 0,01% khấu trừ lúc đúc.\n\nĐiểm quan trọng cho chủ shop: chị Lan không cần hiểu gì về đốt hay đúc. Chị chỉ cần một địa chỉ ví và một mã QR. Phần kỹ thuật — theo dõi xác nhận, gọi hợp đồng, xử lý lỗi — là việc của phần mềm gateway. Việc của chị là bán gốm, và kiểm tra tiền đã về ví trên bảng điều khiển, giống như kiểm tra tài khoản ngân hàng cuối ngày.\n\nUSDC vào thẳng ví do chị tự giữ chìa khóa. Không ai — kể cả gateway — có thể giữ hộ hay chặn số tiền đó.",
+  "rubric": [
+    {
+      "item_id": "r1",
+      "criterion": "Bài viết bằng tiếng Việt, độ dài trong khoảng 250-400 từ",
+      "weight": 20
+    },
+    {
+      "item_id": "r2",
+      "criterion": "Giải thích cơ chế CCTP burn-and-mint của Circle bằng ngôn ngữ dễ hiểu cho người không chuyên",
+      "weight": 25
+    },
+    {
+      "item_id": "r3",
+      "criterion": "Có ít nhất một ví dụ cụ thể về một giao dịch thanh toán USDC",
+      "weight": 20
+    },
+    {
+      "item_id": "r4",
+      "criterion": "Nêu rõ thời gian hoàn tất giao dịch ước tính",
+      "weight": 15
+    },
+    {
+      "item_id": "r5",
+      "criterion": "Giọng văn trung lập, không hype, không hứa hẹn lợi nhuận",
+      "weight": 20
+    }
+  ]
 }

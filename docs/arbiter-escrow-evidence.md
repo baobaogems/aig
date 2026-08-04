@@ -65,9 +65,35 @@ exponential backoff. Retrying writes is safe here precisely because the contract
 idempotent-guarded: a duplicate `createBounty` reverts `BountyExists`, a duplicate `release`
 reverts `AlreadySettled`.
 
-## Not yet proven (GATE 2 remainder)
+## GATE 2 — first verdict-driven release (LIVE, 2026-08-04)
 
-The full pipeline cycle — lock → **AI verdict** → verdict-driven release — is wired
-(`lib/arbiter/run.ts` → `judgeAndSettle`) and runnable via `npm run arbiter:gate2 -- --run`,
-but has not been executed live. It needs: migration `006_create_arbiter_tables.sql` applied
-(the per-day spend ledger fails closed without it), `DRY_RUN=false`, and a worker address.
+Preconditions met that morning: migration 006 applied (per-day ledger live, `0/150` non-degraded),
+calibration passed (10/10 tier-exact on grade-v2, commit `ac3913c`). Run:
+`npm run arbiter:gate2 -- --run --worker 0xF478…e321 --amount 1 --case pass-01` with the fixture's
+**frozen 5-item rubric** (the first attempt ABORTED by design: GATE 2 refuses to judge without a
+frozen rubric — rubric generation at judge time would violate F1's freeze rule).
+
+| Step | Tx | Block |
+|---|---|---|
+| USDC `approve` | [`0xc7265ba91b792d39aabc4c65044e30e0084030ad9a2ca43a66d77aa3bf3d7395`](https://testnet.arcscan.app/tx/0xc7265ba91b792d39aabc4c65044e30e0084030ad9a2ca43a66d77aa3bf3d7395) | 55276300 |
+| `createBounty` (lock 1 USDC) | [`0x82511d582464db29c1771d277c3a898a2877b5600e9ad3ca40c3762b07523a7b`](https://testnet.arcscan.app/tx/0x82511d582464db29c1771d277c3a898a2877b5600e9ad3ca40c3762b07523a7b) | 55276304 |
+| `release` (verdict-driven) | [`0x65dbbc871f13d510ae8f421021deeee9b4226bb0c47239cb5aa57c1478aecdff`](https://testnet.arcscan.app/tx/0x65dbbc871f13d510ae8f421021deeee9b4226bb0c47239cb5aa57c1478aecdff) | 55276342 |
+
+All three receipts `status=0x1`. Bounty `17fdcb50-6f4e-407f-bbde-78b943b10375`
+(bountyKey `0x792f67b07767bd4945b252c591de9ed2611e77365ddb0f0117bfbc8f5ba9bb5d`),
+1 USDC → worker `0xF4784bb0AcD3d315894Ebf522Ae411445288e321`, confirmed received.
+
+**Verdict** (model `claude-opus-4-8`, prompt `v2.0`): decision `RELEASE`, total_score **92**,
+confidence **88** — reasoning: all items evidence-backed, word-count estimate ~370 within range,
+no item ≤20 so the split-profile cap did not apply. `verdictHash`
+`0xbb728e339e2589d588bce36f22e6d91d1d3c3d8a8c31948c0d533b6e9e6546b9` — the `Released` event's
+on-chain hash **matches the computed hash exactly** (the AI's reasoning is now anchored on Arc).
+
+Known gap (Phase 04 work, recorded honestly): the gate2 CLI does not yet persist the verdict row
+to Supabase — the canonical verdict JSON for THIS run lives in the run log, and the per-day spend
+ledger therefore does not count this 1 USDC (it reads `verdicts.release_tx` from the DB). The
+`POST /api/judge` route owns persistence; until it lands, autonomous releases are CLI-only and
+under-counted by the ledger — conservative in the wrong direction, fix is first task of Phase 04.
+
+`DRY_RUN` was flipped back to `true` in the same shell command that ran the cycle (auto-restore
+on exit) — money stays off by default until the pilot.
