@@ -99,3 +99,82 @@ record of the one release that predates persistence.
 
 `DRY_RUN` was flipped back to `true` in the same shell command that ran the cycle (auto-restore
 on exit) — money stays off by default until the pilot.
+
+## Pilot — 2 real bounties through the production app (2026-08-05)
+
+Unlike GATE 2 (a CLI run), both pilot bounties went through the deployed app end-to-end:
+poster form → rubric freeze → on-chain lock → worker submission snapshot → `POST /api/judge`
+(SSE) → settlement. `DRY_RUN=false` on the production deploy only; every verdict persisted with
+its `release_tx` in the same request (ledger-counted).
+
+### Bounty A — clean autonomous release (5 USDC)
+
+Brief: 400–500-word Vietnamese introduction to the ARC network (4 required points);
+6-item rubric generated, reviewed, and **frozen before the deliverable existed**.
+Bounty `b69ec496-6019-406e-aae5-c56a10e12887`
+(bountyKey `0xeb7ebd87fc58e473cc2dc79c9426f26071ecd73ab8068a3dc6f1d9c55276fac9`).
+
+| Step | Tx | Block |
+|---|---|---|
+| `createBounty` (lock 5 USDC) | [`0x43783049e517ed4f47bd36227333b91067003afa3a6678828f16d5a19288e6f7`](https://testnet.arcscan.app/tx/0x43783049e517ed4f47bd36227333b91067003afa3a6678828f16d5a19288e6f7) | 55365180 |
+| `release` (verdict-driven) | [`0x3ac63896ed94d300ea3f57a3b155dc077a40892e31bbee1f7ad843cd37ac1d83`](https://testnet.arcscan.app/tx/0x3ac63896ed94d300ea3f57a3b155dc077a40892e31bbee1f7ad843cd37ac1d83) | 55376912 |
+
+**Verdict** (model `claude-opus-4-8`, prompt `v2.0`): `RELEASE`, total_score **94**, confidence
+**85**, every rubric item evidence-cited. `verdictHash`
+`0x40dd03b7b71903efb16564677fe1d499ab7a6367870bd41c22b4525889aa163e` — the `Released` event
+carries this exact hash plus amount `0x4c4b40` (5 USDC), worker
+`0x78D6506A2bB8BfF5D551F1120979c9dAf0C5ADf8` indexed. Receipt `status=0x1`;
+`getBounty` now reads `released=true`.
+
+**Fail-closed incident, recorded honestly:** the first judge attempt on this bounty errored out
+because the production deploy briefly carried a misconfigured `ARBITER_ESCROW_ADDRESS` (an EOA,
+not the contract). The pre-flight `getBounty` read returned no data and the pipeline **aborted
+before grading — no verdict written, no money moved**. Env corrected, redeployed, re-ran
+cleanly. The money path's first real-world failure mode was a refusal, which is the design.
+
+### Bounty B — deliberate borderline → escalation → human override (2.22 USDC)
+
+Brief: short Vietnamese end-user introduction to ARC; 5-item rubric frozen (length window
+300–800 words, weight 15). Bounty `c7d2502e-f547-4b5a-86ca-be726cc79757`
+(bountyKey `0xa6a1bb8b878d8e25c42e8c1ad0467ff71bd4090101780915aa76af18c502c5a2`).
+Lock tx: [`0xc20db06b0d2808b04a619c3b8869399fbd3ecc010c0518f54ceca75536a47114`](https://testnet.arcscan.app/tx/0xc20db06b0d2808b04a619c3b8869399fbd3ecc010c0518f54ceca75536a47114) (block 55386946, `status=0x1`).
+
+The submitted deliverable was ~150 words — on-topic and accurate, but far under the frozen
+length floor.
+
+**Verdict:** `ESCALATE`, total_score **63**, confidence **72**, `release_tx: null` — no
+autonomous payment. Item scores split hard: r1 (what ARC is) = 80 vs r4 (length) = 10. The
+**split-profile confidence cap** — added to prompt v2.0 after calibration round 1 leaked a
+mixed-profile case into auto-release — fired on its first real case. The model's own
+confidence reasoning: the length shortfall "is the poster's judgment call", so it capped
+confidence and deferred. `verdictHash`
+`0x5f9d72312f2e3d140d80bc63df1b079ee9dd13e718cb7d9458ab9bbe902a79a7` (persisted; committed
+on-chain only if a release ever happens).
+
+**Human override:** the poster reviewed the evidence in the UI and clicked **REJECT**
+(escalation `223494db`, 2026-08-05 12:14 ICT). The bounty stays `JUDGED`, the 2.22 USDC stays
+locked in the contract, and the poster refunds on-chain after the deadline (2026-08-06 12:00
+ICT) — refund tx will be appended here when executed.
+
+### Pilot metrics (from `agent_stats`, backed by the rows above)
+
+| Metric | Value |
+|---|---|
+| Verdicts | 2 |
+| T1 autonomous releases | 1 (Bounty A, 5 USDC settled on-chain) |
+| REFUSE | 0 |
+| Escalated to human (T2) | 1 |
+| Human overrides | 1 (REJECT) |
+| Override rate | 1/1 escalations |
+| USDC settled by verdict | 5 |
+| USDC held pending refund | 2.22 |
+
+Two-bounty pilot, stated as exactly that. The pair demonstrates both halves of the safety
+story on real transactions: autonomous settlement when the evidence supports it, and a
+confidence-capped handoff to a human when the profile splits — with the human's decision
+(and its rate) recorded publicly.
+
+**Pilot trust model, stated plainly:** the pilot app is auth-less and custodial — the server's
+admin wallet signs as both poster (seed bounties) and arbiter, and the UI's poster actions are
+not wallet-gated. Acceptable for a supervised 2-bounty pilot; wallet-gated poster auth is the
+first post-pilot item.
