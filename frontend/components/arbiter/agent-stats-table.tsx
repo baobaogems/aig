@@ -1,5 +1,8 @@
-// agent-stats-table.tsx — THE table (plan: "one screenshot = one slide"). Plain, zero styling.
+// agent-stats-table.tsx — THE table (plan: "one screenshot = one slide"). Reskinned:
+// clean, airy, dark-on-light readout — still zero logic, same data shape.
 // override_rate = poster REJECTs ÷ human-reviewed verdicts — the pitch's headline number.
+
+import { GlassPanel } from "@/components/ui/glass-panel";
 
 export interface AgentStats {
   total_verdicts: number;
@@ -11,7 +14,7 @@ export interface AgentStats {
 }
 
 export function AgentStatsTable({ stats }: { stats: AgentStats | null }) {
-  if (!stats) return <p className="text-sm">stats unavailable</p>;
+  if (!stats) return <p className="text-sm text-[var(--color-ink-muted)]">stats unavailable</p>;
   const rows: [string, string | number][] = [
     ["Total verdicts", stats.total_verdicts],
     ["T1 autonomous releases", stats.t1_auto_release],
@@ -21,15 +24,17 @@ export function AgentStatsTable({ stats }: { stats: AgentStats | null }) {
     ["Override rate", `${(Number(stats.override_rate) * 100).toFixed(1)}%`],
   ];
   return (
-    <table className="text-sm border border-gray-400 w-full">
-      <tbody>
-        {rows.map(([k, v]) => (
-          <tr key={k} className="border-b border-gray-200">
-            <td className="px-2 py-1">{k}</td>
-            <td className="px-2 py-1 text-right font-mono">{v}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
+    <GlassPanel tone="light" className="p-5">
+      <table className="w-full text-sm">
+        <tbody>
+          {rows.map(([k, v]) => (
+            <tr key={k} className="border-b border-[var(--color-ink)]/5 last:border-0">
+              <td className="py-2 text-[var(--color-ink-muted)]">{k}</td>
+              <td className="py-2 text-right font-[family-name:var(--font-jetbrains-mono)] font-semibold text-[var(--color-ink)]">{v}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </GlassPanel>
   );
 }

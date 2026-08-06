@@ -4,6 +4,9 @@
 // with evidence, escalation APPROVE/REJECT (F4). Bare on purpose.
 
 import { useState } from "react";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { PillButton } from "@/components/ui/pill-button";
+import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 
 interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
@@ -72,54 +75,51 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
 
   const v = detail?.verdict;
   return (
-    <section className="border border-gray-400 p-3">
-      <h2 className="font-bold mb-2">Bounties</h2>
-      <table className="text-sm w-full">
-        <thead><tr className="text-left border-b border-gray-400"><th>id</th><th>status</th><th className="text-right">USDC</th></tr></thead>
+    <GlassPanel tone="light" className="p-5">
+      <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">Bounties</h2>
+      <table className="mt-3 w-full text-sm">
+        <thead>
+          <tr className="border-b border-[var(--color-ink)]/10 text-left text-[var(--color-ink-muted)]">
+            <th className="pb-2 font-normal">id</th><th className="font-normal">status</th><th className="text-right font-normal">USDC</th>
+          </tr>
+        </thead>
         <tbody>
           {bounties.map((b) => (
-            <tr key={b.id} className="border-b border-gray-200 cursor-pointer" onClick={() => loadDetail(b.id)}>
-              <td className="font-mono pr-2">{b.id.slice(0, 8)}…</td>
-              <td>{b.status}</td>
-              <td className="text-right">{b.amount_usdc}</td>
+            <tr
+              key={b.id}
+              className="cursor-pointer border-b border-[var(--color-ink)]/5 transition-colors hover:bg-[var(--color-accent)]/5"
+              onClick={() => loadDetail(b.id)}
+            >
+              <td className="py-2 pr-2 font-[family-name:var(--font-jetbrains-mono)] text-[var(--color-ink)]">{b.id.slice(0, 8)}…</td>
+              <td className="text-[var(--color-ink)]">{b.status}</td>
+              <td className="text-right font-[family-name:var(--font-jetbrains-mono)] text-[var(--color-ink)]">{b.amount_usdc}</td>
             </tr>
           ))}
-          {bounties.length === 0 && <tr><td colSpan={3} className="py-2">no bounties yet</td></tr>}
+          {bounties.length === 0 && <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">no bounties yet</td></tr>}
         </tbody>
       </table>
 
       {open && detail && (
-        <div className="mt-3 border-t border-gray-300 pt-2 text-sm">
-          <p className="font-mono text-xs">{detail.bounty.id}</p>
-          <p className="whitespace-pre-wrap mt-1">{detail.bounty.brief}</p>
+        <div className="mt-4 border-t border-[var(--color-ink)]/10 pt-4 text-sm">
+          <p className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">{detail.bounty.id}</p>
+          <p className="mt-1 whitespace-pre-wrap text-[var(--color-ink)]">{detail.bounty.brief}</p>
           {detail.bounty.status === "SUBMITTED" && (
-            <button className="border border-black px-3 py-1 mt-2 disabled:opacity-50" disabled={busy} onClick={() => judge(detail.bounty.id)}>
-              Judge (F3)
-            </button>
+            <div className="mt-3">
+              <PillButton variant="primary" disabled={busy} onClick={() => judge(detail.bounty.id)}>Judge (F3)</PillButton>
+            </div>
           )}
           {v && (
-            <div className="mt-2">
-              <p className="font-bold">{v.decision} — score {v.total_score}, confidence {v.confidence}</p>
-              <p className="text-xs font-mono break-all">verdictHash {v.verdict_hash}{v.release_tx && ` · release ${v.release_tx}`}</p>
-              {v.verdict_json.rubric_scores.map((s) => (
-                <div key={s.item_id} className="border-l-2 border-gray-300 pl-2 mt-1">
-                  <p>{s.item_id} [w{s.weight}] {s.score}/100 — {s.reasoning}</p>
-                  <p className="text-xs italic">evidence: “{s.evidence[0]}”</p>
-                </div>
-              ))}
-              <p className="mt-1 text-xs">confidence: {v.verdict_json.confidence_reasoning}</p>
-              {detail.bounty.status === "JUDGED" && !detail.escalation && (
-                <div className="flex gap-2 mt-2">
-                  <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy} onClick={() => act("APPROVE")}>APPROVE — release</button>
-                  <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy} onClick={() => act("REJECT")}>REJECT</button>
-                </div>
-              )}
-              {detail.escalation && <p className="mt-1">poster action: {detail.escalation.poster_action}</p>}
-            </div>
+            <VerdictCertificate
+              verdict={v}
+              bountyStatus={detail.bounty.status}
+              escalation={detail.escalation}
+              busy={busy}
+              onAct={act}
+            />
           )}
         </div>
       )}
-      {live && <p className="text-xs mt-2 font-mono break-all">{live}</p>}
-    </section>
+      {live && <p className="mt-3 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">{live}</p>}
+    </GlassPanel>
   );
 }

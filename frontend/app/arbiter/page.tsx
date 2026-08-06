@@ -11,6 +11,7 @@ import { PosterBountyForm } from "@/components/arbiter/poster-bounty-form";
 import { WorkerSubmitForm } from "@/components/arbiter/worker-submit-form";
 import { BountyList } from "@/components/arbiter/bounty-list";
 import { AgentStatsTable, type AgentStats } from "@/components/arbiter/agent-stats-table";
+import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 
 interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
 
@@ -31,21 +32,26 @@ export default function ArbiterPage() {
   useEffect(() => { refresh(); }, [refresh]);
 
   return (
-    <main className="max-w-3xl mx-auto p-4 grid gap-4">
-      <header>
-        <h1 className="text-xl font-bold">AIG v4 — Arbiter track record</h1>
-        <p className="text-sm">
-          An AI arbiter escrows USDC on Arc testnet and decides — with measured confidence — whether
-          a deliverable earned payment. Transparent and accountable: every verdict hash is on-chain.
-        </p>
-      </header>
+    <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-16 pt-12">
+      <div className="mx-auto grid max-w-3xl gap-5">
+        <header>
+          <EyebrowLabel>arbiter</EyebrowLabel>
+          <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
+            AIG v4 — track record
+          </h1>
+          <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            An AI arbiter escrows USDC on Arc testnet and decides — with measured confidence — whether
+            a deliverable earned payment. Transparent and accountable: every verdict hash is on-chain.
+          </p>
+        </header>
 
-      <AgentStatsTable stats={stats} />
-      {error && <p className="text-sm text-red-700">{error}</p>}
+        <AgentStatsTable stats={stats} />
+        {error && <p className="text-sm text-red-700">{error}</p>}
 
-      <PosterBountyForm onChanged={refresh} />
-      <WorkerSubmitForm onChanged={refresh} />
-      <BountyList bounties={bounties} onChanged={refresh} />
+        <PosterBountyForm onChanged={refresh} />
+        <WorkerSubmitForm onChanged={refresh} />
+        <BountyList bounties={bounties} onChanged={refresh} />
+      </div>
     </main>
   );
 }

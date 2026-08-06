@@ -3,13 +3,51 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Reskin tokens (feat/reskin) — single source of truth, dv8.bz-inspired
+     "frontier-tech-meets-nature" language: airy cyan light mode, near-black
+     dark sections. See plans/260806-*-reskin/plan.md for the full brief. */
+  --color-accent: #2ca6bd;
+  --color-accent-bright: #35c4e0;
+  --color-surface-light: #f4f6f6;
+  --color-surface-light-2: #d8e6ec;
+  --color-surface-dark: #05100e;
+  --color-surface-dark-2: #0a1512;
+  --color-ink: #0a1512;
+  --color-ink-muted: #5b6b69;
+  --color-on-dark: #f4f6f6;
+  --color-on-dark-muted: #8fc9d3;
+  --color-gold: #c9a15a;
+  --color-tier-t1: #2ca6bd;
+  --color-tier-t2: #c98a3a;
+  --color-tier-t3: #a85c5c;
+  --radius-pill: 999px;
+  --radius-card: 24px;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-heading);
+
+  --color-accent: var(--color-accent);
+  --color-accent-bright: var(--color-accent-bright);
+  --color-surface-light: var(--color-surface-light);
+  --color-surface-light-2: var(--color-surface-light-2);
+  --color-surface-dark: var(--color-surface-dark);
+  --color-surface-dark-2: var(--color-surface-dark-2);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-on-dark: var(--color-on-dark);
+  --color-on-dark-muted: var(--color-on-dark-muted);
+  --color-gold: var(--color-gold);
+  --color-tier-t1: var(--color-tier-t1);
+  --color-tier-t2: var(--color-tier-t2);
+  --color-tier-t3: var(--color-tier-t3);
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +60,55 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body, Arial, Helvetica, sans-serif);
+}
+
+/* Film-grain noise texture for light-mode "airy" surfaces — cheap SVG turbulence,
+   no image asset, tileable, works on transparent bg-blend so it reads as grain. */
+.bg-grain {
+  position: relative;
+  isolation: isolate;
+}
+.bg-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Scroll-reveal: fade + rise, respects prefers-reduced-motion */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Slow-drifting light streaks — cyan SVG paths, disabled under reduced motion */
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-2%, 1.5%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.light-streak {
+  animation: drift 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-streak {
+    animation: none;
+  }
 }
