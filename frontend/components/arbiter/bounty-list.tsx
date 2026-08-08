@@ -70,7 +70,24 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
     finally { setBusy(false); }
   }
 
+  /** F4 tail — return locked USDC to the poster once the deadline has passed (never released). */
+  async function refund(id: string) {
+    setBusy(true); setLive("refunding…");
+    try {
+      const res = await fetch("/api/refund", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bounty_id: id }),
+      });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j.error);
+      setLive(j.refund_tx ? `refunded: ${j.refund_tx}` : (j.note ?? "refund note"));
+      await loadDetail(id); onChanged();
+    } catch (e) { setLive(`Error: ${e instanceof Error ? e.message : e}`); }
+    finally { setBusy(false); }
+  }
+
   const v = detail?.verdict;
+  const canRefund = !!detail && detail.bounty.status !== "RELEASED" && detail.bounty.status !== "REFUNDED"
+    && new Date(detail.bounty.deadline).getTime() <= Date.now();
   return (
     <section className="border border-gray-400 p-3">
       <h2 className="font-bold mb-2">Bounties</h2>
@@ -115,6 +132,13 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
                 </div>
               )}
               {detail.escalation && <p className="mt-1">poster action: {detail.escalation.poster_action}</p>}
+            </div>
+          )}
+          {canRefund && (
+            <div className="mt-2">
+              <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy} onClick={() => refund(detail.bounty.id)}>
+                Refund (admin, deadline passed — returns locked USDC to poster)
+              </button>
             </div>
           )}
         </div>
