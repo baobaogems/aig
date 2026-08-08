@@ -152,9 +152,15 @@ confidence and deferred. `verdictHash`
 on-chain only if a release ever happens).
 
 **Human override:** the poster reviewed the evidence in the UI and clicked **REJECT**
-(escalation `223494db`, 2026-08-05 12:14 ICT). The bounty stays `JUDGED`, the 2.22 USDC stays
-locked in the contract, and the poster refunds on-chain after the deadline (2026-08-06 12:00
-ICT) — refund tx will be appended here when executed.
+(escalation `223494db`, 2026-08-05 12:14 ICT). The bounty stayed `JUDGED`, the 2.22 USDC stayed
+locked in the contract until the deadline passed.
+
+**Refund (2026-08-08):** deadline (2026-08-06 12:00 ICT) passed with the bounty never released.
+Refund tx: [`0x8ef229b0a1a4859d0ea3e09868fb3b413279d33e969e8e5f4669a1db3d8240be`](https://testnet.arcscan.app/tx/0x8ef229b0a1a4859d0ea3e09868fb3b413279d33e969e8e5f4669a1db3d8240be)
+(block 55886538, `status=0x1`). `getBounty` now reads `released=false, refunded=true`; DB status
+`REFUNDED`. Triggered via `POST /api/refund` from a poster-facing "Refund (admin, deadline
+passed)" button added to `/arbiter`'s bounty detail view — same auth-less admin-wallet path as
+the rest of the pilot, `DRY_RUN=false` scoped to that single request only.
 
 ### Pilot metrics (from `agent_stats`, backed by the rows above)
 
@@ -167,7 +173,7 @@ ICT) — refund tx will be appended here when executed.
 | Human overrides | 1 (REJECT) |
 | Override rate | 1/1 escalations |
 | USDC settled by verdict | 5 |
-| USDC held pending refund | 2.22 |
+| USDC refunded to poster | 2.22 |
 
 Two-bounty pilot, stated as exactly that. The pair demonstrates both halves of the safety
 story on real transactions: autonomous settlement when the evidence supports it, and a
