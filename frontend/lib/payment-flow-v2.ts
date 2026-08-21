@@ -18,10 +18,13 @@ import { ERC20_APPROVE_ABI, CCTP_TOKEN_MESSENGER_ABI } from "./cctp-abi";
 import type { PaymentStep } from "@/components/payment-progress-bar";
 
 // Same env reads bundled to client because NEXT_PUBLIC_ prefix. No secrets.
-const SOURCE_CHAIN_ID = Number(process.env.NEXT_PUBLIC_SOURCE_CHAIN_ID ?? 11155111);
-const USDC = (process.env.NEXT_PUBLIC_USDC_ADDRESS_SOURCE ?? "") as `0x${string}`;
-const TOKEN_MESSENGER = (process.env.NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE ?? "") as `0x${string}`;
-const ARC_DOMAIN = Number(process.env.NEXT_PUBLIC_ARC_CCTP_DOMAIN ?? 26);
+// `||` not `??`: Next inlines these at build time, and a variable that exists on Vercel
+// with an EMPTY value inlines as "" — which `??` passes straight through. That turned
+// SOURCE_CHAIN_ID into Number("") = 0 and the addresses into "" in production.
+const SOURCE_CHAIN_ID = Number(process.env.NEXT_PUBLIC_SOURCE_CHAIN_ID || 11155111);
+const USDC = (process.env.NEXT_PUBLIC_USDC_ADDRESS_SOURCE || "") as `0x${string}`;
+const TOKEN_MESSENGER = (process.env.NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE || "") as `0x${string}`;
+const ARC_DOMAIN = Number(process.env.NEXT_PUBLIC_ARC_CCTP_DOMAIN || 26);
 
 // USDC has 6 decimals on every CCTP chain.
 const USDC_DECIMALS = 6;
@@ -113,6 +116,15 @@ export function usePaymentFlowV2(args: PaymentFlowV2Args): PaymentFlowV2State {
 
   const handlePay = useCallback(async () => {
     if (!merchantWallet || !targetUSDC) return;
+
+    // Fail loudly on missing build-time config instead of sending a tx to address "".
+    if (!USDC || !TOKEN_MESSENGER) {
+      setErrorMessage(
+        "Payment is misconfigured: NEXT_PUBLIC_USDC_ADDRESS_SOURCE / " +
+          "NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE are empty in this build.",
+      );
+      return;
+    }
 
     try {
       // Pre-flight: ensure customer is on source chain (Sepolia)
