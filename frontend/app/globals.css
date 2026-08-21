@@ -14,8 +14,8 @@
   --color-surface-light-2: #d8e6ec;
   --color-surface-dark: #19181c; /* obsidian — dark sections */
   --color-surface-dark-2: #27282d; /* glass tint over obsidian */
-  --color-ink: #0a1512;
-  --color-ink-muted: #5b6b69;
+  --color-ink: #111111;
+  --color-ink-muted: #666666;
   --color-on-dark: #ffffff;
   --color-on-dark-muted: #a9aab1; /* smoke — secondary text on dark */
   --color-gold: #ffd59f;
@@ -27,9 +27,21 @@
   --radius-pill: 999px;
   --radius-card: 24px;
 
-  /* Dashboard surfaces — these values were previously hardcoded across
-     6 dashboard/payment components; lifted here verbatim so the refactor
-     to tokens changes nothing visually. */
+  /* Dashboard surfaces — previously hardcoded across the dashboard/payment
+     components. Most are lifted verbatim (--color-border-light,
+     --color-chip-success, --color-chip-warn, --color-ink-success,
+     --color-ink-warn all equal the hex they replaced), but the migration was
+     NOT purely mechanical and four cases shift colour on purpose:
+       · --color-ink / --color-ink-muted were the landing page's blue-black
+         ink (#0a1512 / #5b6b69) and are now the dashboard's neutral
+         #111111 / #666666 — one palette for the whole app, so the landing
+         and /arbiter text tones moved slightly.
+       · the dashboard's #f2f3f0 panels resolve to --color-surface-light
+         (#f4f6f6) rather than earning a near-duplicate token.
+       · #000000 resolves to --color-ink; the app has no pure black.
+       · the dashboard's orange #ff8400 is GONE. It is not the product
+         accent: actions and active states take --color-accent (redshift),
+         progress fills and hovers take --color-accent-bright (ember). */
   --color-border-light: #cbccc9;
   --color-surface-panel: #e7e8e5;
   --color-chip-neutral: #e9e3d8;
