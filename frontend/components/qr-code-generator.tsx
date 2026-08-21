@@ -73,29 +73,29 @@ export function QRCodeGenerator({ merchantWallet, targetUSDC, baseUrl }: QRCodeG
   return (
     <div className="flex flex-col items-center gap-4">
       {/* QR code — 180x180 container matching Pencil spec */}
-      <div className="w-[180px] h-[180px] bg-[#F2F3F0] border border-[#CBCCC9] rounded flex items-center justify-center">
+      <div className="w-[180px] h-[180px] bg-[var(--color-surface-light)] border border-[var(--color-border-light)] rounded flex items-center justify-center">
         <QRCodeSVG value={payUrl} size={156} />
       </div>
 
       {/* Amount */}
-      <p className="font-[family-name:var(--font-jetbrains-mono)] text-xl font-semibold text-[#111111] text-center">
+      <p className="font-[family-name:var(--font-jetbrains-mono)] text-xl font-semibold text-[var(--color-ink)] text-center">
         ${targetUSDC.toFixed(2)} USDC
       </p>
 
       {/* Session ID */}
-      <p className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-[#666666] text-center">
+      <p className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] text-[var(--color-ink-muted)] text-center">
         {payload.sessionId.slice(0, 16)}...
       </p>
 
       {/* Expiry */}
-      <p className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[#666666] text-center">
+      <p className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[var(--color-ink-muted)] text-center">
         Expires at {expiryStr} &middot; {countdown}s remaining
       </p>
 
       {/* Refresh link */}
       <button
         onClick={refresh}
-        className="font-[family-name:var(--font-geist-sans)] text-xs text-[#804200] hover:underline"
+        className="font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-warn)] hover:underline"
       >
         Refresh now
       </button>

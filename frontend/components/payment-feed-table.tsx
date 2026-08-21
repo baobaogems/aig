@@ -59,17 +59,17 @@ function tokenLabel(bridgeMode: string | null): string {
 
 // Status badge styling per Pencil design
 const STATUS_STYLES: Record<string, string> = {
-  CONFIRMED: "bg-[#DFE6E1] text-[#004D1A]",
-  PENDING: "bg-[#FFF3E0] text-[#804200]",
-  BRIDGING: "bg-[#E8EAF6] text-[#1A237E]",
-  EXPIRED: "bg-[#F2F3F0] text-[#666666]",
-  REFUNDED: "bg-[#FCE4EC] text-[#B71C1C]",
-  SWAP_EXECUTING: "bg-[#E8EAF6] text-[#1A237E]",
-  BRIDGE_DELAYED: "bg-[#FFF3E0] text-[#804200]",
+  CONFIRMED: "bg-[var(--color-chip-success)] text-[var(--color-ink-success)]",
+  PENDING: "bg-[var(--color-chip-warn)] text-[var(--color-ink-warn)]",
+  BRIDGING: "bg-[var(--color-chip-info)] text-[var(--color-ink-info)]",
+  EXPIRED: "bg-[var(--color-surface-light)] text-[var(--color-ink-muted)]",
+  REFUNDED: "bg-[var(--color-chip-danger)] text-[var(--color-ink-danger)]",
+  SWAP_EXECUTING: "bg-[var(--color-chip-info)] text-[var(--color-ink-info)]",
+  BRIDGE_DELAYED: "bg-[var(--color-chip-warn)] text-[var(--color-ink-warn)]",
 };
 
 function StatusBadge({ status }: { status: string }) {
-  const style = STATUS_STYLES[status] ?? "bg-[#F2F3F0] text-[#666666]";
+  const style = STATUS_STYLES[status] ?? "bg-[var(--color-surface-light)] text-[var(--color-ink-muted)]";
   return (
     <span
       className={`inline-flex items-center rounded-full px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-sm leading-none ${style}`}
@@ -83,7 +83,7 @@ function StatusBadge({ status }: { status: string }) {
 function ColHeader({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
     <div
-      className={`px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-xs font-semibold text-[#666666] tracking-wider uppercase ${className}`}
+      className={`px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-xs font-semibold text-[var(--color-ink-muted)] tracking-wider uppercase ${className}`}
     >
       {children}
     </div>
@@ -139,7 +139,7 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
 
   if (rows.length === 0) {
     return (
-      <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666] text-center py-10">
+      <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-muted)] text-center py-10">
         No payments yet. Share your QR code to receive your first payment.
       </p>
     );
@@ -148,7 +148,7 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
   return (
     <div className="overflow-x-auto">
       {/* Table header row */}
-      <div className="flex flex-row bg-[#F2F3F0]">
+      <div className="flex flex-row bg-[var(--color-surface-light)]">
         <ColHeader className="w-[140px]">Source</ColHeader>
         <ColHeader className="flex-1">Token</ColHeader>
         <ColHeader className="w-[140px]">USDC Received</ColHeader>
@@ -160,18 +160,18 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
       {rows.map((row) => (
         <div
           key={row.id}
-          className="flex flex-row border-b border-[#CBCCC9] hover:bg-[#F2F3F0]/50 transition-colors"
+          className="flex flex-row border-b border-[var(--color-border-light)] hover:bg-[var(--color-surface-light)]/50 transition-colors"
         >
           {/* Source */}
-          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] text-[#111111]">
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] text-[var(--color-ink)]">
             {sourceLabel(row.bridge_mode)}
           </div>
           {/* Token */}
-          <div className="flex-1 px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] font-medium text-[#111111]">
+          <div className="flex-1 px-3 py-3 font-[family-name:var(--font-geist-sans)] text-[13px] font-medium text-[var(--color-ink)]">
             {tokenLabel(row.bridge_mode)}
           </div>
           {/* USDC Received */}
-          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-medium text-[#111111]">
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-medium text-[var(--color-ink)]">
             {row.target_usdc != null
               ? `$${Number(row.target_usdc).toFixed(2)}`
               : "—"}
@@ -181,7 +181,7 @@ export function PaymentFeedTable({ merchantWallet }: PaymentFeedTableProps) {
             <StatusBadge status={row.status} />
           </div>
           {/* Time */}
-          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-xs text-[#666666]">
+          <div className="w-[140px] px-3 py-3 font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-muted)]">
             {relativeTime(row.updated_at)}
           </div>
         </div>

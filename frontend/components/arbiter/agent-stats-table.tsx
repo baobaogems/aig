@@ -21,7 +21,8 @@ export function AgentStatsTable({ stats }: { stats: AgentStats | null }) {
     ["REFUSE (knows its limits)", stats.refused],
     ["Human-reviewed (escalations)", stats.human_reviewed],
     ["Overridden by poster", stats.overridden],
-    ["Override rate", `${(Number(stats.override_rate) * 100).toFixed(1)}%`],
+    // Small-n: a raw count reads honestly where "100.0%" over 1 escalation overstates.
+    ["Overrides", `${stats.overridden} of ${stats.human_reviewed} escalations`],
   ];
   return (
     <GlassPanel tone="light" className="p-5">

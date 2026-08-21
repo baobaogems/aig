@@ -26,7 +26,7 @@ const TIER_PERKS: Record<string, { multiplier: string; revenueShare: string }> =
 
 function TierBadge({ tier }: { tier: string }) {
   return (
-    <span className="rounded-full bg-[#E9E3D8] px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-sm text-[#804200] leading-none">
+    <span className="rounded-full bg-[var(--color-chip-neutral)] px-2 py-1 font-[family-name:var(--font-jetbrains-mono)] text-sm text-[var(--color-ink-warn)] leading-none">
       {tier}
     </span>
   );
@@ -48,10 +48,10 @@ export function PointsTierCard({ totalPoints, tier }: PointsTierCardProps) {
       );
 
   return (
-    <div className="bg-white border border-[#CBCCC9] shadow-[0_1px_1.75px_0_#0000000d]">
+    <div className="bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_#0000000d]">
       {/* Card header */}
-      <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[#CBCCC9]">
-        <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
+      <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[var(--color-border-light)]">
+        <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[var(--color-ink)]">
           Points &amp; Tier
         </span>
         <TierBadge tier={tier} />
@@ -61,10 +61,10 @@ export function PointsTierCard({ totalPoints, tier }: PointsTierCardProps) {
       <div className="px-6 py-6 flex flex-col gap-4">
         {/* Total Points row */}
         <div className="flex flex-row items-center justify-between">
-          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[#666666]">
+          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[var(--color-ink-muted)]">
             Total Points
           </span>
-          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-semibold text-[#111111]">
+          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-semibold text-[var(--color-ink)]">
             {totalPoints.toLocaleString("en-US")} pts
           </span>
         </div>
@@ -72,17 +72,17 @@ export function PointsTierCard({ totalPoints, tier }: PointsTierCardProps) {
         {/* Progress section */}
         <div className="flex flex-col gap-1.5">
           <div className="flex flex-row items-center justify-between">
-            <span className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[#666666]">
+            <span className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[var(--color-ink-muted)]">
               {isSovereign ? "Max tier reached" : `Next: ${thresholds.nextName}`}
             </span>
-            <span className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[#666666]">
+            <span className="font-[family-name:var(--font-geist-sans)] text-[11px] text-[var(--color-ink-muted)]">
               {isSovereign ? "" : `${thresholds.next.toLocaleString("en-US")} pts`}
             </span>
           </div>
           {/* Progress bar */}
-          <div className="h-4 bg-[#E7E8E5] rounded-full overflow-hidden">
+          <div className="h-4 bg-[var(--color-surface-panel)] rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#FF8400] rounded-full transition-all duration-500"
+              className="h-full bg-[var(--color-accent-bright)] rounded-full transition-all duration-500"
               style={{ width: `${progressPct}%` }}
             />
           </div>
@@ -90,20 +90,20 @@ export function PointsTierCard({ totalPoints, tier }: PointsTierCardProps) {
 
         {/* Multiplier row */}
         <div className="flex flex-row items-center justify-between">
-          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[#666666]">
+          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[var(--color-ink-muted)]">
             Multiplier
           </span>
-          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-semibold text-[#FF8400]">
+          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-semibold text-[var(--color-accent-bright)]">
             {perks.multiplier}
           </span>
         </div>
 
         {/* Revenue Share row */}
         <div className="flex flex-row items-center justify-between">
-          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[#666666]">
+          <span className="font-[family-name:var(--font-geist-sans)] text-[13px] text-[var(--color-ink-muted)]">
             Revenue Share
           </span>
-          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-medium text-[#004D1A]">
+          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[13px] font-medium text-[var(--color-ink-success)]">
             {perks.revenueShare}
           </span>
         </div>

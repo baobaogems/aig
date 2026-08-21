@@ -45,25 +45,40 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!address) return;
-    setApiError(null);
-    setStatsLoading(true);
+    let cancelled = false;
 
-    fetch(`/api/points?wallet=${address}`)
-      .then((r) => r.json())
-      .then((data) => { if (!data.error) setPoints(data); })
-      .catch(() => null);
+    const load = async () => {
+      setApiError(null);
+      setStatsLoading(true);
 
-    fetch(`/api/dashboard?wallet=${address}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.error) {
-          setApiError(data.error);
-        } else {
-          setDashStats(data.stats);
-        }
-      })
-      .catch((e) => setApiError(e.message ?? "Failed to load dashboard"))
-      .finally(() => setStatsLoading(false));
+      try {
+        const data = await fetch(`/api/points?wallet=${address}`).then((r) =>
+          r.json(),
+        );
+        if (!cancelled && !data.error) setPoints(data);
+      } catch {
+        // ignore — points are non-critical
+      }
+
+      try {
+        const data = await fetch(`/api/dashboard?wallet=${address}`).then((r) =>
+          r.json(),
+        );
+        if (cancelled) return;
+        if (data.error) setApiError(data.error);
+        else setDashStats(data.stats);
+      } catch (e) {
+        if (!cancelled)
+          setApiError(e instanceof Error ? e.message : "Failed to load dashboard");
+      } finally {
+        if (!cancelled) setStatsLoading(false);
+      }
+    };
+
+    load();
+    return () => {
+      cancelled = true;
+    };
   }, [address]);
 
   // SSR placeholder — render nothing until client hydrates

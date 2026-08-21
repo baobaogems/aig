@@ -1,25 +1,8 @@
-// /app/home/page.tsx — reskin marketing/landing page (feat/reskin). Standalone route;
-// does not touch "/" (existing dashboard redirect) or any business logic. Server component —
-// interactivity (scroll-reveal) lives in the small client islands under components/ui.
+// /app/home/page.tsx — the landing page moved to "/". This route stays as a
+// permanent redirect so links shared during the pilot keep working.
 
-import { LandingNav } from "@/components/landing/landing-nav";
-import { LandingHero } from "@/components/landing/landing-hero";
-import { LandingProblem } from "@/components/landing/landing-problem";
-import { LandingFlow } from "@/components/landing/landing-flow";
-import { LandingSafety } from "@/components/landing/landing-safety";
-import { LandingPilotMetrics } from "@/components/landing/landing-pilot-metrics";
-import { LandingFooter } from "@/components/landing/landing-footer";
+import { redirect } from "next/navigation";
 
-export default function LandingPage() {
-  return (
-    <div className="font-[family-name:var(--font-body)]">
-      <LandingNav />
-      <LandingHero />
-      <LandingProblem />
-      <LandingFlow />
-      <LandingSafety />
-      <LandingPilotMetrics />
-      <LandingFooter />
-    </div>
-  );
+export default function HomeRedirect() {
+  redirect("/");
 }
