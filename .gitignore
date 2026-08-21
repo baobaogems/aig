@@ -64,3 +64,6 @@ Thumbs.db
 
 # Fundraising materials (local only)
 AIG_INVESTOR_DECK.pptx
+
+# Ảnh chụp UI: binary, nặng, dựng lại được bằng scripts/capture-landing-baseline.js
+frontend/.screenshots/
