@@ -29,9 +29,10 @@
 
   /* Dashboard surfaces — previously hardcoded across the dashboard/payment
      components. Most are lifted verbatim (--color-border-light,
-     --color-chip-success, --color-chip-warn, --color-ink-success,
-     --color-ink-warn all equal the hex they replaced), but the migration was
-     NOT purely mechanical and four cases shift colour on purpose:
+     --color-chip-success, --color-chip-warn, --color-chip-warn-border,
+     --color-ink-success, --color-ink-warn all equal the hex they replaced),
+     but the migration was NOT purely mechanical and four cases shift colour
+     on purpose:
        · --color-ink / --color-ink-muted were the landing page's blue-black
          ink (#0a1512 / #5b6b69) and are now the dashboard's neutral
          #111111 / #666666 — one palette for the whole app, so the landing
@@ -48,6 +49,9 @@
   --color-chip-success: #dfe6e1;
   --color-chip-info: #e8eaf6;
   --color-chip-warn: #fff3e0;
+  /* Outline for warn surfaces. Separate from --color-chip-warn: a chip that
+     draws its border from its own fill has no border at all. */
+  --color-chip-warn-border: #ffcc80;
   --color-chip-danger: #fce4ec;
   --color-ink-success: #004d1a;
   --color-ink-warn: #804200;
@@ -85,6 +89,7 @@
   --color-chip-success: var(--color-chip-success);
   --color-chip-info: var(--color-chip-info);
   --color-chip-warn: var(--color-chip-warn);
+  --color-chip-warn-border: var(--color-chip-warn-border);
   --color-chip-danger: var(--color-chip-danger);
   --color-ink-success: var(--color-ink-success);
   --color-ink-warn: var(--color-ink-warn);

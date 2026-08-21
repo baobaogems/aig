@@ -5,7 +5,7 @@
 
 export function DashboardApiErrorBanner() {
   return (
-    <div className="bg-[var(--color-chip-warn)] border border-[var(--color-chip-warn)] rounded px-4 py-3 flex items-center justify-between">
+    <div className="bg-[var(--color-chip-warn)] border border-[var(--color-chip-warn-border)] rounded px-4 py-3 flex items-center justify-between">
       <span className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-warn)]">
         Unable to load dashboard data. Services may be initializing.
       </span>
