@@ -15,7 +15,7 @@ interface StatCardsProps {
 
 // Card base styling shared across all 4 cards
 const cardClass =
-  "bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_#0000000d] flex-1 flex flex-col";
+  "bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_rgb(0_0_0/0.051)] flex-1 flex flex-col";
 
 // Tier badge for Points card
 function TierBadge({ tier }: { tier: string }) {

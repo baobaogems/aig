@@ -24,7 +24,7 @@ interface PointsData {
 
 // Shared card style used for all content cards
 const cardClass =
-  "bg-white border border-[#CBCCC9] shadow-[0_1px_1.75px_0_#0000000d]";
+  "bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_rgb(0_0_0/0.051)]";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
@@ -84,8 +84,8 @@ export default function DashboardPage() {
   // SSR placeholder — render nothing until client hydrates
   if (!mounted) {
     return (
-      <main className="min-h-screen bg-[#F2F3F0] flex items-center justify-center">
-        <p className="text-[#666666] text-sm">Loading...</p>
+      <main className="min-h-screen bg-[var(--color-surface-light)] flex items-center justify-center">
+        <p className="text-[var(--color-ink-muted)] text-sm">Loading...</p>
       </main>
     );
   }
@@ -93,17 +93,17 @@ export default function DashboardPage() {
   // ── Not connected: wallet connect screen ─────────────────────────────────
   if (!isConnected) {
     return (
-      <main className="min-h-screen bg-[#F2F3F0] flex flex-col items-center justify-center p-4">
+      <main className="min-h-screen bg-[var(--color-surface-light)] flex flex-col items-center justify-center p-4">
         <div className="text-center flex flex-col items-center gap-4 max-w-sm w-full">
-          <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[#111111] tracking-[-1px]">
+          <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[var(--color-ink)] tracking-[-1px]">
             Dashboard
           </h1>
-          <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666]">
+          <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-muted)]">
             Connect your wallet to access your merchant dashboard.
           </p>
           <button
             onClick={() => connect({ connector: injected() })}
-            className="bg-[#FF8400] rounded-full h-10 px-6 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity"
+            className="bg-[var(--color-accent)] rounded-full h-10 px-6 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:opacity-90 transition-opacity"
           >
             Connect Wallet
           </button>
@@ -114,16 +114,16 @@ export default function DashboardPage() {
 
   // ── Connected: full Pencil layout ─────────────────────────────────────────
   return (
-    <main className="min-h-screen bg-[#F2F3F0]" style={{ padding: "32px 40px" }}>
+    <main className="min-h-screen bg-[var(--color-surface-light)]" style={{ padding: "32px 40px" }}>
       <div className="flex flex-col gap-7">
 
         {/* ── 1. Page Header ─────────────────────────────────────────────── */}
         <div className="flex flex-row items-center justify-between">
           <div className="flex flex-col gap-1">
-            <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[#111111] tracking-[-1px] leading-none">
+            <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[var(--color-ink)] tracking-[-1px] leading-none">
               Dashboard
             </h1>
-            <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[#666666]">
+            <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-muted)]">
               Welcome back. Here&apos;s your payment overview.
             </p>
           </div>
@@ -135,18 +135,18 @@ export default function DashboardPage() {
                 setQrKey((k) => k + 1);
                 qrCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
               }}
-              className="bg-[#FF8400] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:opacity-90 transition-opacity whitespace-nowrap"
+              className="bg-[var(--color-accent)] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:opacity-90 transition-opacity whitespace-nowrap"
             >
               Generate QR
             </button>
             {/* Export button */}
-            <button className="bg-[#F2F3F0] border border-[#CBCCC9] shadow-sm rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[#111111] hover:bg-white transition-colors whitespace-nowrap">
+            <button className="bg-[var(--color-surface-light)] border border-[var(--color-border-light)] shadow-sm rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:bg-white transition-colors whitespace-nowrap">
               Export
             </button>
             {/* Disconnect (small secondary) */}
             <button
               onClick={() => disconnect()}
-              className="font-[family-name:var(--font-geist-sans)] text-xs text-[#666666] hover:text-[#111111] transition-colors ml-2"
+              className="font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors ml-2"
             >
               {address?.slice(0, 6)}&hellip;{address?.slice(-4)} &middot; Disconnect
             </button>
@@ -155,13 +155,13 @@ export default function DashboardPage() {
 
         {/* ── API Error Banner ───────────────────────────────────────────── */}
         {apiError && (
-          <div className="bg-[#FFF3E0] border border-[#FFCC80] rounded px-4 py-3 flex items-center justify-between">
-            <span className="font-[family-name:var(--font-geist-sans)] text-sm text-[#804200]">
+          <div className="bg-[var(--color-chip-warn)] border border-[var(--color-chip-warn)] rounded px-4 py-3 flex items-center justify-between">
+            <span className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-warn)]">
               Unable to load dashboard data. Services may be initializing.
             </span>
             <button
               onClick={() => window.location.reload()}
-              className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[#804200] hover:underline ml-4 whitespace-nowrap"
+              className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-warn)] hover:underline ml-4 whitespace-nowrap"
             >
               Retry
             </button>
@@ -183,8 +183,8 @@ export default function DashboardPage() {
           {/* Left: Recent Payments table */}
           <div className={`flex-1 flex flex-col ${cardClass}`}>
             {/* Table header */}
-            <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[#CBCCC9]">
-              <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
+            <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[var(--color-border-light)]">
+              <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[var(--color-ink)]">
                 Recent Payments
               </span>
             </div>
@@ -198,11 +198,11 @@ export default function DashboardPage() {
             {/* QR Code Card */}
             <div ref={qrCardRef} className={cardClass}>
               {/* QR card header */}
-              <div className="flex flex-col gap-1 px-6 py-4 border-b border-[#CBCCC9]">
-                <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[#111111]">
+              <div className="flex flex-col gap-1 px-6 py-4 border-b border-[var(--color-border-light)]">
+                <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[var(--color-ink)]">
                   Payment QR Code
                 </span>
-                <span className="font-[family-name:var(--font-geist-sans)] text-xs text-[#666666]">
+                <span className="font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-muted)]">
                   Share with customers to receive payments
                 </span>
               </div>
@@ -210,11 +210,11 @@ export default function DashboardPage() {
               <div className="px-6 py-6 flex flex-col items-center">
                 {/* Amount picker — retail clerk sets price per customer */}
                 <div className="w-full mb-5">
-                  <label className="block text-[10px] uppercase tracking-wider text-[#666] mb-2 font-[family-name:var(--font-jetbrains-mono)]">
+                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)] mb-2 font-[family-name:var(--font-jetbrains-mono)]">
                     Amount (USDC)
                   </label>
                   <div className="relative mb-3">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#666] text-lg font-medium pointer-events-none">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ink-muted)] text-lg font-medium pointer-events-none">$</span>
                     <input
                       type="number"
                       min="0.01"
@@ -225,7 +225,7 @@ export default function DashboardPage() {
                         const v = parseFloat(e.target.value);
                         setTargetUSDC(Number.isFinite(v) && v > 0 ? v : 0.01);
                       }}
-                      className="w-full pl-8 pr-3 py-2.5 text-2xl font-semibold text-[#111] bg-white border border-[#CBCCC9] rounded-md focus:outline-none focus:border-[#FF8400] focus:ring-1 focus:ring-[#FF8400]"
+                      className="w-full pl-8 pr-3 py-2.5 text-2xl font-semibold text-[var(--color-ink)] bg-white border border-[var(--color-border-light)] rounded-md focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
                     />
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -236,8 +236,8 @@ export default function DashboardPage() {
                         onClick={() => setTargetUSDC(v)}
                         className={`flex-1 min-w-[42px] px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
                           targetUSDC === v
-                            ? "bg-[#111] text-white border-[#111]"
-                            : "bg-white text-[#111] border-[#CBCCC9] hover:bg-[#F2F3F0]"
+                            ? "bg-[var(--color-ink)] text-white border-[var(--color-ink)]"
+                            : "bg-white text-[var(--color-ink)] border-[var(--color-border-light)] hover:bg-[var(--color-surface-light)]"
                         }`}
                       >
                         ${v}

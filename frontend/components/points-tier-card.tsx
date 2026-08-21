@@ -48,7 +48,7 @@ export function PointsTierCard({ totalPoints, tier }: PointsTierCardProps) {
       );
 
   return (
-    <div className="bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_#0000000d]">
+    <div className="bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_rgb(0_0_0/0.051)]">
       {/* Card header */}
       <div className="flex flex-row items-center justify-between px-6 py-4 border-b border-[var(--color-border-light)]">
         <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[var(--color-ink)]">
