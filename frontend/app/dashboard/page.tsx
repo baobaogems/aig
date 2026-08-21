@@ -9,11 +9,15 @@
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useConnect, useDisconnect } from "wagmi";
 import { injected } from "wagmi/connectors";
-import { QRCodeGenerator } from "@/components/qr-code-generator";
 import { PaymentFeedTable } from "@/components/payment-feed-table";
 import { DashboardStatCards } from "@/components/dashboard-stat-cards";
 import { PointsTierCard } from "@/components/points-tier-card";
 import { NanoAgentsCard } from "@/components/nano-agents-card";
+import { DashboardConnectGate } from "@/components/dashboard/dashboard-connect-gate";
+import { DashboardHeader } from "@/components/dashboard/dashboard-header";
+import { DashboardApiErrorBanner } from "@/components/dashboard/dashboard-api-error-banner";
+import { DashboardQrCard } from "@/components/dashboard/dashboard-qr-card";
+import { cardClass } from "@/components/dashboard/dashboard-card-style";
 import type { DashboardStats } from "@/lib/merchant";
 
 interface PointsData {
@@ -21,10 +25,6 @@ interface PointsData {
   tier: string;
   lastActivity: string | null;
 }
-
-// Shared card style used for all content cards
-const cardClass =
-  "bg-white border border-[var(--color-border-light)] shadow-[0_1px_1.75px_0_rgb(0_0_0/0.051)]";
 
 export default function DashboardPage() {
   const { address, isConnected } = useAccount();
@@ -92,24 +92,7 @@ export default function DashboardPage() {
 
   // ── Not connected: wallet connect screen ─────────────────────────────────
   if (!isConnected) {
-    return (
-      <main className="min-h-screen bg-[var(--color-surface-light)] flex flex-col items-center justify-center p-4">
-        <div className="text-center flex flex-col items-center gap-4 max-w-sm w-full">
-          <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[var(--color-ink)] tracking-[-1px]">
-            Dashboard
-          </h1>
-          <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-muted)]">
-            Connect your wallet to access your merchant dashboard.
-          </p>
-          <button
-            onClick={() => connect({ connector: injected() })}
-            className="bg-[var(--color-accent)] rounded-full h-10 px-6 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:opacity-90 transition-opacity"
-          >
-            Connect Wallet
-          </button>
-        </div>
-      </main>
-    );
+    return <DashboardConnectGate onConnect={() => connect({ connector: injected() })} />;
   }
 
   // ── Connected: full Pencil layout ─────────────────────────────────────────
@@ -118,55 +101,17 @@ export default function DashboardPage() {
       <div className="flex flex-col gap-7">
 
         {/* ── 1. Page Header ─────────────────────────────────────────────── */}
-        <div className="flex flex-row items-center justify-between">
-          <div className="flex flex-col gap-1">
-            <h1 className="font-[family-name:var(--font-jetbrains-mono)] text-[28px] font-semibold text-[var(--color-ink)] tracking-[-1px] leading-none">
-              Dashboard
-            </h1>
-            <p className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-muted)]">
-              Welcome back. Here&apos;s your payment overview.
-            </p>
-          </div>
-
-          <div className="flex flex-row items-center gap-3">
-            {/* Generate QR button — scrolls to QR card and regenerates */}
-            <button
-              onClick={() => {
-                setQrKey((k) => k + 1);
-                qrCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-              }}
-              className="bg-[var(--color-accent)] rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:opacity-90 transition-opacity whitespace-nowrap"
-            >
-              Generate QR
-            </button>
-            {/* Export button */}
-            <button className="bg-[var(--color-surface-light)] border border-[var(--color-border-light)] shadow-sm rounded-full h-10 px-4 font-[family-name:var(--font-jetbrains-mono)] text-sm font-medium text-[var(--color-ink)] hover:bg-white transition-colors whitespace-nowrap">
-              Export
-            </button>
-            {/* Disconnect (small secondary) */}
-            <button
-              onClick={() => disconnect()}
-              className="font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors ml-2"
-            >
-              {address?.slice(0, 6)}&hellip;{address?.slice(-4)} &middot; Disconnect
-            </button>
-          </div>
-        </div>
+        <DashboardHeader
+          address={address}
+          onGenerateQr={() => {
+            setQrKey((k) => k + 1);
+            qrCardRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+          }}
+          onDisconnect={() => disconnect()}
+        />
 
         {/* ── API Error Banner ───────────────────────────────────────────── */}
-        {apiError && (
-          <div className="bg-[var(--color-chip-warn)] border border-[var(--color-chip-warn)] rounded px-4 py-3 flex items-center justify-between">
-            <span className="font-[family-name:var(--font-geist-sans)] text-sm text-[var(--color-ink-warn)]">
-              Unable to load dashboard data. Services may be initializing.
-            </span>
-            <button
-              onClick={() => window.location.reload()}
-              className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-warn)] hover:underline ml-4 whitespace-nowrap"
-            >
-              Retry
-            </button>
-          </div>
-        )}
+        {apiError && <DashboardApiErrorBanner />}
 
         {/* ── 2. Metrics Row ──────────────────────────────────────────────── */}
         <DashboardStatCards
@@ -196,60 +141,13 @@ export default function DashboardPage() {
           <div className="w-[340px] flex flex-col gap-6">
 
             {/* QR Code Card */}
-            <div ref={qrCardRef} className={cardClass}>
-              {/* QR card header */}
-              <div className="flex flex-col gap-1 px-6 py-4 border-b border-[var(--color-border-light)]">
-                <span className="font-[family-name:var(--font-jetbrains-mono)] text-base font-semibold text-[var(--color-ink)]">
-                  Payment QR Code
-                </span>
-                <span className="font-[family-name:var(--font-geist-sans)] text-xs text-[var(--color-ink-muted)]">
-                  Share with customers to receive payments
-                </span>
-              </div>
-              {/* QR card body */}
-              <div className="px-6 py-6 flex flex-col items-center">
-                {/* Amount picker — retail clerk sets price per customer */}
-                <div className="w-full mb-5">
-                  <label className="block text-[10px] uppercase tracking-wider text-[var(--color-ink-muted)] mb-2 font-[family-name:var(--font-jetbrains-mono)]">
-                    Amount (USDC)
-                  </label>
-                  <div className="relative mb-3">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-ink-muted)] text-lg font-medium pointer-events-none">$</span>
-                    <input
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      inputMode="decimal"
-                      value={targetUSDC}
-                      onChange={(e) => {
-                        const v = parseFloat(e.target.value);
-                        setTargetUSDC(Number.isFinite(v) && v > 0 ? v : 0.01);
-                      }}
-                      className="w-full pl-8 pr-3 py-2.5 text-2xl font-semibold text-[var(--color-ink)] bg-white border border-[var(--color-border-light)] rounded-md focus:outline-none focus:border-[var(--color-accent)] focus:ring-1 focus:ring-[var(--color-accent)]"
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 5, 10, 20, 50, 100].map((v) => (
-                      <button
-                        key={v}
-                        type="button"
-                        onClick={() => setTargetUSDC(v)}
-                        className={`flex-1 min-w-[42px] px-2 py-1.5 text-xs font-medium rounded-md border transition-colors ${
-                          targetUSDC === v
-                            ? "bg-[var(--color-ink)] text-white border-[var(--color-ink)]"
-                            : "bg-white text-[var(--color-ink)] border-[var(--color-border-light)] hover:bg-[var(--color-surface-light)]"
-                        }`}
-                      >
-                        ${v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {address && (
-                  <QRCodeGenerator key={qrKey} merchantWallet={address} targetUSDC={targetUSDC} />
-                )}
-              </div>
-            </div>
+            <DashboardQrCard
+              cardRef={qrCardRef}
+              qrKey={qrKey}
+              address={address}
+              targetUSDC={targetUSDC}
+              onAmountChange={setTargetUSDC}
+            />
 
             {/* Points & Tier Card */}
             <PointsTierCard
