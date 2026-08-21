@@ -29,6 +29,10 @@ export function LandingNav() {
             {l.label}
           </a>
         ))}
+        {/* Route link, not a section anchor — the merchant dashboard had no way in from here. */}
+        <a href="/dashboard" className="text-sm text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-accent)]">
+          Dashboard
+        </a>
       </nav>
       <a href="/arbiter" className="rounded-full bg-[var(--color-surface-dark)] px-4 py-1.5 text-sm font-medium text-[var(--color-on-dark)] transition-transform hover:-translate-y-0.5">
         Open app
