@@ -47,10 +47,17 @@ export interface JudgeResult {
 }
 
 export async function gradeSubmission(input: JudgeInput): Promise<JudgeResult> {
-  const { data, usage } = await callJson(
+  const { data, usage, parseError } = await callJson(
     GRADE_SYSTEM,
     gradeUser(input.brief, input.rubric, input.deliverable),
   );
+
+  if (parseError) {
+    // Unparseable reply is the same class of failure as an off-schema one: we do not know
+    // what the model meant, so no money moves. Never throw — a throw leaves the bounty stuck
+    // in SUBMITTED with no verdict row to show for the tokens spent.
+    return finalize(input, refuseVerdict(input, "grade unparseable: " + parseError), usage);
+  }
 
   const parsed = gradeReplySchema.safeParse(data);
   if (!parsed.success) {
@@ -94,7 +101,12 @@ export async function gradeSubmission(input: JudgeInput): Promise<JudgeResult> {
 function finalize(input: JudgeInput, verdict: Verdict, usage: JudgeResult["usage"]): JudgeResult {
   // Belt-and-suspenders: the assembled verdict must itself pass the public schema.
   const check = parseVerdict(verdict);
-  if (!check.ok) return { verdict: refuseVerdict(input, "assembled verdict invalid: " + check.error), hash: "0x", usage } as JudgeResult;
+  if (!check.ok) {
+    // Hash the REFUSE we actually store, not a placeholder — verdict_hash goes on-chain and
+    // into the DB, so "0x" would publish a hash that matches no verdict anyone can verify.
+    const refusal = refuseVerdict(input, "assembled verdict invalid: " + check.error);
+    return { verdict: refusal, hash: verdictHash(refusal), usage };
+  }
   return { verdict, hash: verdictHash(verdict), usage };
 }
 
