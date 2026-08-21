@@ -164,6 +164,28 @@ Removed in Phase 06 partial: `@circle-fin/app-kit`, `@circle-fin/adapter-viem-v2
 - TypeScript strict mode
 - File size: <200 lines preferred — split larger files (`pay/[id]/page.tsx` currently 348 lines; strangler-fig transition exception, cleaned in Phase 06 full)
 
+### Xác minh bằng đo đạc: luôn có mẫu đối chứng
+
+Trước khi kết luận "thứ X không tồn tại / không chạy / không được biên dịch ra", phải
+đo kèm một **mẫu đối chứng đã biết chắc là có**. Nếu mẫu đối chứng cũng vắng mặt thì
+lỗi nằm ở công cụ đo, không nằm ở thứ đang xét.
+
+Đối chứng chỉ hợp lệ khi nó được **thêm vào cùng lúc** với thứ đang nghi. Một class đã
+tồn tại từ commit trước không phân biệt được bản build mới với bản build cũ — cả hai
+đều chứa nó.
+
+Đợt reskin landing (21/08/2026) mắc cùng một dạng sai ba lần, mỗi lần trên một trục
+khác nhau, và cả ba lần "không đo thấy" đều trông y hệt "không tồn tại":
+
+| # | Đo cái gì | Bỏ sót | Hậu quả |
+|---|---|---|---|
+| 1 | hover CTA | thiếu **thuộc tính** — chỉ đọc `transform`, trong khi Tailwind v4 dịch `-translate-y-*` ra thuộc tính `translate` | báo nhầm "hover không hoạt động" |
+| 2 | hover card | thiếu **loại phần tử** — chỉ rê lên `a`/`button`, card là `div` | glow chạy vẫn báo là không |
+| 3 | luật CSS tự viết | đọc **output đã chết** của dev server không còn biên dịch | kết luận sai "Tailwind v4 nuốt class tên `hover-*`" — **quy tắc này SAI**, đã thực nghiệm bác bỏ: `.hover-lift` biên dịch ra bình thường |
+
+Danh sách thuộc tính / phần tử / nguồn dữ liệu cố định sẽ **im lặng** bỏ sót thứ nó
+không biết. Không có thông báo lỗi nào cho trường hợp này — chỉ có mẫu đối chứng.
+
 ## Known limitations
 
 - Testnet only (Arc + Sepolia testnets; Circle CCTP V2 sandbox API).
