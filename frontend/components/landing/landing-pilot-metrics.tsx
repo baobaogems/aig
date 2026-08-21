@@ -38,11 +38,17 @@ const METRICS: [string, string][] = [
 
 export function LandingPilotMetrics() {
   return (
-    <section id="evidence" className="bg-[var(--color-surface-light)] py-24">
+    // Cùng nền obsidian với khối safety ngay trên nó. Một đường kẻ mảnh đánh dấu chỗ
+    // chuyển từ lời tuyên bố sang bằng chứng — giữ mảng tối liền mạch, không cắt rời
+    // bằng khoảng trống hay màu nền khác.
+    <section
+      id="evidence"
+      className="border-t border-white/10 bg-[var(--color-surface-dark)] py-24"
+    >
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <EyebrowLabel>calibration + pilot</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-ink)] sm:text-4xl">
+          <EyebrowLabel onDark>calibration + pilot</EyebrowLabel>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
             Two real bounties. Both halves of the safety story, on real transactions.
           </h2>
         </Reveal>
@@ -50,15 +56,15 @@ export function LandingPilotMetrics() {
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
           {CASES.map((c) => (
             <Reveal key={c.label}>
-              <GlassPanel tone="light" interactive className="h-full p-6">
+              <GlassPanel tone="dark-raised" interactive className="h-full p-6">
                 <TierPill decision={c.decision} />
-                <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">{c.label}</h3>
-                <p className="tnum mt-1 text-sm text-[var(--color-ink-muted)]">score {c.score} · {c.amount}</p>
+                <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-on-dark)]">{c.label}</h3>
+                <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">score {c.score} · {c.amount}</p>
                 <a
                   href={c.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-accent)] underline decoration-[var(--color-accent)]/30 underline-offset-4 hover:decoration-[var(--color-accent)]"
+                  className="mt-3 inline-block font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-accent-bright)] underline decoration-[var(--color-accent-bright)]/30 underline-offset-4 hover:decoration-[var(--color-accent-bright)]"
                 >
                   {c.tx}
                 </a>
@@ -68,12 +74,12 @@ export function LandingPilotMetrics() {
         </div>
 
         <Reveal className="mt-8">
-          <GlassPanel tone="light" className="p-6">
+          <GlassPanel tone="dark-raised" className="p-6">
             <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
               {METRICS.map(([k, v]) => (
                 <div key={k}>
-                  <p className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">{k}</p>
-                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-ink)]">{v}</p>
+                  <p className="text-xs uppercase tracking-wide text-[var(--color-on-dark-muted)]">{k}</p>
+                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-on-dark)]">{v}</p>
                 </div>
               ))}
             </div>
@@ -81,7 +87,7 @@ export function LandingPilotMetrics() {
         </Reveal>
 
         <Reveal className="mt-10">
-          <PillButton href="https://github.com/baobaogems/aig/blob/main/docs/arbiter-escrow-evidence.md" variant="secondary" target="_blank" rel="noopener noreferrer">
+          <PillButton href="https://github.com/baobaogems/aig/blob/main/docs/arbiter-escrow-evidence.md" variant="secondary-on-dark" target="_blank" rel="noopener noreferrer">
             Full on-chain evidence, incl. the fail-closed incident
           </PillButton>
         </Reveal>

@@ -105,7 +105,10 @@ async function run() {
         const seen = new Set();
         // Card (.card-lift) đứng TRƯỚC a/button: card là <div>, nếu không gọi tên
         // riêng thì không bao giờ lọt vào phép đo hover.
-        return [...document.querySelectorAll(".card-lift"), ...document.querySelectorAll("a, button")]
+        // [class*="card-lift"] bắt cả .card-lift (nền sáng) lẫn .card-lift-dark (nền tối).
+        // Selector `.card-lift` KHÔNG khớp `.card-lift-dark` — card sẽ lặng lẽ rơi khỏi
+        // phép đo và bảng hover trông y như lúc glow không chạy.
+        return [...document.querySelectorAll('[class*="card-lift"]'), ...document.querySelectorAll("a, button")]
           .filter((el) => {
             const r = el.getBoundingClientRect();
             if (r.width < 40 || r.height < 20) return false;

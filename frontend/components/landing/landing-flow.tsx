@@ -16,7 +16,9 @@ const STEPS = [
 
 export function LandingFlow() {
   return (
-    <section id="flow" className="bg-[var(--color-surface-light-2)] py-24">
+    // Cùng nền với khối problem ngay trên nó, nên ranh giới hai khối là một đường kẻ
+    // mảnh chứ không phải một màu nền khác.
+    <section id="flow" className="border-t border-[var(--color-ink)]/10 bg-[var(--color-surface-light)] py-24">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <EyebrowLabel>how a bounty flows</EyebrowLabel>

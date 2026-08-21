@@ -142,6 +142,21 @@ body {
   }
 }
 
+/* Bản cho nền tối. box-shadow vô dụng ở đây — bóng của .card-lift là chính màu
+   obsidian, đổ lên nền obsidian thì không thấy gì. Trên nền tối, tín hiệu duy nhất
+   là ÁNH SÁNG: làm viền sáng lên. */
+.card-lift-dark {
+  transition: border-color 0.25s ease;
+}
+.card-lift-dark:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-lift-dark {
+    transition: none;
+  }
+}
+
 /* Chữ số rộng đều nhau — để cột số thẳng hàng khi giá trị đổi. */
 .tnum {
   font-variant-numeric: tabular-nums;

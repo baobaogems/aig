@@ -6,7 +6,7 @@ import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from "reac
 
 interface PillButtonBaseProps {
   children: ReactNode;
-  variant?: "primary" | "secondary";
+  variant?: "primary" | "secondary" | "secondary-on-dark";
   className?: string;
 }
 
@@ -22,6 +22,10 @@ const variants = {
   primary: "bg-[var(--color-surface-dark)] text-[var(--color-on-dark)] pl-5 pr-1.5 py-1.5",
   secondary:
     "border border-[var(--color-accent)]/40 text-[var(--color-accent)] px-5 py-2 hover:border-[var(--color-accent)]",
+  // Trên obsidian, --color-accent (#de1e14) là đỏ sẫm trên nền gần đen — tối và khó
+  // đọc. Nền tối dùng ember, giống cách khối safety xử lý chữ nhấn của nó.
+  "secondary-on-dark":
+    "border border-[var(--color-accent-bright)]/40 text-[var(--color-accent-bright)] px-5 py-2 hover:border-[var(--color-accent-bright)]",
 };
 
 export function PillButton({ children, variant = "primary", className = "", ...props }: PillButtonProps) {

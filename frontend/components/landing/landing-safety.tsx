@@ -19,7 +19,7 @@ export function LandingSafety() {
     <section id="safety" className="bg-[var(--color-surface-dark)] py-24">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <EyebrowLabel>safety design</EyebrowLabel>
+          <EyebrowLabel onDark>safety design</EyebrowLabel>
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
             An AI with budget authority needs brakes before it needs autonomy.
           </h2>
