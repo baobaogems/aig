@@ -30,7 +30,7 @@ export function LandingFlow() {
           {STEPS.map((s) => (
             <Reveal key={s.n}>
               <div className="flex gap-4">
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-white font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--color-accent)]">
+                <span className="tnum flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-white font-[family-name:var(--font-jetbrains-mono)] text-sm font-semibold text-[var(--color-accent)]">
                   {s.n}
                 </span>
                 <div>

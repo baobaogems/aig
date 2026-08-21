@@ -53,7 +53,7 @@ export function LandingPilotMetrics() {
               <GlassPanel tone="light" className="h-full p-6">
                 <TierPill decision={c.decision} />
                 <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">{c.label}</h3>
-                <p className="mt-1 text-sm text-[var(--color-ink-muted)]">score {c.score} · {c.amount}</p>
+                <p className="tnum mt-1 text-sm text-[var(--color-ink-muted)]">score {c.score} · {c.amount}</p>
                 <a
                   href={c.href}
                   target="_blank"
@@ -73,7 +73,7 @@ export function LandingPilotMetrics() {
               {METRICS.map(([k, v]) => (
                 <div key={k}>
                   <p className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">{k}</p>
-                  <p className="mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-ink)]">{v}</p>
+                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-ink)]">{v}</p>
                 </div>
               ))}
             </div>
