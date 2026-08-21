@@ -103,7 +103,9 @@ async function run() {
     if (vp.name === "desktop") {
       const targets = await page.evaluate(() => {
         const seen = new Set();
-        return [...document.querySelectorAll("a, button")]
+        // Card (.card-lift) đứng TRƯỚC a/button: card là <div>, nếu không gọi tên
+        // riêng thì không bao giờ lọt vào phép đo hover.
+        return [...document.querySelectorAll(".card-lift"), ...document.querySelectorAll("a, button")]
           .filter((el) => {
             const r = el.getBoundingClientRect();
             if (r.width < 40 || r.height < 20) return false;
@@ -112,7 +114,7 @@ async function run() {
             seen.add(key);
             return true;
           })
-          .slice(0, 8)
+          .slice(0, 10)
           .map((el, idx) => {
             el.setAttribute("data-hv", String(idx));
             return { idx, label: (el.textContent || "").trim().slice(0, 40), tag: el.tagName };

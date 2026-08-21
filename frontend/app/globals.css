@@ -127,6 +127,21 @@ body {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* Hover glow: bóng đổ sâu hơn + viền rõ hơn. KHÔNG dùng màu accent —
+   đỏ dành riêng cho hành động chính, không cho trạng thái rê chuột. */
+.card-lift {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card-lift:hover {
+  box-shadow: 0 12px 40px rgba(10, 21, 18, 0.12);
+  border-color: rgba(10, 21, 18, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-lift {
+    transition: none;
+  }
+}
+
 /* Chữ số rộng đều nhau — để cột số thẳng hàng khi giá trị đổi. */
 .tnum {
   font-variant-numeric: tabular-nums;

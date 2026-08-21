@@ -12,7 +12,7 @@ const LINKS = [
 export function LandingNav() {
   return (
     <div className="sticky top-4 z-50 mx-auto flex w-[min(100%-2rem,64rem)] items-center justify-between rounded-full border border-black/5 bg-white/70 px-4 py-2.5 shadow-[0_8px_30px_rgba(10,21,18,0.08)] backdrop-blur-xl">
-      <a href="#top" className="flex items-center gap-2">
+      <a href="#top" className="flex items-center gap-2 transition-opacity hover:opacity-70">
         <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface-dark)]">
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M8 1.5 14 5v6l-6 3.5L2 11V5l6-3.5Z" stroke="var(--color-accent-bright)" strokeWidth="1.2" />
