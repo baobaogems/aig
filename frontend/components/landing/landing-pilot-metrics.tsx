@@ -6,13 +6,21 @@ import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { PillButton } from "@/components/ui/pill-button";
 import { TierPill } from "@/components/ui/tier-pill";
+import { ThresholdBar } from "@/components/ui/threshold-bar";
 import { Reveal } from "@/components/ui/reveal";
+import { TIER_THRESHOLDS } from "@/lib/arbiter/tiers";
 
+// score and confidence are two separate numbers, not a value/threshold pair — see
+// docs/arbiter-escrow-evidence.md (Bounty A: total_score 94, confidence 85; Bounty B:
+// total_score 63, confidence 72). The gates they are measured against come from
+// lib/arbiter/tiers.ts, the code that actually decides whether money moves.
 const CASES = [
   {
     label: "Bounty A — clean autonomous release",
     decision: "RELEASE",
-    score: "94 / 85",
+    tier: "T1" as const,
+    score: 94,
+    confidence: 85,
     amount: "5 USDC settled on-chain",
     tx: "0x3ac63896…37ac1d83",
     href: "https://testnet.arcscan.app/tx/0x3ac63896ed94d300ea3f57a3b155dc077a40892e31bbee1f7ad843cd37ac1d83",
@@ -20,7 +28,9 @@ const CASES = [
   {
     label: "Bounty B — borderline, escalated, overridden",
     decision: "ESCALATE",
-    score: "63 / 72",
+    tier: "T2" as const,
+    score: 63,
+    confidence: 72,
     amount: "2.22 USDC held pending refund",
     tx: "poster REJECT — escalation 223494db",
     href: "https://github.com/baobaogems/aig/blob/main/docs/arbiter-escrow-evidence.md",
@@ -59,7 +69,21 @@ export function LandingPilotMetrics() {
               <GlassPanel tone="dark-raised" interactive className="h-full p-6">
                 <TierPill decision={c.decision} />
                 <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-on-dark)]">{c.label}</h3>
-                <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">score {c.score} · {c.amount}</p>
+                <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">{c.amount}</p>
+                <div className="mt-4 space-y-3">
+                  <ThresholdBar
+                    label="score"
+                    value={c.score}
+                    threshold={TIER_THRESHOLDS.autoReleaseScore}
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
+                  />
+                  <ThresholdBar
+                    label="confidence"
+                    value={c.confidence}
+                    threshold={TIER_THRESHOLDS.autoReleaseConfidence}
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
+                  />
+                </div>
                 <a
                   href={c.href}
                   target="_blank"
