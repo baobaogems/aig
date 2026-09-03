@@ -1,6 +1,7 @@
 // landing-hero.tsx — reskin hero: huge left-aligned headline, cyan eyebrow, pill CTAs,
-// abstract "escrow vault" visual (glassy hexagon holding a coin of light — our own motif,
-// not dv8's butterfly). Cloud-gradient light-mode surface with drifting streaks + grain.
+// abstract "withheld verdict" visual (an unclosed glassy hexagon around a confidence bar
+// short of its threshold — our own motif, not dv8's butterfly). Cloud-gradient light-mode
+// surface with drifting streaks + grain.
 
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { PillButton } from "@/components/ui/pill-button";
@@ -41,23 +42,37 @@ export function LandingHero() {
 
         <div className="relative mx-auto aspect-square w-full max-w-sm">
           <div className="absolute inset-0 rounded-[var(--radius-card)] bg-white/60 shadow-[0_20px_60px_rgba(10,21,18,0.12)] backdrop-blur-xl" />
+          {/* Withheld-verdict motif: a hexagon whose top-right edge is deliberately left
+              open (nothing has been released yet) around a confidence bar that stops short
+              of the release threshold. Static SVG, no decorative red — cyan is the tier
+              language already used for verdicts. */}
           <svg viewBox="0 0 320 320" className="relative h-full w-full p-10" aria-hidden="true">
-            <defs>
-              <linearGradient id="vault-glow" x1="0" y1="0" x2="1" y2="1">
-                <stop offset="0%" stopColor="var(--color-accent-bright)" />
-                <stop offset="100%" stopColor="var(--color-accent)" />
-              </linearGradient>
-            </defs>
-            <polygon
-              points="160,20 280,90 280,230 160,300 40,230 40,90"
+            {/* hexagon, unclosed: the 160,20 -> 280,90 edge is omitted */}
+            <path
+              d="M280 90 L280 230 L160 300 L40 230 L40 90 L160 20"
               fill="none"
-              stroke="url(#vault-glow)"
+              stroke="var(--color-ink-muted)"
               strokeWidth="1.5"
-              opacity="0.55"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.35"
             />
-            <circle cx="160" cy="160" r="58" fill="url(#vault-glow)" opacity="0.9" />
-            <circle cx="160" cy="160" r="58" fill="none" stroke="white" strokeOpacity="0.4" strokeWidth="1" />
-            <path d="M136 160l16 16 32-32" stroke="white" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            {/* confidence track */}
+            <rect x="72" y="149" width="176" height="14" rx="7" fill="var(--color-ink-muted)" opacity="0.15" />
+            {/* fill — short of the threshold */}
+            <rect x="72" y="149" width="98" height="14" rx="7" fill="var(--color-tier-t1)" opacity="0.85" />
+            {/* release threshold */}
+            <line
+              x1="212"
+              y1="130"
+              x2="212"
+              y2="182"
+              stroke="var(--color-ink-muted)"
+              strokeWidth="1.5"
+              strokeDasharray="3 4"
+              strokeLinecap="round"
+              opacity="0.7"
+            />
           </svg>
         </div>
       </div>
