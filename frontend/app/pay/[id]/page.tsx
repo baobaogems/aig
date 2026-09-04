@@ -19,8 +19,8 @@ export default function PaymentPageWrapper() {
   return (
     <Suspense
       fallback={
-        <main className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <p className="text-gray-400 text-sm">Loading payment...</p>
+        <main className="flex min-h-screen items-center justify-center bg-[var(--color-surface-light)]">
+          <p className="text-sm text-[var(--color-ink-muted)]">Loading payment…</p>
         </main>
       }
     >
@@ -43,21 +43,23 @@ function PaymentPage() {
 
   if (!merchantWallet || !targetUSDC) {
     return (
-      <main className="min-h-screen flex items-center justify-center p-4">
-        <p className="text-gray-500 text-sm">Invalid payment link.</p>
+      <main className="flex min-h-screen items-center justify-center bg-[var(--color-surface-light)] p-4">
+        <p className="text-sm text-[var(--color-ink-muted)]">Invalid payment link.</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-[var(--color-surface-light)] p-4">
       <div className="w-full max-w-sm space-y-4">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900">Pay with USDC</h1>
-          <p className="text-gray-500 text-sm mt-1">
+          <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
+            Pay with USDC
+          </h1>
+          <p className="tnum mt-1 text-sm text-[var(--color-ink-muted)]">
             ${targetUSDC.toFixed(2)} USDC → merchant on Arc
           </p>
-          <p className="text-gray-400 text-xs mt-1">
+          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
             via Ethereum Sepolia → CCTP → Arc
           </p>
         </div>
@@ -65,38 +67,39 @@ function PaymentPage() {
         {!isConnected && (
           <button
             onClick={() => connect({ connector: injected() })}
-            className="w-full bg-gray-900 hover:bg-gray-800 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+            className="w-full rounded-[var(--radius-pill)] bg-[var(--color-surface-dark)] px-4 py-3 font-semibold text-[var(--color-on-dark)] transition-transform hover:-translate-y-0.5"
           >
             Connect Wallet
           </button>
         )}
 
         {isConnected && (
-          <p className="text-xs text-center text-gray-400">
+          <p className="text-center font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
             Connected: {address?.slice(0, 6)}…{address?.slice(-4)}
           </p>
         )}
 
         {isConnected && step === "idle" && (
-          <div className="bg-white rounded-xl p-4 space-y-3 border border-gray-200">
+          <div className="space-y-3 rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white p-5">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">You pay</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-[var(--color-ink-muted)]">You pay</span>
+              <span className="tnum font-medium text-[var(--color-ink)]">
                 {targetUSDC.toFixed(2)} USDC
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Merchant receives</span>
-              <span className="font-medium text-gray-900">
+              <span className="text-[var(--color-ink-muted)]">Merchant receives</span>
+              <span className="tnum font-medium text-[var(--color-ink)]">
                 {targetUSDC.toFixed(2)} USDC
               </span>
             </div>
-            <p className="text-xs text-gray-400 pt-1">
+            <p className="pt-1 text-xs text-[var(--color-ink-muted)]">
               Two signatures: approve USDC + bridge to Arc. ~30–60s for attestation.
             </p>
+            {/* The only red on this page: paying is the primary action. */}
             <button
               onClick={handlePay}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-colors"
+              className="w-full rounded-[var(--radius-pill)] bg-[var(--color-accent)] px-4 py-3 font-semibold text-white transition-colors hover:bg-[var(--color-accent-bright)]"
             >
               Pay ${targetUSDC.toFixed(2)}
             </button>

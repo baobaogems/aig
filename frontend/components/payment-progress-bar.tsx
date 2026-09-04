@@ -57,30 +57,41 @@ export function PaymentProgressBar({
           const done = current > i;
           const active = current === i;
           return (
-            <div key={s.key} className="flex flex-col items-center flex-1">
+            // `relative` matters: the connector line below is absolutely positioned and
+            // previously had no positioned ancestor here, so it resolved against the page
+            // and drew a full-width rule across the viewport instead of joining two steps.
+            <div key={s.key} className="relative flex flex-1 flex-col items-center">
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                  done
-                    ? "bg-green-500 text-white"
-                    : active
-                    ? "bg-blue-600 text-white animate-pulse"
-                    : "bg-gray-200 text-gray-400"
+                // z-10 keeps the circle above the connector line. The pulse on the active
+                // step stays: it is live feedback that a signature or a bridge is still in
+                // flight, not decoration.
+                className={`relative z-10 flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold transition-colors ${
+                  active ? "animate-pulse" : ""
                 }`}
+                style={
+                  done
+                    ? { backgroundColor: "var(--color-ink-success)", color: "#fff" }
+                    : active
+                    ? { backgroundColor: "var(--color-accent)", color: "#fff" }
+                    : { backgroundColor: "var(--color-chip-neutral)", color: "var(--color-ink-muted)" }
+                }
               >
                 {done ? "✓" : i + 1}
               </div>
               <span
-                className={`mt-1 text-xs ${
-                  done || active ? "text-gray-800 font-medium" : "text-gray-400"
-                }`}
+                className={`mt-1 text-xs ${done || active ? "font-medium" : ""}`}
+                style={{ color: done || active ? "var(--color-ink)" : "var(--color-ink-muted)" }}
               >
                 {s.label}
               </span>
               {i < STEPS.length - 1 && (
                 <div
-                  className={`absolute h-0.5 w-full top-4 left-1/2 ${
-                    done ? "bg-green-500" : "bg-gray-200"
-                  }`}
+                  className="absolute left-1/2 top-4 z-0 h-0.5 w-full"
+                  style={{
+                    backgroundColor: done
+                      ? "var(--color-ink-success)"
+                      : "var(--color-border-light)",
+                  }}
                 />
               )}
             </div>
@@ -90,33 +101,55 @@ export function PaymentProgressBar({
 
       {/* Status message */}
       {step === "bridge_delayed" && (
-        <p className="text-center text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
-          Taking longer than expected... Bridge confirmation may take a few minutes.
+        <p
+          className="rounded-lg p-3 text-center text-sm"
+          style={{
+            color: "var(--color-ink-warn)",
+            backgroundColor: "var(--color-chip-warn)",
+            border: "1px solid var(--color-chip-warn-border)",
+          }}
+        >
+          Taking longer than expected… Bridge confirmation may take a few minutes.
         </p>
       )}
 
       {step === "error" && errorMessage && (
-        <p className="text-center text-sm text-red-600 bg-red-50 rounded-lg p-3">
+        <p
+          className="rounded-lg p-3 text-center text-sm"
+          style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}
+        >
           {errorMessage}
         </p>
       )}
 
       {/* Receipt */}
       {step === "confirmed" && receipt && (
-        <div className="mt-4 bg-green-50 border border-green-200 rounded-xl p-4 text-sm space-y-2">
-          <p className="text-green-700 font-semibold text-center">Payment Confirmed ✓</p>
-          <div className="flex justify-between text-gray-600">
+        <div
+          className="mt-4 space-y-2 rounded-[var(--radius-card)] p-4 text-sm"
+          style={{
+            backgroundColor: "var(--color-chip-success)",
+            border: "1px solid var(--color-border-light)",
+          }}
+        >
+          <p className="text-center font-semibold" style={{ color: "var(--color-ink-success)" }}>
+            Payment Confirmed ✓
+          </p>
+          <div className="flex justify-between text-[var(--color-ink-muted)]">
             <span>Bridge</span>
-            <span className="font-medium">{receipt.bridgeMode}</span>
+            <span className="font-medium text-[var(--color-ink)]">{receipt.bridgeMode}</span>
           </div>
-          <div className="text-gray-600">
+          <div className="text-[var(--color-ink-muted)]">
             <span>Tx: </span>
-            <span className="font-mono text-xs break-all">{receipt.txHash}</span>
+            <span className="font-[family-name:var(--font-jetbrains-mono)] text-xs break-all text-[var(--color-ink)]">
+              {receipt.txHash}
+            </span>
           </div>
           {swapTxHash && (
-            <div className="text-gray-600">
+            <div className="text-[var(--color-ink-muted)]">
               <span>Swap: </span>
-              <span className="font-mono text-xs break-all">{swapTxHash}</span>
+              <span className="font-[family-name:var(--font-jetbrains-mono)] text-xs break-all text-[var(--color-ink)]">
+                {swapTxHash}
+              </span>
             </div>
           )}
         </div>
