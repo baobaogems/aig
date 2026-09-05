@@ -7,6 +7,7 @@ import { useState } from "react";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { PillButton } from "@/components/ui/pill-button";
 import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
+import { BountyRow } from "@/components/arbiter/bounty-row";
 
 interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
@@ -26,6 +27,13 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
     setOpen(id); setDetail(null);
     const res = await fetch(`/api/bounty?id=${id}`);
     if (res.ok) setDetail(await res.json());
+  }
+
+  /** Clicking the open row closes it; the live log is per-row, so it clears too. */
+  function toggle(id: string) {
+    if (open === id) { setOpen(null); setDetail(null); setLive(""); return; }
+    setLive("");
+    loadDetail(id);
   }
 
   /** F3 — judge over SSE; show each event line as it arrives. */
@@ -76,55 +84,66 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
   const v = detail?.verdict;
   return (
     // The heading lives on the page, next to the operator buttons.
-    <GlassPanel tone="light" className="p-5">
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-[var(--color-ink)]/10 text-left text-[var(--color-ink-muted)]">
-            <th className="pb-2 font-normal">id</th><th className="font-normal">status</th><th className="text-right font-normal">USDC</th>
-          </tr>
-        </thead>
-        <tbody>
-          {bounties.map((b) => (
-            <tr
-              key={b.id}
-              className="cursor-pointer border-b border-[var(--color-ink)]/5 transition-colors hover:bg-[var(--color-accent)]/5"
-              onClick={() => loadDetail(b.id)}
-            >
-              <td className="py-2 pr-2 font-[family-name:var(--font-jetbrains-mono)] text-[var(--color-ink)]">{b.id.slice(0, 8)}…</td>
-              <td className="text-[var(--color-ink)]">{b.status}</td>
-              <td className="text-right font-[family-name:var(--font-jetbrains-mono)] text-[var(--color-ink)]">{b.amount_usdc}</td>
-            </tr>
-          ))}
-          {loading && bounties.length === 0 && (
-            <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">Loading the ledger…</td></tr>
-          )}
-          {!loading && bounties.length === 0 && (
-            <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">No bounties yet.</td></tr>
-          )}
-        </tbody>
-      </table>
+    <GlassPanel tone="light" className="overflow-hidden p-0">
+      <div className="divide-y divide-[var(--color-ink)]/5">
+        {bounties.map((b) => (
+          <div key={b.id}>
+            <BountyRow bounty={b} expanded={open === b.id} onToggle={() => toggle(b.id)} />
 
-      {open && detail && (
-        <div className="mt-4 border-t border-[var(--color-ink)]/10 pt-4 text-sm">
-          <p className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">{detail.bounty.id}</p>
-          <p className="mt-1 whitespace-pre-wrap text-[var(--color-ink)]">{detail.bounty.brief}</p>
-          {detail.bounty.status === "SUBMITTED" && (
-            <div className="mt-3">
-              <PillButton variant="primary" disabled={busy} onClick={() => judge(detail.bounty.id)}>Judge (F3)</PillButton>
-            </div>
-          )}
-          {v && (
-            <VerdictCertificate
-              verdict={v}
-              bountyStatus={detail.bounty.status}
-              escalation={detail.escalation}
-              busy={busy}
-              onAct={act}
-            />
-          )}
-        </div>
-      )}
-      {live && <p className="mt-3 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">{live}</p>}
+            {open === b.id && (
+              <div className="border-t border-[var(--color-ink)]/5 bg-[var(--color-surface-light)]/40 px-4 py-4">
+                {!detail && <p className="text-sm text-[var(--color-ink-muted)]">Opening the case…</p>}
+
+                {detail && (
+                  <>
+                    <h3 className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">The brief</h3>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-ink)]">
+                      {detail.bounty.brief}
+                    </p>
+
+                    {detail.bounty.status === "SUBMITTED" && (
+                      <div className="mt-4">
+                        <PillButton variant="primary" disabled={busy} onClick={() => judge(detail.bounty.id)}>
+                          {busy ? "Judging…" : "Judge this submission"}
+                        </PillButton>
+                      </div>
+                    )}
+
+                    {v && (
+                      <VerdictCertificate
+                        verdict={v}
+                        bountyStatus={detail.bounty.status}
+                        escalation={detail.escalation}
+                        busy={busy}
+                        onAct={act}
+                      />
+                    )}
+
+                    {!v && detail.bounty.status !== "SUBMITTED" && (
+                      <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
+                        No verdict yet — this bounty has not been judged.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {live && (
+                  <p className="mt-3 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
+                    {live}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {loading && bounties.length === 0 && (
+          <p className="px-4 py-6 text-sm text-[var(--color-ink-muted)]">Loading the ledger…</p>
+        )}
+        {!loading && bounties.length === 0 && (
+          <p className="px-4 py-6 text-sm text-[var(--color-ink-muted)]">No bounties yet.</p>
+        )}
+      </div>
     </GlassPanel>
   );
 }
