@@ -16,7 +16,7 @@ interface Detail {
   escalation: null | { poster_action: string };
 }
 
-export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onChanged: () => void }) {
+export function BountyList({ bounties, loading, onChanged }: { bounties: BountyRow[]; loading?: boolean; onChanged: () => void }) {
   const [open, setOpen] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
@@ -75,9 +75,9 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
 
   const v = detail?.verdict;
   return (
+    // The heading lives on the page, next to the operator buttons.
     <GlassPanel tone="light" className="p-5">
-      <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">Bounties</h2>
-      <table className="mt-3 w-full text-sm">
+      <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-[var(--color-ink)]/10 text-left text-[var(--color-ink-muted)]">
             <th className="pb-2 font-normal">id</th><th className="font-normal">status</th><th className="text-right font-normal">USDC</th>
@@ -95,7 +95,12 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
               <td className="text-right font-[family-name:var(--font-jetbrains-mono)] text-[var(--color-ink)]">{b.amount_usdc}</td>
             </tr>
           ))}
-          {bounties.length === 0 && <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">no bounties yet</td></tr>}
+          {loading && bounties.length === 0 && (
+            <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">Loading the ledger…</td></tr>
+          )}
+          {!loading && bounties.length === 0 && (
+            <tr><td colSpan={3} className="py-3 text-[var(--color-ink-muted)]">No bounties yet.</td></tr>
+          )}
         </tbody>
       </table>
 

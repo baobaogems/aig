@@ -4,7 +4,6 @@
 // Deliberately bare (plan: logic over styling).
 
 import { useState } from "react";
-import { GlassPanel } from "@/components/ui/glass-panel";
 import { PillButton } from "@/components/ui/pill-button";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
@@ -56,9 +55,9 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
     "rounded-xl border border-[var(--color-ink)]/10 bg-white/80 px-3 py-2 w-full text-sm text-[var(--color-ink)] " +
     "placeholder:text-[var(--color-ink-muted)] outline-none transition-colors focus:border-[var(--color-accent)]";
   return (
-    <GlassPanel tone="light" className="p-5">
-      <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">Poster — create bounty (F1)</h2>
-      <div className="mt-3 grid gap-2.5">
+    // Rendered inside a Drawer, which supplies the heading and the framing copy.
+    <div>
+      <div className="grid gap-2.5">
         <input className={inp} placeholder="poster wallet 0x…" value={poster} onChange={(e) => setPoster(e.target.value)} />
         <input className={inp} placeholder="worker wallet 0x… (assigned, 1 bounty = 1 worker)" value={worker} onChange={(e) => setWorker(e.target.value)} />
         <textarea className={inp} rows={4} placeholder="brief — plain language, the arbiter drafts the rubric from this" value={brief} onChange={(e) => setBrief(e.target.value)} />
@@ -94,6 +93,6 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
         </div>
       )}
       {msg && <p className="mt-3 text-sm text-[var(--color-ink-muted)]">{msg}</p>}
-    </GlassPanel>
+    </div>
   );
 }
