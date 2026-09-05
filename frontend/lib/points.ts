@@ -23,7 +23,8 @@ type Tier = keyof typeof TIER_THRESHOLDS;
 // -------------------------------------------------------------------------
 // awardPoints
 //
-// Called from /api/agent/route.ts after session reaches CONFIRMED state.
+// Called from /api/judge, /api/settle and /api/escalation. (Its original caller,
+// /api/agent, was removed with the merchant-payment surface.)
 // Multipliers are additive (not compounding). Max effective: 3.7x.
 // -------------------------------------------------------------------------
 export async function awardPoints(

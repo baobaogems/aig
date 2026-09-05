@@ -10,8 +10,6 @@ const LINKS = [
   { href: "#flow", label: "Flow" },
   { href: "#safety", label: "Safety" },
   { href: "#evidence", label: "Evidence" },
-  // Route link, not a section anchor — the merchant dashboard had no way in from here.
-  { href: "/dashboard", label: "Dashboard" },
 ];
 
 const LINK_CLASS =
