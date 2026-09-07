@@ -46,7 +46,10 @@ export function ThresholdBar({ label, value, threshold, color, tone = "dark" }: 
         className={`relative mt-1.5 h-1.5 w-full rounded-full ${track}`}
       >
         <div
-          className="absolute inset-y-0 left-0 rounded-full"
+          // Width animates so a verdict arriving live can be watched climbing to its gate
+          // instead of snapping into place. Static renders (the landing) never change value,
+          // so nothing moves there.
+          className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-[900ms] ease-out motion-reduce:transition-none"
           style={{ width: `${value}%`, backgroundColor: color, opacity: clear ? 0.9 : 0.55 }}
         />
         {/* the gate itself — a hard tick, drawn over the fill so it stays readable

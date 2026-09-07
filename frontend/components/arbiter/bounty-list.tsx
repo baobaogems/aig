@@ -8,6 +8,7 @@ import { GlassPanel } from "@/components/ui/glass-panel";
 import { PillButton } from "@/components/ui/pill-button";
 import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 import { BountyRow } from "@/components/arbiter/bounty-row";
+import { JudgingProgress, type JudgeStage, type JudgeVerdict } from "@/components/arbiter/judging-progress";
 
 interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
@@ -25,7 +26,7 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
   const [open, setOpen] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
-  const [live, setLive] = useState("");
+  const [stage, setStage] = useState<JudgeStage | null>(null);
 
   async function loadDetail(id: string) {
     setOpen(id); setDetail(null);
@@ -35,14 +36,18 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
 
   /** Clicking the open row closes it; the live log is per-row, so it clears too. */
   function toggle(id: string) {
-    if (open === id) { setOpen(null); setDetail(null); setLive(""); return; }
-    setLive("");
+    if (open === id) { setOpen(null); setDetail(null); setStage(null); return; }
+    setStage(null);
     loadDetail(id);
   }
 
-  /** F3 — judge over SSE; show each event line as it arrives. */
-  async function judge(id: string) {
-    setBusy(true); setLive("judging — evidence-cited grading, ~20s…");
+  /** F3 — judge over SSE. Three events arrive: judging, verdict, done. The phases below
+   *  mirror exactly those; nothing is inferred in between. */
+  async function judge(id: string, criteria: string[]) {
+    setBusy(true);
+    setStage({ kind: "grading", startedAt: Date.now(), criteria });
+    let verdict: JudgeVerdict | null = null;
+    let sawDone = false;
     try {
       const res = await fetch("/api/judge", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bounty_id: id }),
@@ -59,13 +64,28 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
         for (const ev of events) {
           const type = ev.match(/^event: (.+)$/m)?.[1];
           const data = ev.match(/^data: (.+)$/m)?.[1];
-          if (type && data) setLive(`${type}: ${data}`);
-          if (type === "error") throw new Error(JSON.parse(data ?? "{}").message);
+          if (!type || !data) continue;
+          const payload = JSON.parse(data);
+          if (type === "verdict") { verdict = payload as JudgeVerdict; setStage({ kind: "verdict", verdict }); }
+          if (type === "done") { sawDone = true; setStage({ kind: "done", verdict, status: payload.status }); }
+          if (type === "error") throw new Error(payload.message);
         }
       }
+      // The stream can end without `done` if the connection is cut. Say so rather than
+      // leaving the panel frozen mid-phase looking like it is still working.
+      if (!sawDone) {
+        setStage({
+          kind: "error", afterVerdict: verdict !== null,
+          message: "The stream closed before the run reported finishing.",
+        });
+      }
       await loadDetail(id); onChanged();
-    } catch (e) { setLive(`Error: ${e instanceof Error ? e.message : e}`); }
-    finally { setBusy(false); }
+    } catch (e) {
+      setStage({
+        kind: "error", afterVerdict: verdict !== null,
+        message: e instanceof Error ? e.message : String(e),
+      });
+    } finally { setBusy(false); }
   }
 
   /** F4 — poster acts on the verdict; every action feeds override_rate. */
@@ -79,9 +99,11 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setLive(j.note ?? (j.release_tx ? `released: ${j.release_tx}` : action));
+      setStage(null);
       await loadDetail(detail.bounty.id); onChanged();
-    } catch (e) { setLive(`Error: ${e instanceof Error ? e.message : e}`); }
+    } catch (e) {
+      setStage({ kind: "error", afterVerdict: false, message: e instanceof Error ? e.message : String(e) });
+    }
     finally { setBusy(false); }
   }
 
@@ -107,7 +129,11 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
 
                     {detail.bounty.status === "SUBMITTED" && (
                       <div className="mt-4">
-                        <PillButton variant="primary" disabled={busy} onClick={() => judge(detail.bounty.id)}>
+                        <PillButton
+                          variant="primary"
+                          disabled={busy}
+                          onClick={() => judge(detail.bounty.id, (detail.rubric?.items_json ?? []).map((r) => r.criterion))}
+                        >
                           {busy ? "Judging…" : "Judge this submission"}
                         </PillButton>
                       </div>
@@ -132,11 +158,7 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
                   </>
                 )}
 
-                {live && (
-                  <p className="mt-3 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
-                    {live}
-                  </p>
-                )}
+                {stage && <JudgingProgress stage={stage} />}
               </div>
             )}
           </div>
