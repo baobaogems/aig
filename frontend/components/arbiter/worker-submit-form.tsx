@@ -18,6 +18,14 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
   const [msg, setMsg] = useState("");
   const [errors, setErrors] = useState<Errors>({});
 
+  /** Clear a field's error as soon as it is edited — see the note in poster-bounty-form. */
+  function edit(setter: (v: string) => void, key: keyof Errors) {
+    return (value: string) => {
+      setter(value);
+      setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+    };
+  }
+
   async function submit() {
     const e: Errors = {};
     if (!bountyId.trim()) e.bountyId = "Paste the id of the bounty you are answering.";
@@ -56,7 +64,7 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
             className={`${inp("bountyId")} font-[family-name:var(--font-jetbrains-mono)] text-xs`}
             placeholder="00000000-0000-0000-0000-000000000000"
             value={bountyId}
-            onChange={(e) => setBountyId(e.target.value)}
+            onChange={(e) => edit(setBountyId, "bountyId")(e.target.value)}
           />
         </FormField>
 
@@ -66,7 +74,7 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
           hint="Paste the finished text. This snapshot is exactly what gets judged, word for word."
           error={errors.content}
         >
-          <textarea id="content" rows={8} className={inp("content")} value={content} onChange={(e) => setContent(e.target.value)} />
+          <textarea id="content" rows={8} className={inp("content")} value={content} onChange={(e) => edit(setContent, "content")(e.target.value)} />
         </FormField>
 
         <FormField id="source-url" label="Where it lives (optional)" hint="Stored as a reference only. The arbiter judges the text above, not this link.">

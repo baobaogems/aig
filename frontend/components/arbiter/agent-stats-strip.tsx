@@ -34,9 +34,19 @@ export function AgentStatsStrip({ stats }: { stats: AgentStats | null }) {
   ];
 
   return (
+    // At 375px five cells in two columns left the last one stranded on a row of its own.
+    // It spans the full width instead, with a rule above it, so it reads as the summary
+    // line it actually is rather than a layout accident.
     <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/60 px-5 py-4 sm:grid-cols-5">
-      {cells.map(([label, value]) => (
-        <div key={label}>
+      {cells.map(([label, value], i) => (
+        <div
+          key={label}
+          className={
+            i === cells.length - 1
+              ? "col-span-2 border-t border-[var(--color-ink)]/10 pt-4 sm:col-span-1 sm:border-0 sm:pt-0"
+              : undefined
+          }
+        >
           <p className="tnum font-[family-name:var(--font-jetbrains-mono)] text-2xl font-semibold leading-none text-[var(--color-ink)]">
             {value}
           </p>

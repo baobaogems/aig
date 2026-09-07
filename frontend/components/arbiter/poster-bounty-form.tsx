@@ -29,6 +29,15 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   const [errors, setErrors] = useState<Errors>({});
   const [draft, setDraft] = useState<{ id: string; rubric: RubricItem[] } | null>(null);
 
+  /** Clear a field's error the moment it is edited. Leaving it red while someone fixes it
+   *  keeps telling them they are wrong after they have stopped being wrong. */
+  function edit<T>(setter: (v: T) => void, key: keyof Errors) {
+    return (value: T) => {
+      setter(value);
+      setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+    };
+  }
+
   /** Mirrors the server's rules so the failure lands on the field, not in a banner. */
   function validate(): Errors {
     const e: Errors = {};
@@ -86,11 +95,11 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
     <div>
       <div className="grid gap-4">
         <FormField id="poster" label="Your wallet" hint="The address that funds the escrow and gets the refund if work is rejected." error={errors.poster}>
-          <input id="poster" className={inp("poster")} placeholder="0x0000…0000" value={poster} onChange={(e) => setPoster(e.target.value)} />
+          <input id="poster" className={inp("poster")} placeholder="0x0000…0000" value={poster} onChange={(e) => edit(setPoster, "poster")(e.target.value)} />
         </FormField>
 
         <FormField id="worker" label="Who is doing the work" hint="One bounty is assigned to one worker. This address gets paid on release." error={errors.worker}>
-          <input id="worker" className={inp("worker")} placeholder="0x0000…0000" value={worker} onChange={(e) => setWorker(e.target.value)} />
+          <input id="worker" className={inp("worker")} placeholder="0x0000…0000" value={worker} onChange={(e) => edit(setWorker, "worker")(e.target.value)} />
         </FormField>
 
         <FormField
@@ -99,15 +108,15 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
           hint="Plain language. The arbiter turns this into the scoring rubric, so anything you leave out cannot be scored."
           error={errors.brief}
         >
-          <textarea id="brief" rows={5} className={inp("brief")} value={brief} onChange={(e) => setBrief(e.target.value)} />
+          <textarea id="brief" rows={5} className={inp("brief")} value={brief} onChange={(e) => edit(setBrief, "brief")(e.target.value)} />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <FormField id="amount" label="Amount to escrow" hint="In USDC, held on Arc testnet." error={errors.amount}>
-            <input id="amount" type="number" min="0.1" step="0.1" className={inp("amount")} value={amount} onChange={(e) => setAmount(e.target.value)} />
+            <input id="amount" type="number" min="0.1" step="0.1" className={inp("amount")} value={amount} onChange={(e) => edit(setAmount, "amount")(e.target.value)} />
           </FormField>
           <FormField id="deadline" label="Deadline" hint="Must be in the future." error={errors.deadline}>
-            <input id="deadline" type="datetime-local" className={inp("deadline")} value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+            <input id="deadline" type="datetime-local" className={inp("deadline")} value={deadline} onChange={(e) => edit(setDeadline, "deadline")(e.target.value)} />
           </FormField>
         </div>
 

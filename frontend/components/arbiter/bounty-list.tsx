@@ -143,10 +143,29 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
         ))}
 
         {loading && bounties.length === 0 && (
-          <p className="px-4 py-6 text-sm text-[var(--color-ink-muted)]">Loading the ledger…</p>
+          // Skeleton rows rather than a spinner: the page keeps its shape, so nothing jumps
+          // when the real rows land.
+          <div aria-busy="true" aria-label="Loading the ledger">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3.5">
+                <div className="h-3 w-3/5 animate-pulse rounded bg-[var(--color-ink)]/8" />
+                <div className="ml-auto h-5 w-24 animate-pulse rounded-full bg-[var(--color-ink)]/8" />
+              </div>
+            ))}
+          </div>
         )}
+
+        {/* An empty ledger is the first thing a new deployment shows, so it has to say what
+            to do next rather than just reporting nothing. */}
         {!loading && bounties.length === 0 && (
-          <p className="px-4 py-6 text-sm text-[var(--color-ink-muted)]">No bounties yet.</p>
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm font-medium text-[var(--color-ink)]">No verdicts yet</p>
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              Start with <span className="font-medium text-[var(--color-ink)]">+ New bounty</span>: describe a
+              job and the arbiter drafts a rubric you can freeze. Then submit work against it, and the
+              verdict it reaches will appear here.
+            </p>
+          </div>
         )}
       </div>
     </GlassPanel>

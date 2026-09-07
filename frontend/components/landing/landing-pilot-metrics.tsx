@@ -67,7 +67,7 @@ export function LandingPilotMetrics() {
           {CASES.map((c) => (
             <Reveal key={c.label}>
               <GlassPanel tone="dark-raised" interactive className="h-full p-6">
-                <TierPill decision={c.decision} />
+                <TierPill decision={c.decision} tone="dark" />
                 <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-on-dark)]">{c.label}</h3>
                 <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">{c.amount}</p>
                 <div className="mt-4 space-y-3">

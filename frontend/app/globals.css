@@ -24,6 +24,12 @@
   --color-tier-t1: #2ca6bd;
   --color-tier-t2: #fe940b;
   --color-tier-t3: #a85c5c;
+  /* Same hues, darkened until small text passes WCAG AA on a white/near-white surface.
+     Measured on #ffffff: t1 2.88:1 -> 4.65:1, t2 2.22:1 -> 4.88:1. The bright tokens above
+     stay for dots, borders and fills, where the 3:1 non-text rule applies; TEXT on light
+     takes these. t3 #a85c5c already passes at 4.83:1 and needs no variant. */
+  --color-tier-t1-ink: #227f91;
+  --color-tier-t2-ink: #a85f01;
   --radius-pill: 999px;
   --radius-card: 24px;
 
@@ -78,6 +84,8 @@
   --color-on-dark-muted: var(--color-on-dark-muted);
   --color-gold: var(--color-gold);
   --color-tier-t1: var(--color-tier-t1);
+  --color-tier-t1-ink: var(--color-tier-t1-ink);
+  --color-tier-t2-ink: var(--color-tier-t2-ink);
   --color-tier-t2: var(--color-tier-t2);
   --color-tier-t3: var(--color-tier-t3);
   --radius-pill: var(--radius-pill);

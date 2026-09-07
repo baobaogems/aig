@@ -13,7 +13,11 @@ export type BountyStatus = "DRAFT" | "OPEN" | "SUBMITTED" | "JUDGED" | "RELEASED
 interface Look {
   label: string;
   glyph: string;
+  /** Hue for the border and fill — the 3:1 non-text rule applies here. */
   color: string;
+  /** Colour for the label itself. Small text needs 4.5:1, which the bright cyan (2.88:1)
+     and amber (2.22:1) both failed on this light surface. Same hue, darkened. */
+  ink?: string;
   /** Terminal outcomes are filled; states still in motion are outlined. */
   filled: boolean;
 }
@@ -21,8 +25,8 @@ interface Look {
 const LOOK: Record<string, Look> = {
   DRAFT: { label: "Draft", glyph: "○", color: "var(--color-ink-muted)", filled: false },
   OPEN: { label: "Open for work", glyph: "○", color: "var(--color-ink-muted)", filled: false },
-  SUBMITTED: { label: "Awaiting judgment", glyph: "◔", color: "var(--color-tier-t1)", filled: false },
-  JUDGED: { label: "Needs your call", glyph: "⚖", color: "var(--color-tier-t2)", filled: false },
+  SUBMITTED: { label: "Awaiting judgment", glyph: "◔", color: "var(--color-tier-t1)", ink: "var(--color-tier-t1-ink)", filled: false },
+  JUDGED: { label: "Needs your call", glyph: "⚖", color: "var(--color-tier-t2)", ink: "var(--color-tier-t2-ink)", filled: false },
   RELEASED: { label: "Paid out", glyph: "↑", color: "var(--color-ink-success)", filled: true },
   REFUNDED: { label: "Refunded", glyph: "↩", color: "var(--color-tier-t3)", filled: true },
 };
@@ -39,7 +43,7 @@ export function BountyStatusBadge({ status }: { status: string }) {
     <span
       className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium"
       style={{
-        color: look.color,
+        color: look.ink ?? look.color,
         backgroundColor: look.filled
           ? `color-mix(in srgb, ${look.color} 14%, transparent)`
           : "transparent",

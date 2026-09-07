@@ -90,7 +90,7 @@ export function BountyRow({
         <span className="hidden shrink-0 items-center gap-3 sm:flex">{meta}</span>
       </button>
 
-      <span className="shrink-0 self-center pr-3 pl-1">
+      <span className="shrink-0 self-start pt-3 pr-3 pl-1 sm:self-center sm:pt-0">
         <CopyButton value={bounty.id} label="Copy bounty id" />
       </span>
     </div>
