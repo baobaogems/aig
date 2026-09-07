@@ -9,10 +9,14 @@ import { PillButton } from "@/components/ui/pill-button";
 import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 import { BountyRow } from "@/components/arbiter/bounty-row";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
+interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
+interface RubricItem { item_id: string; criterion: string; weight: number }
 interface Detail {
   bounty: BountyRow;
+  // Already returned by GET /api/bounty?id= (store.getBountyDetail) — the page simply was
+  // not declaring it, so the criterion text was fetched and then thrown away.
+  rubric: null | { items_json: RubricItem[] };
   verdict: null | { id: string; decision: string; total_score: number; confidence: number; verdict_hash: string; release_tx: string | null; verdict_json: { rubric_scores: RubricScore[]; confidence_reasoning: string; refusal_reason: string | null } };
   escalation: null | { poster_action: string };
 }
@@ -112,6 +116,7 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
                     {v && (
                       <VerdictCertificate
                         verdict={v}
+                        rubric={detail.rubric?.items_json ?? null}
                         bountyStatus={detail.bounty.status}
                         escalation={detail.escalation}
                         busy={busy}

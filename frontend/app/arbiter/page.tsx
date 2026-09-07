@@ -19,7 +19,7 @@ import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-sta
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { Drawer } from "@/components/ui/drawer";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
+interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
 
 type OpenDrawer = null | "create" | "submit";
 

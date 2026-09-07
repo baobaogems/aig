@@ -25,15 +25,19 @@ const TIER_COLOR: Record<string, string> = {
 };
 
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
+interface RubricItem { item_id: string; criterion: string; weight: number }
 interface Verdict {
   id: string; decision: string; total_score: number; confidence: number; verdict_hash: string; release_tx: string | null;
   verdict_json: { rubric_scores: RubricScore[]; confidence_reasoning: string; refusal_reason: string | null };
 }
 
 export function VerdictCertificate({
-  verdict, bountyStatus, escalation, busy, onAct,
+  verdict, rubric, bountyStatus, escalation, busy, onAct,
 }: {
   verdict: Verdict;
+  /** The frozen rubric this verdict scored against. Its criterion text is what makes a
+   *  score mean anything — "95/100" alone never says 95 out of what. */
+  rubric: RubricItem[] | null;
   bountyStatus: string;
   escalation: null | { poster_action: string };
   busy: boolean;
@@ -41,6 +45,7 @@ export function VerdictCertificate({
 }) {
   const color = TIER_COLOR[verdict.decision] ?? "var(--color-tier-t3)";
   const { rubric_scores, confidence_reasoning, refusal_reason } = verdict.verdict_json;
+  const criterionText = new Map((rubric ?? []).map((r) => [r.item_id, r.criterion]));
 
   return (
     <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/70 p-5">
@@ -58,9 +63,20 @@ export function VerdictCertificate({
         />
       </div>
 
+      {/* Two voices, kept apart. The first sentence is ours and always the same; the second
+          is the model's own words about this one case, often in the language of the brief.
+          Run together they read as a single confused paragraph. */}
       <p className="mt-3 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-        Both gates must be cleared for the arbiter to release on its own. {confidence_reasoning}
+        Both gates must be cleared for the arbiter to release on its own.
       </p>
+      {confidence_reasoning && (
+        <figure className="mt-2 border-l-2 border-[var(--color-ink)]/15 pl-3">
+          <figcaption className="text-[11px] uppercase tracking-wide text-[var(--color-ink-muted)]">
+            The arbiter, on its own confidence
+          </figcaption>
+          <p className="mt-1 text-sm italic leading-relaxed text-[var(--color-ink)]">{confidence_reasoning}</p>
+        </figure>
+      )}
 
       {refusal_reason && (
         <p
@@ -71,9 +87,8 @@ export function VerdictCertificate({
         </p>
       )}
 
-      {/* Per-criterion scoring. The rubric text itself lives in another table and is not
-          part of this payload, so criteria are numbered in order rather than showing the
-          raw item_id. */}
+      {/* Per-criterion scoring, against the criterion text from the frozen rubric. Falls
+          back to a number only when the rubric row is missing. */}
       <div className="mt-5 space-y-4">
         <h4 className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">
           How it scored, criterion by criterion
@@ -81,10 +96,10 @@ export function VerdictCertificate({
         {rubric_scores.map((s, i) => (
           <div key={s.item_id} className="border-l-2 pl-3" style={{ borderColor: `color-mix(in srgb, ${color} 45%, transparent)` }}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="text-sm font-medium text-[var(--color-ink)]">
-                Criterion {i + 1}
-                <span className="ml-2 text-xs font-normal text-[var(--color-ink-muted)]">
-                  counts for {s.weight}% of the score
+              <p className="max-w-[38ch] text-sm font-medium text-[var(--color-ink)]">
+                {criterionText.get(s.item_id) ?? `Criterion ${i + 1}`}
+                <span className="ml-2 whitespace-nowrap text-xs font-normal text-[var(--color-ink-muted)]">
+                  counts for {s.weight}%
                 </span>
               </p>
               <p className="tnum font-[family-name:var(--font-jetbrains-mono)] text-sm text-[var(--color-ink)]">
@@ -92,6 +107,11 @@ export function VerdictCertificate({
               </p>
             </div>
             <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">{s.reasoning}</p>
+            {s.evidence.filter(Boolean).length > 0 && (
+              <p className="mt-2 text-[11px] uppercase tracking-wide text-[var(--color-ink-muted)]">
+                Quoting the deliverable
+              </p>
+            )}
             {/* Evidence is the whole claim of this product: the arbiter must point at the
                 words it judged, not just assert a number. */}
             {s.evidence.filter(Boolean).map((quote, qi) => (
