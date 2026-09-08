@@ -6,7 +6,7 @@ import { z } from "zod";
 import { callJson, MODEL, PROMPT_VERSION } from "./client";
 import { GRADE_SYSTEM, gradeUser } from "./prompts/grade-v2";
 import type { RubricItem } from "./rubric";
-import { decideTier, applySpendCap, type SpendCaps } from "./tiers";
+import { decideTier, applySpendCap, applySplitProfileCap, type SpendCaps } from "./tiers";
 import { parseVerdict, verdictHash, type Verdict } from "./verdict-schema";
 
 // Intermediate shape the MODEL produces (smaller than the full verdict — no decision/total here).
@@ -66,13 +66,24 @@ export async function gradeSubmission(input: JudgeInput): Promise<JudgeResult> {
   }
   const g = parsed.data;
 
-  // Deterministic weighted total (0–100). Items with NO evidence contribute 0 (anti-vibes rule).
-  const total = Math.round(
-    g.rubric_scores.reduce((acc, s) => acc + (s.evidence.length > 0 ? s.score : 0) * s.weight, 0) / 100,
-  );
+  // Effective scores: the anti-vibes rule zeroes any item that cited no evidence. Everything
+  // downstream — the weighted total AND the split-profile cap — reads these, never the raw
+  // numbers the model claimed.
+  const effective = g.rubric_scores.map((s) => ({
+    ...s,
+    score: s.evidence.length > 0 ? s.score : 0,
+    evidence: s.evidence.length > 0 ? s.evidence : ["(no evidence cited — scored 0)"],
+  }));
+
+  // Deterministic weighted total (0–100).
+  const total = Math.round(effective.reduce((acc, s) => acc + s.score * s.weight, 0) / 100);
+
+  // The model is asked to cap its own confidence on a split profile and has been observed
+  // ignoring its own stated cap. Enforce it here, in code, before anything decides money.
+  const effectiveConfidence = applySplitProfileCap(g.confidence, effective);
 
   const capped = applySpendCap(
-    decideTier({ totalScore: total, confidence: g.confidence, outOfScope: g.out_of_scope }),
+    decideTier({ totalScore: total, confidence: effectiveConfidence, outOfScope: g.out_of_scope }),
     input.amountUsdc,
     input.caps,
   );
@@ -80,13 +91,12 @@ export async function gradeSubmission(input: JudgeInput): Promise<JudgeResult> {
   const verdict: Verdict = {
     bounty_id: input.bountyId,
     submission_id: input.submissionId,
-    rubric_scores: g.rubric_scores.map((s) => ({
-      ...s,
-      evidence: s.evidence.length > 0 ? s.evidence : ["(no evidence cited — scored 0)"],
-      score: s.evidence.length > 0 ? s.score : 0,
-    })),
+    rubric_scores: effective,
     total_score: total,
-    confidence: g.confidence,
+    // The number that actually governed the decision. When the cap bit, the model's own
+    // claim is preserved below rather than quietly overwritten.
+    confidence: effectiveConfidence,
+    ...(effectiveConfidence !== g.confidence ? { confidence_model_claimed: g.confidence } : {}),
     confidence_reasoning: g.confidence_reasoning,
     decision: capped.decision,
     refusal_reason: capped.decision === "REFUSE" ? (g.refusal_reason ?? "out of scope") : null,
