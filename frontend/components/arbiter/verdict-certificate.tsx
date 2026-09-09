@@ -148,30 +148,47 @@ export function VerdictCertificate({
         )}
       </div>
 
+      {/* ESCALATE and FAIL both land here, and they mean opposite things. ESCALATE is "I am
+          not sure enough to decide this"; FAIL at high confidence is "I am sure this did not
+          pass, and I still may not act on it alone". One shared sentence read as the machine
+          dodging responsibility. */}
       {bountyStatus === "JUDGED" && !escalation && (
         <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
-          <p className="text-sm text-[var(--color-ink)]">
-            The arbiter did not release on its own. Your decision is recorded and counts toward the
-            public override rate.
+          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
+            {verdict.decision === "FAIL"
+              ? "The arbiter is confident this did not meet the rubric — but it has no authority to take money off the worker, so the call is yours."
+              : "The arbiter was not confident enough to decide this alone, so it stopped and asked you."}
+          </p>
+          <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+            Its only power over the escrow is to release it; it can never refund or reclaim. Whatever
+            you choose is recorded and counts toward the public override rate.
           </p>
           <div className="mt-3 flex flex-wrap gap-3">
             <PillButton variant="primary" disabled={busy} onClick={() => onAct("APPROVE")}>
               Approve — pay the worker
             </PillButton>
             <PillButton variant="secondary" disabled={busy} onClick={() => onAct("REJECT")}>
-              Reject — refund me
+              Reject — withhold payment
             </PillButton>
           </div>
         </div>
       )}
       {escalation && (
-        <p className="mt-5 border-t border-[var(--color-ink)]/10 pt-4 text-sm text-[var(--color-ink)]">
-          You{" "}
-          <span className="font-semibold">
-            {escalation.poster_action === "APPROVE" ? "approved — the worker was paid" : "rejected — the money was refunded"}
-          </span>
-          , overruling the arbiter.
-        </p>
+        <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
+          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
+            You <span className="font-semibold">{escalation.poster_action === "APPROVE" ? "approved" : "rejected"}</span>{" "}
+            this, overruling the arbiter.
+          </p>
+          {/* escalation/route.ts:5 — a REJECT is recorded and the bounty stays JUDGED. The
+              refund is the poster's own on-chain call after the deadline; saying "the money
+              was refunded" here described something the system does not do. */}
+          {escalation.poster_action === "REJECT" && (
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+              The escrow still holds the funds. Reclaiming them is your own on-chain call once the
+              deadline has passed — the arbiter cannot move money back.
+            </p>
+          )}
+        </div>
       )}
     </div>
   );

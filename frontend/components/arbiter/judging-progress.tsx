@@ -141,8 +141,10 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
           {stage.status === "RELEASED"
             ? "Both gates cleared. The USDC has been released to the worker."
             : stage.status === "REFUSED"
-            ? "The arbiter refused to score this one, so no money moved."
-            : "It did not clear both gates on its own, so it is waiting on your decision below."}
+            ? "The arbiter declined to judge this one at all, so no money moved."
+            : verdict?.decision === "FAIL"
+            ? "It is confident this did not meet the rubric. It still cannot withhold or reclaim on its own, so the call is yours below."
+            : "It was not confident enough to decide alone, so it stopped and asked you below."}
         </p>
       )}
 

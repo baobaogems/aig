@@ -9,6 +9,7 @@
 export interface AgentStats {
   total_verdicts: number;
   t1_auto_release: number;
+  /** REFUSE only — verdicts where the arbiter declined to judge. Does NOT include FAIL. */
   refused: number;
   human_reviewed: number;
   overridden: number;
@@ -27,7 +28,12 @@ export function AgentStatsStrip({ stats }: { stats: AgentStats | null }) {
   const cells: [string, string | number][] = [
     ["verdicts", stats.total_verdicts],
     ["released on its own", stats.t1_auto_release],
-    ["refused", stats.refused],
+    // agent_stats counts REFUSE and never counts FAIL, so the remainder was silently
+    // missing: a reader adding up released + refused + escalated came up short of the
+    // total and three failed verdicts vanished from the record. Derived here rather than
+    // by changing the database view.
+    ["scored, did not pass", Math.max(0, stats.total_verdicts - stats.t1_auto_release - stats.refused - stats.human_reviewed)],
+    ["declined to judge", stats.refused],
     ["sent to a human", stats.human_reviewed],
     // Small-n: a raw count reads honestly where "100.0%" over 1 escalation overstates.
     ["overturned", `${stats.overridden} of ${stats.human_reviewed}`],
@@ -37,7 +43,7 @@ export function AgentStatsStrip({ stats }: { stats: AgentStats | null }) {
     // At 375px five cells in two columns left the last one stranded on a row of its own.
     // It spans the full width instead, with a rule above it, so it reads as the summary
     // line it actually is rather than a layout accident.
-    <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/60 px-5 py-4 sm:grid-cols-5">
+    <div className="grid grid-cols-2 gap-x-6 gap-y-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/60 px-5 py-4 sm:grid-cols-3 lg:grid-cols-6">
       {cells.map(([label, value], i) => (
         <div
           key={label}

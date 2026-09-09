@@ -8,10 +8,14 @@ const TIER_BY_DECISION: Record<string, "T1" | "T2" | "T3"> = {
   REFUSE: "T3",
 };
 
-const TIER_LABEL: Record<"T1" | "T2" | "T3", string> = {
-  T1: "T1 · auto-release",
-  T2: "T2 · escalated",
-  T3: "T3 · refused / failed",
+// Labelled by DECISION, not by tier. T3 covers two opposite things: REFUSE means the
+// arbiter judged itself unable to score this at all, FAIL means it scored it and the work
+// did not clear the bar. Printing "refused / failed" for both told the reader neither.
+const DECISION_LABEL: Record<string, string> = {
+  RELEASE: "T1 · released on its own",
+  ESCALATE: "T2 · sent to the poster",
+  FAIL: "T3 · scored, did not pass",
+  REFUSE: "T3 · declined to judge",
 };
 
 const TIER_COLOR: Record<"T1" | "T2" | "T3", string> = {
@@ -40,7 +44,7 @@ export function TierPill({ decision, tone = "light" }: { decision: string; tone?
       style={{ color: ink, backgroundColor: `color-mix(in srgb, ${color} 12%, transparent)`, border: `1px solid color-mix(in srgb, ${color} 35%, transparent)` }}
     >
       <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
-      {TIER_LABEL[tier]} — {decision}
+      {DECISION_LABEL[decision] ?? `${tier} · ${decision.toLowerCase()}`}
     </span>
   );
 }
