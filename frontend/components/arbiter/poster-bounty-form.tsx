@@ -1,11 +1,22 @@
 "use client";
 
 // poster-bounty-form.tsx — F1: brief + amount + deadline → rubric preview → approve/freeze.
-// Deliberately bare (plan: logic over styling).
+//
+// Every field has a real label and a format hint, and errors appear under the field that
+// caused them. The checks here mirror app/api/bounty/route.ts exactly — they are a courtesy
+// so you learn about a bad address before waiting out a ~15s rubric call, never the
+// authority. The server re-validates everything and remains the only thing that decides.
+//
+// Field names in the request body are untouched.
 
 import { useState } from "react";
+import { PillButton } from "@/components/ui/pill-button";
+import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-field";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
+
+const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
+type Errors = Partial<Record<"poster" | "worker" | "brief" | "amount" | "deadline", string>>;
 
 export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   const [poster, setPoster] = useState("");
@@ -15,10 +26,38 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   const [deadline, setDeadline] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
+  const [errors, setErrors] = useState<Errors>({});
   const [draft, setDraft] = useState<{ id: string; rubric: RubricItem[] } | null>(null);
 
+  /** Clear a field's error the moment it is edited. Leaving it red while someone fixes it
+   *  keeps telling them they are wrong after they have stopped being wrong. */
+  function edit<T>(setter: (v: T) => void, key: keyof Errors) {
+    return (value: T) => {
+      setter(value);
+      setErrors((prev) => (prev[key] ? { ...prev, [key]: undefined } : prev));
+    };
+  }
+
+  /** Mirrors the server's rules so the failure lands on the field, not in a banner. */
+  function validate(): Errors {
+    const e: Errors = {};
+    if (!ADDR_RE.test(poster)) e.poster = "Needs a wallet address: 0x followed by 40 hex characters.";
+    if (!ADDR_RE.test(worker)) e.worker = "Needs a wallet address: 0x followed by 40 hex characters.";
+    if (brief.trim().length < 20) e.brief = `At least 20 characters — currently ${brief.trim().length}.`;
+    const n = Number(amount);
+    if (!Number.isFinite(n) || n <= 0) e.amount = "Must be more than 0.";
+    const dl = new Date(deadline);
+    if (Number.isNaN(dl.getTime())) e.deadline = "Pick a date and time.";
+    else if (dl.getTime() <= Date.now()) e.deadline = "Must be in the future.";
+    return e;
+  }
+
   async function createBounty() {
-    setBusy(true); setMsg("Generating rubric (one LLM call, ~15s)…");
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length > 0) { setMsg(""); return; }
+
+    setBusy(true); setMsg("Reading the brief and drafting a rubric — about 15 seconds.");
     try {
       const res = await fetch("/api/bounty", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -30,62 +69,92 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       setDraft({ id: j.bounty.id, rubric: j.rubric.items_json });
-      setMsg("Rubric generated — review below, then approve to FREEZE it.");
+      setMsg("");
       onChanged();
-    } catch (e) { setMsg(`Error: ${e instanceof Error ? e.message : e}`); }
+    } catch (err) { setMsg(`Could not create it: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 
   async function approveRubric() {
     if (!draft) return;
-    setBusy(true); setMsg("Freezing rubric…");
+    setBusy(true); setMsg("Freezing the rubric…");
     try {
       const res = await fetch(`/api/bounty/${draft.id}/approve-rubric`, { method: "POST" });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setMsg(j.note ?? "Rubric frozen — bounty OPEN.");
+      setMsg(j.note ?? "Rubric frozen. The bounty is open for work.");
       setDraft(null);
       onChanged();
-    } catch (e) { setMsg(`Error: ${e instanceof Error ? e.message : e}`); }
+    } catch (err) { setMsg(`Could not freeze it: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 
-  const inp = "border border-gray-400 px-2 py-1 w-full text-sm";
+  const inp = (k: keyof Errors) => `${FIELD_INPUT_CLASS} ${fieldBorder(!!errors[k])}`;
+
   return (
-    <section className="border border-gray-400 p-3">
-      <h2 className="font-bold mb-2">Poster — create bounty (F1)</h2>
-      <div className="grid gap-2">
-        <input className={inp} placeholder="poster wallet 0x…" value={poster} onChange={(e) => setPoster(e.target.value)} />
-        <input className={inp} placeholder="worker wallet 0x… (assigned, 1 bounty = 1 worker)" value={worker} onChange={(e) => setWorker(e.target.value)} />
-        <textarea className={inp} rows={4} placeholder="brief — plain language, the arbiter drafts the rubric from this" value={brief} onChange={(e) => setBrief(e.target.value)} />
-        <div className="flex gap-2">
-          <input className={inp} type="number" min="0.1" step="0.1" placeholder="USDC" value={amount} onChange={(e) => setAmount(e.target.value)} />
-          <input className={inp} type="datetime-local" value={deadline} onChange={(e) => setDeadline(e.target.value)} />
+    <div>
+      <div className="grid gap-4">
+        <FormField id="poster" label="Your wallet" hint="The address that funds the escrow and gets the refund if work is rejected." error={errors.poster}>
+          <input id="poster" className={inp("poster")} placeholder="0x0000…0000" value={poster} onChange={(e) => edit(setPoster, "poster")(e.target.value)} />
+        </FormField>
+
+        <FormField id="worker" label="Who is doing the work" hint="One bounty is assigned to one worker. This address gets paid on release." error={errors.worker}>
+          <input id="worker" className={inp("worker")} placeholder="0x0000…0000" value={worker} onChange={(e) => edit(setWorker, "worker")(e.target.value)} />
+        </FormField>
+
+        <FormField
+          id="brief"
+          label="What needs to be done"
+          hint="Plain language. The arbiter turns this into the scoring rubric, so anything you leave out cannot be scored."
+          error={errors.brief}
+        >
+          <textarea id="brief" rows={5} className={inp("brief")} value={brief} onChange={(e) => edit(setBrief, "brief")(e.target.value)} />
+        </FormField>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <FormField id="amount" label="Amount to escrow" hint="In USDC, held on Arc testnet." error={errors.amount}>
+            <input id="amount" type="number" min="0.1" step="0.1" className={inp("amount")} value={amount} onChange={(e) => edit(setAmount, "amount")(e.target.value)} />
+          </FormField>
+          <FormField id="deadline" label="Deadline" hint="Must be in the future." error={errors.deadline}>
+            <input id="deadline" type="datetime-local" className={inp("deadline")} value={deadline} onChange={(e) => edit(setDeadline, "deadline")(e.target.value)} />
+          </FormField>
         </div>
-        <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy || !!draft} onClick={createBounty}>
-          Create + generate rubric
-        </button>
+
+        <div>
+          <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty}>
+            {busy && !draft ? "Drafting the rubric…" : "Create and draft the rubric"}
+          </PillButton>
+        </div>
       </div>
+
       {draft && (
-        <div className="mt-3 border-t border-gray-300 pt-2">
-          <p className="text-sm font-bold">Proposed rubric (approving FREEZES it — no edits after):</p>
-          <table className="text-sm w-full mt-1">
-            <tbody>
-              {draft.rubric.map((r) => (
-                <tr key={r.item_id} className="border-b border-gray-200">
-                  <td className="pr-2 align-top">{r.item_id}</td>
-                  <td>{r.criterion}</td>
-                  <td className="text-right pl-2">w{r.weight}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <button className="border border-black px-3 py-1 mt-2 disabled:opacity-50" disabled={busy} onClick={approveRubric}>
-            Approve — freeze rubric &amp; open bounty
-          </button>
+        <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-5">
+          <h3 className="text-sm font-semibold text-[var(--color-ink)]">
+            The arbiter proposes to score it like this
+          </h3>
+          <p className="mt-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+            Approving freezes these criteria. They cannot be edited afterwards — that is what stops
+            anyone moving the goalposts once work has started.
+          </p>
+          <ul className="mt-3 space-y-2.5">
+            {draft.rubric.map((r) => (
+              <li key={r.item_id} className="flex items-baseline justify-between gap-4 border-b border-[var(--color-ink)]/5 pb-2.5 last:border-0">
+                <span className="text-sm leading-relaxed text-[var(--color-ink)]">{r.criterion}</span>
+                <span className="tnum shrink-0 font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
+                  {r.weight}%
+                </span>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-4">
+            <PillButton variant="primary" disabled={busy} onClick={approveRubric}>
+              Approve and open the bounty
+            </PillButton>
+          </div>
         </div>
       )}
-      {msg && <p className="text-sm mt-2">{msg}</p>}
-    </section>
+
+      {msg && <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">{msg}</p>}
+    </div>
   );
 }

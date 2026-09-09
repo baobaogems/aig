@@ -11,7 +11,41 @@ export const TIER_THRESHOLDS = {
   // T3 floor: below either → not release; clear fail if score < 40.
   refuseConfidence: 50,
   failScore: 40,
+  // Split-profile cap. One requirement wholly unmet while another is strongly met is the
+  // POSTER's call, not the arbiter's — so confidence is held below autoReleaseConfidence,
+  // which forces T2. See applySplitProfileCap.
+  splitUnmetAtOrBelow: 20,
+  splitStrongAtOrAbove: 80,
+  splitConfidenceCeiling: 70,
 } as const;
+
+export interface ScoredItem {
+  /** Score AFTER the no-evidence rule has been applied — see applySplitProfileCap. */
+  score: number;
+}
+
+/**
+ * Hold confidence down when the deliverable is split: some requirement essentially unmet
+ * (≤20) while another is strongly met (≥80).
+ *
+ * grade-v2.ts already instructs the model to cap itself at 70 here, and in live runs it
+ * has both obeyed (said "capped at 70", returned 70) and ignored itself (said "capped at
+ * 70", returned 90). A prompt is a request; this is the rule. Without it a deliverable
+ * scoring 75 overall with one requirement flatly violated could reach T1 on a confidence
+ * number the model simply asserted, and the money would move with no human in the loop.
+ *
+ * IMPORTANT: `items` must carry EFFECTIVE scores, i.e. after judge.ts has zeroed items that
+ * cited no evidence. Checking the model's raw scores would leave the cap trivially avoidable
+ * — claim 85 on an item, cite nothing, and the item counts as 0 toward the total while never
+ * looking "unmet" to this check.
+ */
+export function applySplitProfileCap(confidence: number, items: ScoredItem[]): number {
+  const t = TIER_THRESHOLDS;
+  const hasUnmet = items.some((i) => i.score <= t.splitUnmetAtOrBelow);
+  const hasStrong = items.some((i) => i.score >= t.splitStrongAtOrAbove);
+  if (hasUnmet && hasStrong) return Math.min(confidence, t.splitConfidenceCeiling);
+  return confidence;
+}
 
 export interface TierInput {
   totalScore: number; // 0–100

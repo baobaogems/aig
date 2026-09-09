@@ -21,7 +21,8 @@ export interface GeneratedRubric {
 
 /** Generate a rubric from a brief. Throws if the model returns malformed items or weights ≠ 100. */
 export async function generateRubric(brief: string): Promise<GeneratedRubric> {
-  const { data, usage } = await callJson(RUBRIC_SYSTEM, rubricUser(brief));
+  const { data, usage, parseError } = await callJson(RUBRIC_SYSTEM, rubricUser(brief));
+  if (parseError) throw new Error(`rubric unparseable: ${parseError}`);
   const parsed = rubricReplySchema.safeParse(data);
   if (!parsed.success) {
     throw new Error(`rubric off-schema: ${parsed.error.issues.map((i) => i.message).join("; ")}`);

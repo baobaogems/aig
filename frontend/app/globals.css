@@ -3,13 +3,106 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* Reskin tokens — single source of truth for every surface in the app.
+     Brand accent + dark surfaces derive from the marketplace.delorean.com
+     extraction (see the website-clone repo's docs/research/DESIGN_TOKENS.md).
+     Names stay semantic on purpose: no component references a brand. */
+  --color-accent: #de1e14; /* redshift — primary action, active state */
+  --color-accent-bright: #ff6d05; /* ember — hover / progress fill */
+  --color-surface-light: #f4f6f6;
+  --color-surface-light-2: #d8e6ec;
+  --color-surface-dark: #19181c; /* obsidian — dark sections */
+  --color-surface-dark-2: #27282d; /* glass tint over obsidian */
+  --color-ink: #111111;
+  --color-ink-muted: #666666;
+  --color-on-dark: #ffffff;
+  --color-on-dark-muted: #a9aab1; /* smoke — secondary text on dark */
+  --color-gold: #ffd59f;
+  /* Verdict tiers are functional status, deliberately NOT the brand accent:
+     T1 auto-release, T2 escalated, T3 refused/failed. */
+  --color-tier-t1: #2ca6bd;
+  --color-tier-t2: #fe940b;
+  --color-tier-t3: #a85c5c;
+  /* Same hues, darkened until small text passes WCAG AA on a white/near-white surface.
+     Measured on #ffffff: t1 2.88:1 -> 4.65:1, t2 2.22:1 -> 4.88:1. The bright tokens above
+     stay for dots, borders and fills, where the 3:1 non-text rule applies; TEXT on light
+     takes these. t3 #a85c5c already passes at 4.83:1 and needs no variant. */
+  --color-tier-t1-ink: #227f91;
+  --color-tier-t2-ink: #a85f01;
+  --radius-pill: 999px;
+  --radius-card: 24px;
+
+  /* Dashboard surfaces — previously hardcoded across the dashboard/payment
+     components. Most are lifted verbatim (--color-border-light,
+     --color-chip-success, --color-chip-warn, --color-chip-warn-border,
+     --color-ink-success, --color-ink-warn all equal the hex they replaced),
+     but the migration was NOT purely mechanical and four cases shift colour
+     on purpose:
+       · --color-ink / --color-ink-muted were the landing page's blue-black
+         ink (#0a1512 / #5b6b69) and are now the dashboard's neutral
+         #111111 / #666666 — one palette for the whole app, so the landing
+         and /arbiter text tones moved slightly.
+       · the dashboard's #f2f3f0 panels resolve to --color-surface-light
+         (#f4f6f6) rather than earning a near-duplicate token.
+       · #000000 resolves to --color-ink; the app has no pure black.
+       · the dashboard's orange #ff8400 is GONE. It is not the product
+         accent: actions and active states take --color-accent (redshift),
+         progress fills and hovers take --color-accent-bright (ember). */
+  --color-border-light: #cbccc9;
+  --color-surface-panel: #e7e8e5;
+  --color-chip-neutral: #e9e3d8;
+  --color-chip-success: #dfe6e1;
+  --color-chip-info: #e8eaf6;
+  --color-chip-warn: #fff3e0;
+  /* Outline for warn surfaces. Separate from --color-chip-warn: a chip that
+     draws its border from its own fill has no border at all. */
+  --color-chip-warn-border: #ffcc80;
+  --color-chip-danger: #fce4ec;
+  --color-ink-success: #004d1a;
+  --color-ink-warn: #804200;
+  --color-ink-info: #1a237e;
+  --color-ink-danger: #b71c1c;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-heading);
+
+  --color-accent: var(--color-accent);
+  --color-accent-bright: var(--color-accent-bright);
+  --color-surface-light: var(--color-surface-light);
+  --color-surface-light-2: var(--color-surface-light-2);
+  --color-surface-dark: var(--color-surface-dark);
+  --color-surface-dark-2: var(--color-surface-dark-2);
+  --color-ink: var(--color-ink);
+  --color-ink-muted: var(--color-ink-muted);
+  --color-on-dark: var(--color-on-dark);
+  --color-on-dark-muted: var(--color-on-dark-muted);
+  --color-gold: var(--color-gold);
+  --color-tier-t1: var(--color-tier-t1);
+  --color-tier-t1-ink: var(--color-tier-t1-ink);
+  --color-tier-t2-ink: var(--color-tier-t2-ink);
+  --color-tier-t2: var(--color-tier-t2);
+  --color-tier-t3: var(--color-tier-t3);
+  --radius-pill: var(--radius-pill);
+  --radius-card: var(--radius-card);
+
+  --color-border-light: var(--color-border-light);
+  --color-surface-panel: var(--color-surface-panel);
+  --color-chip-neutral: var(--color-chip-neutral);
+  --color-chip-success: var(--color-chip-success);
+  --color-chip-info: var(--color-chip-info);
+  --color-chip-warn: var(--color-chip-warn);
+  --color-chip-warn-border: var(--color-chip-warn-border);
+  --color-chip-danger: var(--color-chip-danger);
+  --color-ink-success: var(--color-ink-success);
+  --color-ink-warn: var(--color-ink-warn);
+  --color-ink-info: var(--color-ink-info);
+  --color-ink-danger: var(--color-ink-danger);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -22,5 +115,90 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-body, Arial, Helvetica, sans-serif);
+}
+
+/* Film-grain noise texture for light-mode "airy" surfaces — cheap SVG turbulence,
+   no image asset, tileable, works on transparent bg-blend so it reads as grain. */
+.bg-grain {
+  position: relative;
+  isolation: isolate;
+}
+.bg-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Hover glow: bóng đổ sâu hơn + viền rõ hơn. KHÔNG dùng màu accent —
+   đỏ dành riêng cho hành động chính, không cho trạng thái rê chuột. */
+.card-lift {
+  transition: box-shadow 0.25s ease, border-color 0.25s ease;
+}
+.card-lift:hover {
+  box-shadow: 0 12px 40px rgba(10, 21, 18, 0.12);
+  border-color: rgba(10, 21, 18, 0.12);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-lift {
+    transition: none;
+  }
+}
+
+/* Bản cho nền tối. box-shadow vô dụng ở đây — bóng của .card-lift là chính màu
+   obsidian, đổ lên nền obsidian thì không thấy gì. Trên nền tối, tín hiệu duy nhất
+   là ÁNH SÁNG: làm viền sáng lên. */
+.card-lift-dark {
+  transition: border-color 0.25s ease;
+}
+.card-lift-dark:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-lift-dark {
+    transition: none;
+  }
+}
+
+/* Chữ số rộng đều nhau — để cột số thẳng hàng khi giá trị đổi. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Scroll-reveal: fade + rise, respects prefers-reduced-motion */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.reveal-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Slow-drifting light streaks — cyan SVG paths, disabled under reduced motion */
+@keyframes drift {
+  0% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(-2%, 1.5%, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.light-streak {
+  animation: drift 22s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .light-streak {
+    animation: none;
+  }
 }

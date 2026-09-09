@@ -28,6 +28,9 @@ export const verdictSchema = z
     rubric_scores: z.array(rubricScoreSchema).min(1),
     total_score: z.number().int().min(0).max(100),
     confidence: z.number().int().min(0).max(100),
+    // Present only when a code-side cap overrode the model. Optional so every verdict
+    // written before the cap existed still validates. verdict_json is JSONB — no migration.
+    confidence_model_claimed: z.number().int().min(0).max(100).optional(),
     confidence_reasoning: z.string().min(1),
     decision: decisionEnum,
     refusal_reason: z.string().nullable(),

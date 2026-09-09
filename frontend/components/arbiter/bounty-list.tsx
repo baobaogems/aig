@@ -4,20 +4,29 @@
 // with evidence, escalation APPROVE/REJECT (F4). Bare on purpose.
 
 import { useState } from "react";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { PillButton } from "@/components/ui/pill-button";
+import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
+import { BountyRow } from "@/components/arbiter/bounty-row";
+import { JudgingProgress, type JudgeStage, type JudgeVerdict } from "@/components/arbiter/judging-progress";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string }
+interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
+interface RubricItem { item_id: string; criterion: string; weight: number }
 interface Detail {
   bounty: BountyRow;
+  // Already returned by GET /api/bounty?id= (store.getBountyDetail) — the page simply was
+  // not declaring it, so the criterion text was fetched and then thrown away.
+  rubric: null | { items_json: RubricItem[] };
   verdict: null | { id: string; decision: string; total_score: number; confidence: number; verdict_hash: string; release_tx: string | null; verdict_json: { rubric_scores: RubricScore[]; confidence_reasoning: string; refusal_reason: string | null } };
   escalation: null | { poster_action: string };
 }
 
-export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onChanged: () => void }) {
+export function BountyList({ bounties, loading, onChanged }: { bounties: BountyRow[]; loading?: boolean; onChanged: () => void }) {
   const [open, setOpen] = useState<string | null>(null);
   const [detail, setDetail] = useState<Detail | null>(null);
   const [busy, setBusy] = useState(false);
-  const [live, setLive] = useState("");
+  const [stage, setStage] = useState<JudgeStage | null>(null);
 
   async function loadDetail(id: string) {
     setOpen(id); setDetail(null);
@@ -25,9 +34,20 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
     if (res.ok) setDetail(await res.json());
   }
 
-  /** F3 — judge over SSE; show each event line as it arrives. */
-  async function judge(id: string) {
-    setBusy(true); setLive("judging — evidence-cited grading, ~20s…");
+  /** Clicking the open row closes it; the live log is per-row, so it clears too. */
+  function toggle(id: string) {
+    if (open === id) { setOpen(null); setDetail(null); setStage(null); return; }
+    setStage(null);
+    loadDetail(id);
+  }
+
+  /** F3 — judge over SSE. Three events arrive: judging, verdict, done. The phases below
+   *  mirror exactly those; nothing is inferred in between. */
+  async function judge(id: string, criteria: string[]) {
+    setBusy(true);
+    setStage({ kind: "grading", startedAt: Date.now(), criteria });
+    let verdict: JudgeVerdict | null = null;
+    let sawDone = false;
     try {
       const res = await fetch("/api/judge", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ bounty_id: id }),
@@ -44,13 +64,28 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
         for (const ev of events) {
           const type = ev.match(/^event: (.+)$/m)?.[1];
           const data = ev.match(/^data: (.+)$/m)?.[1];
-          if (type && data) setLive(`${type}: ${data}`);
-          if (type === "error") throw new Error(JSON.parse(data ?? "{}").message);
+          if (!type || !data) continue;
+          const payload = JSON.parse(data);
+          if (type === "verdict") { verdict = payload as JudgeVerdict; setStage({ kind: "verdict", verdict }); }
+          if (type === "done") { sawDone = true; setStage({ kind: "done", verdict, status: payload.status }); }
+          if (type === "error") throw new Error(payload.message);
         }
       }
+      // The stream can end without `done` if the connection is cut. Say so rather than
+      // leaving the panel frozen mid-phase looking like it is still working.
+      if (!sawDone) {
+        setStage({
+          kind: "error", afterVerdict: verdict !== null,
+          message: "The stream closed before the run reported finishing.",
+        });
+      }
       await loadDetail(id); onChanged();
-    } catch (e) { setLive(`Error: ${e instanceof Error ? e.message : e}`); }
-    finally { setBusy(false); }
+    } catch (e) {
+      setStage({
+        kind: "error", afterVerdict: verdict !== null,
+        message: e instanceof Error ? e.message : String(e),
+      });
+    } finally { setBusy(false); }
   }
 
   /** F4 — poster acts on the verdict; every action feeds override_rate. */
@@ -64,62 +99,97 @@ export function BountyList({ bounties, onChanged }: { bounties: BountyRow[]; onC
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setLive(j.note ?? (j.release_tx ? `released: ${j.release_tx}` : action));
+      setStage(null);
       await loadDetail(detail.bounty.id); onChanged();
-    } catch (e) { setLive(`Error: ${e instanceof Error ? e.message : e}`); }
+    } catch (e) {
+      setStage({ kind: "error", afterVerdict: false, message: e instanceof Error ? e.message : String(e) });
+    }
     finally { setBusy(false); }
   }
 
   const v = detail?.verdict;
   return (
-    <section className="border border-gray-400 p-3">
-      <h2 className="font-bold mb-2">Bounties</h2>
-      <table className="text-sm w-full">
-        <thead><tr className="text-left border-b border-gray-400"><th>id</th><th>status</th><th className="text-right">USDC</th></tr></thead>
-        <tbody>
-          {bounties.map((b) => (
-            <tr key={b.id} className="border-b border-gray-200 cursor-pointer" onClick={() => loadDetail(b.id)}>
-              <td className="font-mono pr-2">{b.id.slice(0, 8)}…</td>
-              <td>{b.status}</td>
-              <td className="text-right">{b.amount_usdc}</td>
-            </tr>
-          ))}
-          {bounties.length === 0 && <tr><td colSpan={3} className="py-2">no bounties yet</td></tr>}
-        </tbody>
-      </table>
+    // The heading lives on the page, next to the operator buttons.
+    <GlassPanel tone="light" className="overflow-hidden p-0">
+      <div className="divide-y divide-[var(--color-ink)]/5">
+        {bounties.map((b) => (
+          <div key={b.id}>
+            <BountyRow bounty={b} expanded={open === b.id} onToggle={() => toggle(b.id)} />
 
-      {open && detail && (
-        <div className="mt-3 border-t border-gray-300 pt-2 text-sm">
-          <p className="font-mono text-xs">{detail.bounty.id}</p>
-          <p className="whitespace-pre-wrap mt-1">{detail.bounty.brief}</p>
-          {detail.bounty.status === "SUBMITTED" && (
-            <button className="border border-black px-3 py-1 mt-2 disabled:opacity-50" disabled={busy} onClick={() => judge(detail.bounty.id)}>
-              Judge (F3)
-            </button>
-          )}
-          {v && (
-            <div className="mt-2">
-              <p className="font-bold">{v.decision} — score {v.total_score}, confidence {v.confidence}</p>
-              <p className="text-xs font-mono break-all">verdictHash {v.verdict_hash}{v.release_tx && ` · release ${v.release_tx}`}</p>
-              {v.verdict_json.rubric_scores.map((s) => (
-                <div key={s.item_id} className="border-l-2 border-gray-300 pl-2 mt-1">
-                  <p>{s.item_id} [w{s.weight}] {s.score}/100 — {s.reasoning}</p>
-                  <p className="text-xs italic">evidence: “{s.evidence[0]}”</p>
-                </div>
-              ))}
-              <p className="mt-1 text-xs">confidence: {v.verdict_json.confidence_reasoning}</p>
-              {detail.bounty.status === "JUDGED" && !detail.escalation && (
-                <div className="flex gap-2 mt-2">
-                  <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy} onClick={() => act("APPROVE")}>APPROVE — release</button>
-                  <button className="border border-black px-3 py-1 disabled:opacity-50" disabled={busy} onClick={() => act("REJECT")}>REJECT</button>
-                </div>
-              )}
-              {detail.escalation && <p className="mt-1">poster action: {detail.escalation.poster_action}</p>}
-            </div>
-          )}
-        </div>
-      )}
-      {live && <p className="text-xs mt-2 font-mono break-all">{live}</p>}
-    </section>
+            {open === b.id && (
+              <div className="border-t border-[var(--color-ink)]/5 bg-[var(--color-surface-light)]/40 px-4 py-4">
+                {!detail && <p className="text-sm text-[var(--color-ink-muted)]">Opening the case…</p>}
+
+                {detail && (
+                  <>
+                    <h3 className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">The brief</h3>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-ink)]">
+                      {detail.bounty.brief}
+                    </p>
+
+                    {detail.bounty.status === "SUBMITTED" && (
+                      <div className="mt-4">
+                        <PillButton
+                          variant="primary"
+                          disabled={busy}
+                          onClick={() => judge(detail.bounty.id, (detail.rubric?.items_json ?? []).map((r) => r.criterion))}
+                        >
+                          {busy ? "Judging…" : "Judge this submission"}
+                        </PillButton>
+                      </div>
+                    )}
+
+                    {v && (
+                      <VerdictCertificate
+                        verdict={v}
+                        rubric={detail.rubric?.items_json ?? null}
+                        bountyStatus={detail.bounty.status}
+                        escalation={detail.escalation}
+                        busy={busy}
+                        onAct={act}
+                      />
+                    )}
+
+                    {!v && detail.bounty.status !== "SUBMITTED" && (
+                      <p className="mt-4 text-sm text-[var(--color-ink-muted)]">
+                        No verdict yet — this bounty has not been judged.
+                      </p>
+                    )}
+                  </>
+                )}
+
+                {stage && <JudgingProgress stage={stage} />}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {loading && bounties.length === 0 && (
+          // Skeleton rows rather than a spinner: the page keeps its shape, so nothing jumps
+          // when the real rows land.
+          <div aria-busy="true" aria-label="Loading the ledger">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3.5">
+                <div className="h-3 w-3/5 animate-pulse rounded bg-[var(--color-ink)]/8" />
+                <div className="ml-auto h-5 w-24 animate-pulse rounded-full bg-[var(--color-ink)]/8" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* An empty ledger is the first thing a new deployment shows, so it has to say what
+            to do next rather than just reporting nothing. */}
+        {!loading && bounties.length === 0 && (
+          <div className="px-5 py-10 text-center">
+            <p className="text-sm font-medium text-[var(--color-ink)]">No verdicts yet</p>
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              Start with <span className="font-medium text-[var(--color-ink)]">+ New bounty</span>: describe a
+              job and the arbiter drafts a rubric you can freeze. Then submit work against it, and the
+              verdict it reaches will appear here.
+            </p>
+          </div>
+        )}
+      </div>
+    </GlassPanel>
   );
 }

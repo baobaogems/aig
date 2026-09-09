@@ -1,0 +1,124 @@
+// landing-pilot-metrics.tsx — reskin: the 2-bounty pilot, real numbers, real tx links.
+// Pulled from docs/arbiter-escrow-evidence.md — do not restate numbers here without
+// updating that doc first; it is the source of truth.
+
+import { EyebrowLabel } from "@/components/ui/eyebrow-label";
+import { GlassPanel } from "@/components/ui/glass-panel";
+import { PillButton } from "@/components/ui/pill-button";
+import { TierPill } from "@/components/ui/tier-pill";
+import { ThresholdBar } from "@/components/ui/threshold-bar";
+import { Reveal } from "@/components/ui/reveal";
+import { TIER_THRESHOLDS } from "@/lib/arbiter/tiers";
+
+// score and confidence are two separate numbers, not a value/threshold pair — see
+// docs/arbiter-escrow-evidence.md (Bounty A: total_score 94, confidence 85; Bounty B:
+// total_score 63, confidence 72). The gates they are measured against come from
+// lib/arbiter/tiers.ts, the code that actually decides whether money moves.
+const CASES = [
+  {
+    label: "Bounty A — clean autonomous release",
+    decision: "RELEASE",
+    tier: "T1" as const,
+    score: 94,
+    confidence: 85,
+    amount: "5 USDC settled on-chain",
+    tx: "0x3ac63896…37ac1d83",
+    href: "https://testnet.arcscan.app/tx/0x3ac63896ed94d300ea3f57a3b155dc077a40892e31bbee1f7ad843cd37ac1d83",
+  },
+  {
+    label: "Bounty B — borderline, escalated, overridden",
+    decision: "ESCALATE",
+    tier: "T2" as const,
+    score: 63,
+    confidence: 72,
+    amount: "2.22 USDC held pending refund",
+    tx: "poster REJECT — escalation 223494db",
+    href: "https://github.com/baobaogems/aig/blob/main/docs/arbiter-escrow-evidence.md",
+  },
+];
+
+const METRICS: [string, string][] = [
+  ["Verdicts", "2"],
+  ["T1 autonomous releases", "1"],
+  ["REFUSE", "0"],
+  ["Escalated to human (T2)", "1"],
+  ["Human decisions", "1 (REJECT)"],
+  // Not an override: Bounty B was an ESCALATE, so the arbiter took no position for the
+  // poster to overturn. Corrected 09/09 in docs/arbiter-escrow-evidence.md first, and in
+  // the live figure on /arbiter — the two pages must not disagree, least of all about this.
+  ["Override rate", "none yet"],
+];
+
+export function LandingPilotMetrics() {
+  return (
+    // Cùng nền obsidian với khối safety ngay trên nó. Một đường kẻ mảnh đánh dấu chỗ
+    // chuyển từ lời tuyên bố sang bằng chứng — giữ mảng tối liền mạch, không cắt rời
+    // bằng khoảng trống hay màu nền khác.
+    <section
+      id="evidence"
+      className="border-t border-white/10 bg-[var(--color-surface-dark)] py-24"
+    >
+      <div className="mx-auto max-w-6xl px-6">
+        <Reveal>
+          <EyebrowLabel onDark>calibration + pilot</EyebrowLabel>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
+            Two real bounties. Both halves of the safety story, on real transactions.
+          </h2>
+        </Reveal>
+
+        <div className="mt-12 grid gap-5 lg:grid-cols-2">
+          {CASES.map((c) => (
+            <Reveal key={c.label}>
+              <GlassPanel tone="dark-raised" interactive className="h-full p-6">
+                <TierPill decision={c.decision} tone="dark" />
+                <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-on-dark)]">{c.label}</h3>
+                <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">{c.amount}</p>
+                <div className="mt-4 space-y-3">
+                  <ThresholdBar
+                    label="score"
+                    value={c.score}
+                    threshold={TIER_THRESHOLDS.autoReleaseScore}
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
+                  />
+                  <ThresholdBar
+                    label="confidence"
+                    value={c.confidence}
+                    threshold={TIER_THRESHOLDS.autoReleaseConfidence}
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
+                  />
+                </div>
+                <a
+                  href={c.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-block font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-accent-bright)] underline decoration-[var(--color-accent-bright)]/30 underline-offset-4 hover:decoration-[var(--color-accent-bright)]"
+                >
+                  {c.tx}
+                </a>
+              </GlassPanel>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal className="mt-8">
+          <GlassPanel tone="dark-raised" className="p-6">
+            <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
+              {METRICS.map(([k, v]) => (
+                <div key={k}>
+                  <p className="text-xs uppercase tracking-wide text-[var(--color-on-dark-muted)]">{k}</p>
+                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-on-dark)]">{v}</p>
+                </div>
+              ))}
+            </div>
+          </GlassPanel>
+        </Reveal>
+
+        <Reveal className="mt-10">
+          <PillButton href="https://github.com/baobaogems/aig/blob/main/docs/arbiter-escrow-evidence.md" variant="secondary-on-dark" target="_blank" rel="noopener noreferrer">
+            Full on-chain evidence, incl. the fail-closed incident
+          </PillButton>
+        </Reveal>
+      </div>
+    </section>
+  );
+}

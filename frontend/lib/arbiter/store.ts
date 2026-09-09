@@ -4,6 +4,7 @@
 // as the single source of truth for money that actually moved.
 
 import { getSupabaseClient } from "../agent";
+import { computeOverrideStats } from "./override-rate";
 import type { RubricItem } from "./rubric";
 import type { Verdict } from "./verdict-schema";
 
@@ -61,9 +62,13 @@ export interface AgentStats {
   total_verdicts: number;
   t1_auto_release: number;
   refused: number;
+  /** Verdicts the arbiter escalated. Recomputed — see getAgentStats. */
   human_reviewed: number;
+  /** Poster decisions that went AGAINST a decisive verdict. Recomputed — see getAgentStats. */
   overridden: number;
   override_rate: number;
+  /** Decisive verdicts (RELEASE/FAIL) a poster answered — the override denominator. */
+  decisive_reviewed: number;
 }
 
 function db() {
@@ -231,7 +236,39 @@ export async function listBounties(): Promise<BountyRow[]> {
   return (data ?? []) as BountyRow[];
 }
 
+/**
+ * The agent_stats view still supplies the plain counts, but its override figures are
+ * replaced here. The view counts every REJECT as an override over every recorded action
+ * ("MVP simplification", its own comment) — which billed three answers to ESCALATE
+ * questions as two overturned verdicts. computeOverrideStats holds the real definition.
+ *
+ * Read-only, and the view is left untouched: the raw counts it computes are still correct,
+ * and rewriting a live view is a migration this does not need.
+ */
 export async function getAgentStats(): Promise<AgentStats> {
   const { data, error } = await db().from("agent_stats").select().single();
-  return must(data, error, "agent_stats") as AgentStats;
+  const view = must(data, error, "agent_stats") as AgentStats;
+
+  const { data: verdicts, error: ve } = await db().from("verdicts").select("id,decision");
+  if (ve) throw new Error(`agent_stats verdicts: ${ve.message}`);
+  const { data: escalations, error: ee } = await db().from("escalations").select("verdict_id,poster_action");
+  if (ee) throw new Error(`agent_stats escalations: ${ee.message}`);
+
+  const actionByVerdict = new Map(
+    (escalations ?? []).map((e) => [e.verdict_id as string, e.poster_action as "APPROVE" | "REJECT"]),
+  );
+  const stats = computeOverrideStats(
+    (verdicts ?? []).map((v) => ({
+      decision: v.decision as string,
+      posterAction: actionByVerdict.get(v.id as string) ?? null,
+    })),
+  );
+
+  return {
+    ...view,
+    human_reviewed: stats.escalatedToHuman,
+    overridden: stats.overturned,
+    decisive_reviewed: stats.decisiveReviewed,
+    override_rate: stats.decisiveReviewed === 0 ? 0 : stats.overturned / stats.decisiveReviewed,
+  };
 }

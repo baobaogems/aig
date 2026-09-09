@@ -1,0 +1,275 @@
+{
+  "$schema": "aig-web-sitemap/v1",
+  "project": "Arbiter Invisible Gateway (AIG v4)",
+  "purpose": "Runtime map of the deployed web app: what routes exist, what data moves through them, where that data rests, and which env var feeds which file. Companion to status_AIG.json (state) and docs/system-architecture.md (design intent).",
+  "measuredAt": "2026-08-13T21:25:00+07:00",
+  "measuredOn": "branch feat/reskin @ e214304 (working tree)",
+  "howMeasured": "Routes enumerated with `find frontend/app -name page.tsx -o -name route.ts` and cross-checked against the `next build` route table. Env vars enumerated with `grep -roE 'process\\.env\\.[A-Z0-9_]+'` over app/ lib/ components/ scripts/. Vercel env names from `vercel env ls production`. DB objects from `grep -i 'create table|view' frontend/supabase/migrations/*.sql`. Nothing here was written from memory.",
+
+  "staleWarning": {
+    "rule": "Any block below carrying its own `staleWarning` could NOT be verified by running something. Treat it as a claim, not a fact, and re-measure before relying on it.",
+    "reMeasureCommands": [
+      "find frontend/app -name page.tsx -o -name route.ts | sort",
+      "cd frontend && npm run build   # authoritative route table incl. static/dynamic",
+      "grep -rhoE 'process\\.env\\.[A-Z0-9_]+' frontend/app frontend/lib frontend/components frontend/scripts scripts | sort -u",
+      "cd frontend && vercel env ls production"
+    ]
+  },
+
+  "deployment": {
+    "platform": "Vercel",
+    "project": "arbiter-gateway",
+    "org": "hoangcaaas-projects",
+    "productionUrl": "https://arbiter-gateway.vercel.app",
+    "aliasAlsoLive": "https://aig-frontend-blond.vercel.app",
+    "framework": "Next.js 16.1.6 App Router, React 19",
+    "trigger": "push to origin/main -> Production build",
+    "entryBehavior": "GET / issues a 307 redirect to /dashboard (app/page.tsx is a bare redirect())"
+  },
+
+  "routes": {
+    "pages": [
+      {
+        "path": "/",
+        "file": "frontend/app/page.tsx",
+        "render": "static",
+        "purpose": "Redirect only — 307 to /dashboard. Holds no UI."
+      },
+      {
+        "path": "/dashboard",
+        "file": "frontend/app/dashboard/page.tsx",
+        "render": "static shell, client component",
+        "purpose": "Merchant dashboard. Wallet connect (wagmi injected), metrics row, recent-payments feed, QR receive code, points, agent-nanopayments card.",
+        "reads": ["/api/dashboard", "/api/points", "/api/nanopay/agents", "/api/nanopay/transfers", "Supabase realtime (payment feed, browser-side anon key)"]
+      },
+      {
+        "path": "/arbiter",
+        "file": "frontend/app/arbiter/page.tsx",
+        "render": "static shell, client component",
+        "purpose": "The v4 driving UI for flows F1-F5: create bounty, approve rubric, worker submit, judge, act on escalation, refund. Also renders the public track record (override_rate) via agent_stats.",
+        "reads": ["/api/bounty", "/api/bounty/[id]/approve-rubric", "/api/submission", "/api/judge", "/api/escalation", "/api/settle", "/api/refund"]
+      },
+      {
+        "path": "/home",
+        "file": "frontend/app/home/page.tsx",
+        "render": "static, server component",
+        "purpose": "Marketing/landing page from the parked dv8.bz reskin. Standalone — deliberately does not touch '/'.",
+        "note": "Lives on feat/reskin only. NOT on origin/main, therefore NOT in production."
+      },
+      {
+        "path": "/pay/[id]",
+        "file": "frontend/app/pay/[id]/page.tsx",
+        "render": "dynamic, client component",
+        "purpose": "Customer payment page (v2 CCTP rail). Customer signs USDC.approve + TokenMessengerV2.depositForBurn on Ethereum Sepolia; server bridges and mints on Arc."
+      }
+    ],
+
+    "api": [
+      {
+        "path": "POST /api/agent/execute",
+        "file": "frontend/app/api/agent/execute/route.ts",
+        "flow": "v2 CCTP bridge",
+        "response": "Server-Sent Events",
+        "config": "runtime=nodejs, dynamic=force-dynamic, maxDuration=60",
+        "purpose": "Given a Sepolia burn tx, poll Circle Iris v2 for the attestation, then call receiveMessage on Arc with the admin wallet to mint USDC to the merchant. Pipeline is anchored inside ReadableStream.start() so Vercel keeps the lambda alive."
+      },
+      {
+        "path": "POST /api/bounty  ·  GET /api/bounty  ·  GET /api/bounty?id=",
+        "file": "frontend/app/api/bounty/route.ts",
+        "flow": "F1 create + page reads",
+        "purpose": "POST: brief -> LLM rubric generation -> DRAFT bounty. GET: bounty list + agent_stats in one payload. GET?id: full detail (bounty + rubric + submission + verdict + escalation)."
+      },
+      {
+        "path": "POST /api/bounty/[id]/approve-rubric",
+        "file": "frontend/app/api/bounty/[id]/approve-rubric/route.ts",
+        "flow": "F1 tail",
+        "purpose": "Poster approves -> rubric FREEZES -> bounty OPEN. When DRY_RUN=false the server wallet locks USDC on-chain (lib/escrow-poster.ts). In dry-run the bounty opens with no lock."
+      },
+      {
+        "path": "POST /api/submission",
+        "file": "frontend/app/api/submission/route.ts",
+        "flow": "F2",
+        "purpose": "Worker submits text or link; content is SNAPSHOT-frozen at submit time. Editing the source afterwards changes nothing."
+      },
+      {
+        "path": "POST /api/judge",
+        "file": "frontend/app/api/judge/route.ts",
+        "flow": "F3",
+        "response": "Server-Sent Events (judging -> verdict -> done | error)",
+        "purpose": "Grade a SUBMITTED bounty against the frozen rubric with evidence citations; persist the verdict row; on T1 optionally release on-chain in the same request."
+      },
+      {
+        "path": "POST /api/escalation",
+        "file": "frontend/app/api/escalation/route.ts",
+        "flow": "F4",
+        "purpose": "Poster acts on a T2/T3 verdict. APPROVE releases escrow (live) and marks RELEASED; REJECT is recorded and the bounty stays JUDGED. Every action lands in `escalations` — that table IS the public override_rate."
+      },
+      {
+        "path": "POST /api/refund",
+        "file": "frontend/app/api/refund/route.ts",
+        "flow": "F4 tail (REJECT path)",
+        "purpose": "Return locked USDC to the poster after the deadline so a rejected bounty never strands escrow. Idempotent — the contract refunds once, ever."
+      },
+      {
+        "path": "POST /api/settle",
+        "file": "frontend/app/api/settle/route.ts",
+        "flow": "F5 tail",
+        "purpose": "Carry out a RELEASE verdict that never settled (day-cap deferral at judge time, or a release send that died mid-flight). Idempotent — refuses when release_tx is already recorded."
+      },
+      {
+        "path": "GET /api/dashboard?wallet=",
+        "file": "frontend/app/api/dashboard/route.ts",
+        "purpose": "Merchant profile (auto-created on first sight) + analytics stats."
+      },
+      {
+        "path": "GET /api/points?wallet=",
+        "file": "frontend/app/api/points/route.ts",
+        "purpose": "Points balance + tier + last activity, from the points_balance materialized view."
+      },
+      {
+        "path": "GET /api/nanopay/quote",
+        "file": "frontend/app/api/nanopay/quote/route.ts",
+        "flow": "v3 x402",
+        "purpose": "x402-protected resource. Unpaid -> HTTP 402; on payment ($0.001 USDC via Circle Gateway on Arc) -> verified, settled, JSON returned. Single static resource."
+      },
+      {
+        "path": "GET /api/nanopay/m/[merchant]",
+        "file": "frontend/app/api/nanopay/m/[merchant]/route.ts",
+        "flow": "v3.2 multi-merchant x402",
+        "purpose": "Same as /quote but payTo is the [merchant] wallet from the URL, so one gateway routes nanopayments to many merchants; each merchant's USDC accrues to its own Circle Gateway balance."
+      },
+      {
+        "path": "GET /api/nanopay/agents?merchant=",
+        "file": "frontend/app/api/nanopay/agents/route.ts",
+        "purpose": "Read-only. Aggregated nano_agents rows (one rolling row per paying agent) for the dashboard card."
+      },
+      {
+        "path": "GET /api/nanopay/transfers?merchant=",
+        "file": "frontend/app/api/nanopay/transfers/route.ts",
+        "purpose": "Read-only per-call nanopayment list. Per-call records are deliberately NOT in AIG's DB (v3.1 stores only the aggregate); individual transfers are read from Circle Gateway.",
+        "warning": "This file is UNTRACKED in git — it builds and is in the route table, but has never been committed. See status_AIG.json -> current.git.uncommittedRisk."
+      }
+    ]
+  },
+
+  "runtimeDataFlows": [
+    {
+      "name": "v4 Arbiter — bounty lifecycle (the money path)",
+      "steps": [
+        "Browser /arbiter -> POST /api/bounty (brief) -> Anthropic API generates weighted rubric -> rows in bounties + rubrics (Supabase, service-role key, server-side)",
+        "Poster approves -> POST /api/bounty/[id]/approve-rubric -> rubric frozen -> if DRY_RUN=false: USDC approve + ArbiterEscrow.createBounty on Arc testnet",
+        "Worker -> POST /api/submission -> content snapshot into submissions",
+        "POST /api/judge -> Anthropic grades against frozen rubric -> deterministic server code computes weighted total + confidence tier (the model never computes the total, never moves money) -> verdict row persisted",
+        "T1 (conf>=85 and score>=70) -> ArbiterEscrow.release(bountyId, verdictHash) signed by the admin/arbiter wallet -> verdict hash written on-chain",
+        "T2/T3 -> escalation row -> poster APPROVE (release) or REJECT via /api/escalation -> after deadline, /api/refund returns escrow to poster",
+        "Spend brakes: PER_BOUNTY_CAP_USDC enforced in the contract AND the server; PER_DAY_CAP_USDC is a rolling-24h ledger over verdicts.release_tx (lib/arbiter/spend-ledger.ts) that FAILS CLOSED — unreadable ledger means zero headroom, no autonomous release"
+      ]
+    },
+    {
+      "name": "v2 — CCTP payment rail (Ethereum Sepolia -> Arc)",
+      "steps": [
+        "Customer on /pay/[id] signs USDC.approve then TokenMessengerV2.depositForBurn on Sepolia (client-side, wagmi)",
+        "POST /api/agent/execute opens an SSE stream and polls Circle Iris v2 (GET /v2/messages/{sourceDomain}?transactionHash=) for message + attestation",
+        "Server calls receiveMessage on Arc with AIG_ADMIN_WALLET_PRIVATE_KEY -> USDC minted to the merchant, minus Circle's 1bps Fast Transfer fee",
+        "Session state in payment_sessions; dashboard feed subscribes to Supabase realtime"
+      ]
+    },
+    {
+      "name": "v3 — agentic nanopayments (x402 on Arc)",
+      "steps": [
+        "Autonomous agent GETs /api/nanopay/quote or /api/nanopay/m/[merchant] -> HTTP 402 with x402 payment requirements",
+        "Agent pays sub-cent USDC via Circle Gateway on Arc; server verifies + settles, returns the resource",
+        "Only the AGGREGATE is stored (nano_agents, one rolling row per agent) — per-call detail stays in Circle Gateway and is read back on demand",
+        "Points awarded in batches into points_ledger"
+      ]
+    }
+  ],
+
+  "dataStores": [
+    {
+      "store": "Supabase (Postgres)",
+      "role": "Primary application database. The only stateful store AIG owns.",
+      "migrations": "frontend/supabase/migrations/001..006 — these files ARE the schema source of truth",
+      "objects": {
+        "tables": ["payment_sessions (001)", "points_ledger (002)", "merchants (003)", "nano_agents (004)", "bounties (006)", "rubrics (006)", "submissions (006)", "verdicts (006)", "escalations (006)"],
+        "views": ["points_balance (materialized)", "agent_stats (view — computes the public override_rate)"],
+        "functions": ["nano record function (005)"]
+      },
+      "accessPaths": {
+        "server": "SUPABASE_SERVICE_ROLE_KEY — full access, server routes only",
+        "browser": "NEXT_PUBLIC_SUPABASE_ANON_KEY — used directly by components/payment-feed-table.tsx for the realtime feed"
+      },
+      "backup": "CHUA XAC MINH — no backup or point-in-time-restore setting was verified this session. Supabase free tier does NOT keep PITR. Verify in the Supabase dashboard before treating this data as durable."
+    },
+    {
+      "store": "Arc testnet (chain state)",
+      "role": "Escrow balances, release/refund finality, verdict hashes. Cannot be backed up and does not need to be — but it also cannot be recreated at a new address without redeploying.",
+      "contract": "ArbiterEscrow 0x6F4f038d30Cfc3Dd88c9ed1Ce55D44f89cc96FF5",
+      "source": "contracts/src/ArbiterEscrow.sol (19/19 forge tests)"
+    },
+    {
+      "store": "Circle Gateway",
+      "role": "Holds per-merchant nanopayment USDC balances and the per-call transfer history that AIG deliberately does not mirror into Postgres.",
+      "implication": "If Circle Gateway is unreachable, /api/nanopay/transfers has no fallback source."
+    },
+    {
+      "store": "Vercel",
+      "role": "Stateless compute + the only copy of production env var VALUES.",
+      "implication": "Env values are write-only in the dashboard. The recoverable copy lives in frontend/.env.local on the laptop and nowhere else. See docs/RECOVERY.md."
+    }
+  ],
+
+  "externalServices": [
+    { "service": "Anthropic API", "usedBy": "frontend/lib/arbiter/client.ts", "purpose": "Rubric generation + grading", "failureMode": "No judging at all. Money path halts; nothing is released incorrectly.", "cost": "Paid per token — the arbiter dry-run CLI spends real credits." },
+    { "service": "Supabase", "usedBy": "lib/agent.ts, lib/points.ts, arbiter routes, payment-feed-table.tsx", "purpose": "Application database + realtime", "failureMode": "Spend ledger unreadable -> fails closed -> zero autonomous release. Dashboard blank." },
+    { "service": "Circle Iris v2 (attestation)", "usedBy": "frontend/lib/cctp.ts", "endpoint": "https://iris-api-sandbox.circle.com/v2", "purpose": "CCTP burn attestation", "failureMode": "v2 bridge hangs at 'bridging'; burns are NOT lost — they remain mintable once attestation lands." },
+    { "service": "Circle Gateway", "usedBy": "frontend/lib/nanopay.ts", "purpose": "x402 nanopayment settlement + balances", "failureMode": "402 flow dead; transfers list empty." },
+    { "service": "Arc testnet RPC", "usedBy": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts", "purpose": "All chain reads/writes", "knownIssue": "The public endpoint drops roughly 1 request in 4, returning 'request limit reached' as HTTP 200 with no error code, so viem does not retry it. lib/rpc-retry.ts exists specifically for this." },
+    { "service": "Ethereum Sepolia RPC", "usedBy": "components/providers.tsx (client)", "purpose": "Customer-side approve + burn" },
+    { "service": "Vercel", "purpose": "Hosting + build + env storage" },
+    { "service": "GitHub", "repo": "https://github.com/baobaogems/aig", "visibility": "PUBLIC", "purpose": "Code of record — but NOT of the internal tracking files, which are gitignored." }
+  ],
+
+  "envMatrix": {
+    "note": "`code` = the file that actually reads it. `vercelProduction` = present in `vercel env ls production` on 13/08. A var in code but not on Vercel means production falls back to a default or breaks; a var on Vercel but not in code is dead weight.",
+    "serverSecrets": [
+      { "name": "ANTHROPIC_API_KEY", "code": "lib/arbiter/client.ts", "vercelProduction": true },
+      { "name": "AIG_ADMIN_WALLET_PRIVATE_KEY", "code": "lib/escrow.ts, lib/cctp.ts, api/nanopay/transfers/route.ts", "vercelProduction": true, "note": "This one key is poster + arbiter + relay. Compromise = full control of the money path." },
+      { "name": "SUPABASE_SERVICE_ROLE_KEY", "code": "lib/agent.ts, lib/points.ts, scripts/seed-dashboard-data.ts", "vercelProduction": true }
+    ],
+    "safetySwitches": [
+      { "name": "DRY_RUN", "code": "lib/arbiter/run.ts, lib/escrow.ts", "vercelProduction": true, "note": "Every on-chain write refuses unless DRY_RUN is exactly false." },
+      { "name": "PER_BOUNTY_CAP_USDC", "code": "api/bounty/route.ts, lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts", "vercelProduction": true },
+      { "name": "PER_DAY_CAP_USDC", "code": "lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts", "vercelProduction": true }
+    ],
+    "configuration": [
+      { "name": "ARBITER_ESCROW_ADDRESS", "code": "lib/escrow.ts", "vercelProduction": true },
+      { "name": "ARBITER_MODEL", "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts", "vercelProduction": true },
+      { "name": "PROMPT_VERSION", "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts", "vercelProduction": true },
+      { "name": "ARC_TESTNET_RPC_URL", "code": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts", "vercelProduction": true },
+      { "name": "ARC_CHAIN_ID", "code": "lib/chains.ts", "vercelProduction": true },
+      { "name": "USDC_ADDRESS_ARC_TESTNET", "code": "lib/escrow-poster.ts", "vercelProduction": true },
+      { "name": "CCTP_MESSAGE_TRANSMITTER_ARC", "code": "lib/cctp.ts", "vercelProduction": true },
+      { "name": "CIRCLE_IRIS_API_V2", "code": "lib/cctp.ts", "vercelProduction": false, "note": "Falls back to the hardcoded sandbox default in lib/cctp.ts." },
+      { "name": "CIRCLE_GATEWAY_FACILITATOR_URL", "code": "lib/nanopay.ts", "vercelProduction": false },
+      { "name": "NANOPAY_SELLER_ADDRESS", "code": "lib/nanopay.ts", "vercelProduction": false }
+    ],
+    "publicClientSide": [
+      { "name": "NEXT_PUBLIC_SUPABASE_URL", "code": "lib/agent.ts, lib/points.ts, payment-feed-table.tsx", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY", "code": "payment-feed-table.tsx", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_SOURCE_CHAIN_ID", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_USDC_ADDRESS_SOURCE", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_ARC_CCTP_DOMAIN", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
+      { "name": "NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL", "code": "components/providers.tsx", "vercelProduction": false, "DRIFT": "Vercel has ETHEREUM_SEPOLIA_RPC_URL (no NEXT_PUBLIC_ prefix). A non-prefixed var is never exposed to the browser, so the client is running on whatever default providers.tsx falls back to. Either rename on Vercel or change the code." }
+    ],
+    "deadOnVercel": {
+      "note": "Present in Vercel Production, read by no code in the current tree. Safe to delete; kept listed so nobody mistakes them for live config.",
+      "names": ["BRIDGE_BACKEND", "NEXT_PUBLIC_BRIDGE_BACKEND", "USDC_ADDRESS_BSC_TESTNET", "BSC_TESTNET_RPC_URL", "CCTP_TOKEN_MESSENGER_BSC"]
+    },
+    "scriptOnly": [
+      { "name": "BASE_URL", "code": "scripts/nano-agent.mts" },
+      { "name": "DEPOSIT_AMOUNT", "code": "scripts/nano-agent.mts" }
+    ]
+  }
+}

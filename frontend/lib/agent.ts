@@ -1,7 +1,9 @@
 // =============================================================================
-// agent.ts — Supabase session helpers (v2-only)
+// agent.ts — Supabase session helpers.
 //
-// Imported by: /app/api/agent/execute/route.ts
+// Survives the merchant-payment removal: kept because lib/arbiter/store.ts and
+// lib/arbiter/spend-ledger.ts import it via the relative path "../agent".
+// Its original caller, /app/api/agent/execute/route.ts, is gone.
 // =============================================================================
 
 import { createClient, SupabaseClient } from "@supabase/supabase-js";

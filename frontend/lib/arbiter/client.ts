@@ -18,12 +18,20 @@ function getClient(): Anthropic {
 export interface LlmJsonResult {
   data: unknown; // parsed JSON (may still fail domain validation downstream)
   usage: { input_tokens: number; output_tokens: number };
+  /**
+   * Set when the reply could not be parsed as JSON at all (prose-only answer, truncated
+   * output, syntax error). `data` is then `undefined`. This is NOT thrown: off-schema is a
+   * verdict outcome, not a crash — the caller degrades it to REFUSE and still bills the
+   * tokens that were actually spent.
+   */
+  parseError?: string;
 }
 
 /**
  * Call the model and parse its reply as JSON. The model is told to emit ONLY JSON, but we
  * still defensively strip code fences and extract the outermost {...} — belt and suspenders.
- * Throws on transport error or if no JSON object can be extracted; callers turn that into REFUSE.
+ * Throws only on TRANSPORT failure (network, auth, rate limit). A reply that is not valid
+ * JSON comes back as `parseError`, so callers can turn it into a REFUSE verdict.
  */
 export async function callJson(system: string, user: string): Promise<LlmJsonResult> {
   // NOTE: no temperature param — deprecated/rejected on Opus 4.8 (API 400s if sent).
@@ -40,20 +48,28 @@ export async function callJson(system: string, user: string): Promise<LlmJsonRes
     .map((b) => b.text)
     .join("");
 
-  return {
-    data: JSON.parse(extractJson(text)),
-    usage: { input_tokens: resp.usage.input_tokens, output_tokens: resp.usage.output_tokens },
-  };
+  const usage = { input_tokens: resp.usage.input_tokens, output_tokens: resp.usage.output_tokens };
+
+  const slice = extractJson(text);
+  if (slice === null) return { data: undefined, usage, parseError: "no JSON object in model reply" };
+
+  try {
+    return { data: JSON.parse(slice), usage };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { data: undefined, usage, parseError: "malformed JSON in model reply: " + message };
+  }
 }
 
-/** Pull the outermost JSON object out of a model reply (handles ```json fences / stray prose). */
-function extractJson(text: string): string {
+/**
+ * Pull the outermost JSON object out of a model reply (handles ```json fences / stray prose).
+ * Returns null when there is no object at all — the caller decides what that means.
+ */
+function extractJson(text: string): string | null {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/i);
   const body = fenced ? fenced[1] : text;
   const start = body.indexOf("{");
   const end = body.lastIndexOf("}");
-  if (start === -1 || end === -1 || end < start) {
-    throw new Error("no JSON object in model reply");
-  }
+  if (start === -1 || end === -1 || end < start) return null;
   return body.slice(start, end + 1);
 }
