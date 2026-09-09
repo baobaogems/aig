@@ -6,6 +6,8 @@
 // override_rate = poster REJECTs ÷ human-reviewed verdicts — the pitch's headline number.
 // Zero logic, same data shape as before.
 
+import { formatOverrideRate } from "@/lib/arbiter/override-rate";
+
 export interface AgentStats {
   total_verdicts: number;
   t1_auto_release: number;
@@ -14,6 +16,7 @@ export interface AgentStats {
   human_reviewed: number;
   overridden: number;
   override_rate: number;
+  decisive_reviewed: number;
 }
 
 export function AgentStatsStrip({ stats }: { stats: AgentStats | null }) {
@@ -35,8 +38,14 @@ export function AgentStatsStrip({ stats }: { stats: AgentStats | null }) {
     ["scored, did not pass", Math.max(0, stats.total_verdicts - stats.t1_auto_release - stats.refused - stats.human_reviewed)],
     ["declined to judge", stats.refused],
     ["sent to a human", stats.human_reviewed],
-    // Small-n: a raw count reads honestly where "100.0%" over 1 escalation overstates.
-    ["overturned", `${stats.overridden} of ${stats.human_reviewed}`],
+    // Small-n: a fraction reads honestly where "100.0%" over one case overstates. The
+    // denominator is verdicts the arbiter was decisive about and a poster answered — an
+    // ESCALATE has no position to overturn, so it belongs in neither half.
+    ["overturned", formatOverrideRate({
+      escalatedToHuman: stats.human_reviewed,
+      overturned: stats.overridden,
+      decisiveReviewed: stats.decisive_reviewed,
+    })],
   ];
 
   return (

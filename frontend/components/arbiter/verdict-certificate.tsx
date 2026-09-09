@@ -175,9 +175,13 @@ export function VerdictCertificate({
       )}
       {escalation && (
         <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
+          {/* "Overruling" only applies where the arbiter took a side. On an ESCALATE it
+              asked; answering a question is not overruling anyone. */}
           <p className="text-sm leading-relaxed text-[var(--color-ink)]">
             You <span className="font-semibold">{escalation.poster_action === "APPROVE" ? "approved" : "rejected"}</span>{" "}
-            this, overruling the arbiter.
+            {verdict.decision === "ESCALATE"
+              ? "this — the answer the arbiter asked for."
+              : "this, going against what the arbiter concluded."}
           </p>
           {/* escalation/route.ts:5 — a REJECT is recorded and the bounty stays JUDGED. The
               refund is the poster's own on-chain call after the deadline; saying "the money
