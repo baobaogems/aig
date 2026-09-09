@@ -42,8 +42,11 @@ const METRICS: [string, string][] = [
   ["T1 autonomous releases", "1"],
   ["REFUSE", "0"],
   ["Escalated to human (T2)", "1"],
-  ["Human overrides", "1 (REJECT)"],
-  ["Override rate", "1 / 1 escalations"],
+  ["Human decisions", "1 (REJECT)"],
+  // Not an override: Bounty B was an ESCALATE, so the arbiter took no position for the
+  // poster to overturn. Corrected 09/09 in docs/arbiter-escrow-evidence.md first, and in
+  // the live figure on /arbiter — the two pages must not disagree, least of all about this.
+  ["Override rate", "none yet"],
 ];
 
 export function LandingPilotMetrics() {

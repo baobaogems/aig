@@ -151,10 +151,17 @@ confidence and deferred. `verdictHash`
 `0x5f9d72312f2e3d140d80bc63df1b079ee9dd13e718cb7d9458ab9bbe902a79a7` (persisted; committed
 on-chain only if a release ever happens).
 
-**Human override:** the poster reviewed the evidence in the UI and clicked **REJECT**
-(escalation `223494db`, 2026-08-05 12:14 ICT). The bounty stays `JUDGED`, the 2.22 USDC stays
-locked in the contract, and the poster refunds on-chain after the deadline (2026-08-06 12:00
-ICT) — refund tx will be appended here when executed.
+**Human decision:** the poster reviewed the evidence in the UI and clicked **REJECT**
+(escalation `223494db`, 2026-08-05 12:14 ICT). Note this was an *answer*, not an override —
+see the metrics note below. The bounty stayed `JUDGED`, the 2.22 USDC stayed
+locked in the contract until the deadline passed.
+
+**Refund (2026-08-08):** deadline (2026-08-06 12:00 ICT) passed with the bounty never released.
+Refund tx: [`0x8ef229b0a1a4859d0ea3e09868fb3b413279d33e969e8e5f4669a1db3d8240be`](https://testnet.arcscan.app/tx/0x8ef229b0a1a4859d0ea3e09868fb3b413279d33e969e8e5f4669a1db3d8240be)
+(block 55886538, `status=0x1`). `getBounty` now reads `released=false, refunded=true`; DB status
+`REFUNDED`. Triggered via `POST /api/refund` from a poster-facing "Refund (admin, deadline
+passed)" button added to `/arbiter`'s bounty detail view — same auth-less admin-wallet path as
+the rest of the pilot, `DRY_RUN=false` scoped to that single request only.
 
 ### Pilot metrics (from `agent_stats`, backed by the rows above)
 
@@ -164,10 +171,30 @@ ICT) — refund tx will be appended here when executed.
 | T1 autonomous releases | 1 (Bounty A, 5 USDC settled on-chain) |
 | REFUSE | 0 |
 | Escalated to human (T2) | 1 |
-| Human overrides | 1 (REJECT) |
-| Override rate | 1/1 escalations |
+| Human decisions on escalations | 1 (REJECT) |
+| Override rate | none yet — see below |
 | USDC settled by verdict | 5 |
-| USDC held pending refund | 2.22 |
+| USDC refunded to poster | 2.22 |
+
+**Correction (2026-09-09) — the override rate was previously stated here as "1/1
+escalations". That was wrong, and the figure has been corrected everywhere it is published.**
+
+The `agent_stats` view counts every poster `REJECT` as an override; its own comment in
+`006_create_arbiter_tables.sql` calls this an "MVP simplification". But Bounty B was an
+`ESCALATE`: the arbiter said it was not confident enough to decide and handed the question
+to the poster. It stated no position, so there was nothing for the poster to overturn.
+Answering a question the arbiter asked is not overruling it.
+
+An override now requires the arbiter to have been decisive first — a `RELEASE` the poster
+blocked, or a `FAIL` the poster paid out anyway — over the decisive verdicts a poster
+actually answered. `ESCALATE` and `REFUSE` count toward neither half: one declined to
+decide, the other declined to judge, and both are the system working as designed rather
+than being corrected. The definition is pinned by tests in
+`frontend/lib/arbiter/override-rate.test.ts`.
+
+Across the whole record to date, no poster has yet answered a decisive verdict, so the
+honest reading is **none yet** — not a rate of zero, which would imply a denominator that
+does not exist.
 
 Two-bounty pilot, stated as exactly that. The pair demonstrates both halves of the safety
 story on real transactions: autonomous settlement when the evidence supports it, and a
