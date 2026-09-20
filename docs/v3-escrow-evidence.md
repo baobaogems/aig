@@ -109,9 +109,35 @@ Bốn nhánh chia tiền + chặn hoàn tiền chạy trên **cả hai** bản (
 
 | Hạng mục | Vì sao |
 |---|---|
-| Vòng đầy đủ qua giao diện (chấm bài → thanh toán) | **migration 010 chưa chạy** trên Supabase; DB chưa có `submitted_at`/`escrow_version` |
-| Nối vào Production | env Vercel chưa đổi, code chưa push |
+| Vòng đầy đủ qua giao diện (chấm bài → thanh toán) | env Vercel chưa trỏ v3, nên app vẫn nói chuyện với v2 |
+| Nối vào Production | **env Vercel chưa đổi** (thao tác bị chặn quyền), code chưa push |
 | `timeoutRelease` trên bản chính (48h) | phải chờ đủ 48 giờ |
+
+## Migration 010 — ĐÃ CHẠY 20/09
+
+`supabase db push --linked` từ thư mục `frontend/`. Đính chính nhận định sai trước đó: bảng
+lịch sử migration trên remote **không** trống — 001–009 đã ghi nhận đủ, nên `db push` chỉ áp
+đúng `010_settlement.sql` (đã `--dry-run` xác nhận trước).
+
+Kiểm sau khi chạy: **18 bounty, tất cả `escrow_version = 2`, không dòng nào null**;
+`bounties.submitted_at` và `verdicts.worker_bps` đọc được.
+
+## Kiểm kê v2 — mốc đối chiếu
+
+Chạy `frontend/scripts/escrow-v2-inventory.ts` sau khi deploy v3:
+
+**18 bounty trên v2, đúng 1 cái còn giữ tiền:**
+
+| Bounty | Trạng thái | Trên chain | Tiền | Hạn |
+|---|---|---|---|---|
+| `00c18910-3e36-464e-b633-8b015a4dd51f` | JUDGED | **HOLDING** | **5 USDC** | 27/09/2026 |
+
+17 cái còn lại: `never-created` trên chain (draft, hoặc dòng cũ chưa từng khoá tiền) hoặc đã tất toán.
+
+**Đây là mốc.** Chạy lại lệnh trên bất cứ lúc nào; danh sách phải giống hệt. Khác một dòng là dừng lại.
+
+Bounty `00c18910…` sẽ **kết thúc theo luật v2**: người đăng duyệt thì trả đủ, hoặc họ tự hoàn
+tiền sau 27/09. Code mới định tuyến nó qua `escrow_version = 2` và đường `releaseEscrowV2`.
 
 ## v2 — không đụng vào
 
