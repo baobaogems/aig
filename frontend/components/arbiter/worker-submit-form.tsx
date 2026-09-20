@@ -14,8 +14,18 @@ import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-
 
 type Errors = Partial<Record<"bountyId" | "content", string>>;
 
-export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
-  const [bountyId, setBountyId] = useState("");
+export function WorkerSubmitForm({
+  onChanged,
+  bountyId: fixedBountyId,
+}: {
+  onChanged: () => void;
+  /** Supplied when the form is opened from a bounty's own page — then there is nothing to
+   *  paste, and nothing to paste wrong. The drawer on /arbiter still asks for an id. */
+  bountyId?: string;
+}) {
+  const [typedBountyId, setTypedBountyId] = useState("");
+  const bountyId = fixedBountyId ?? typedBountyId;
+  const setBountyId = setTypedBountyId;
   const [content, setContent] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   /** Which way the work is being handed in. They are alternatives, not a form to fill twice. */
@@ -34,7 +44,7 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
 
   async function submit() {
     const e: Errors = {};
-    if (!bountyId.trim()) e.bountyId = "Dán id của bounty bạn đang trả lời.";
+    if (!fixedBountyId && !bountyId.trim()) e.bountyId = "Dán id của bounty bạn đang trả lời.";
     if (mode === "paste" && !content.trim()) e.content = "Chưa có gì để chấm.";
     if (mode === "link" && !/^https?:\/\//i.test(sourceUrl.trim()))
       e.content = "Cần một link http hoặc https công khai.";
@@ -70,20 +80,22 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
   return (
     <div>
       <div className="grid gap-4">
-        <FormField
-          id="bounty-id"
-          label="Which bounty"
-          hint={'Use the "copy id" button on the row you are answering.'}
-          error={errors.bountyId}
-        >
-          <input
+        {!fixedBountyId && (
+          <FormField
             id="bounty-id"
-            className={`${inp("bountyId")} font-[family-name:var(--font-jetbrains-mono)] text-xs`}
-            placeholder="00000000-0000-0000-0000-000000000000"
-            value={bountyId}
-            onChange={(e) => edit(setBountyId, "bountyId")(e.target.value)}
-          />
-        </FormField>
+            label="Việc nào"
+            hint={'Dùng nút "copy id" ở dòng bạn đang trả lời.'}
+            error={errors.bountyId}
+          >
+            <input
+              id="bounty-id"
+              className={`${inp("bountyId")} font-[family-name:var(--font-jetbrains-mono)] text-xs`}
+              placeholder="00000000-0000-0000-0000-000000000000"
+              value={bountyId}
+              onChange={(e) => edit(setBountyId, "bountyId")(e.target.value)}
+            />
+          </FormField>
+        )}
 
         <div className="flex gap-1.5">
           {([["paste", "Dán nội dung"], ["link", "Gửi link"]] as const).map(([k, label]) => (

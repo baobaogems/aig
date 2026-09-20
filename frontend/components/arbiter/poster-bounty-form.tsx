@@ -18,6 +18,7 @@ import { useState } from "react";
 import { PillButton } from "@/components/ui/pill-button";
 import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-field";
 import { PosterLockFunds, type LockParams } from "@/components/arbiter/poster-lock-funds";
+import { RubricTable } from "@/components/arbiter/rubric-table";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
 
@@ -134,20 +135,9 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
           <h3 className="text-sm font-semibold text-[var(--color-ink)]">
             The arbiter proposes to score it like this
           </h3>
-          <p className="mt-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-            Approving freezes these criteria. They cannot be edited afterwards — that is what stops
-            anyone moving the goalposts once work has started.
-          </p>
-          <ul className="mt-3 space-y-2.5">
-            {draft.rubric.map((r) => (
-              <li key={r.item_id} className="flex items-baseline justify-between gap-4 border-b border-[var(--color-ink)]/5 pb-2.5 last:border-0">
-                <span className="text-sm leading-relaxed text-[var(--color-ink)]">{r.criterion}</span>
-                <span className="tnum shrink-0 font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
-                  {r.weight}%
-                </span>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-1">
+            <RubricTable items={draft.rubric} frozen={false} />
+          </div>
           <div className="mt-4">
             {lock ? (
               <PosterLockFunds

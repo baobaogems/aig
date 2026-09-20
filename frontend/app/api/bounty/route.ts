@@ -7,7 +7,8 @@
 import { NextRequest } from "next/server";
 import { generateRubric } from "@/lib/arbiter/rubric";
 import { createBountyWithRubric, getAgentStats, getBountyDetail, listBounties, type BountyView } from "@/lib/arbiter/store";
-import { requireSession, sameAddress } from "@/lib/auth/require-role";
+import { requireSession } from "@/lib/auth/require-role";
+import { scopeDetailToViewer } from "@/lib/arbiter/bounty-view";
 import { SESSION_COOKIE, openSession } from "@/lib/auth/siwe-session";
 import { LIMIT_CREATE_BOUNTY, enforceRateLimit } from "@/lib/auth/rate-limit";
 
@@ -63,15 +64,10 @@ export async function GET(req: NextRequest) {
   try {
     const id = req.nextUrl.searchParams.get("id");
     if (id) {
-      const detail = await getBountyDetail(id);
-      // The record is public — the deliverable is not. Anyone may audit what the arbiter
-      // decided and why; only the two parties may read the work itself.
+      // The record is public — the deliverable is not. That rule lives in one place
+      // (lib/arbiter/bounty-view.ts) because the detail page enforces it too.
       const viewer = openSession(req.cookies.get(SESSION_COOKIE)?.value);
-      const isParty =
-        sameAddress(detail.bounty.poster_id, viewer) || sameAddress(detail.bounty.worker_id, viewer);
-      if (!isParty && detail.submission) {
-        detail.submission = { ...detail.submission, content_snapshot: "" };
-      }
+      const { detail, isParty } = scopeDetailToViewer(await getBountyDetail(id), viewer);
       return Response.json({ ...detail, viewer_is_party: isParty });
     }
     // Which slice of the board: the public marketplace, or one of the caller's own lists.

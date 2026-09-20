@@ -256,9 +256,14 @@ export async function listBounties(view: BountyView = "all", address?: string | 
   let q = db().from("bounties").select().order("created_at", { ascending: false }).limit(50);
 
   if (view === "marketplace") {
-    // The board: locked, open, unclaimed, and still inside its deadline. A bounty past its
-    // deadline is not work anyone can take — the contract refuses claim() on it too.
-    q = q.eq("status", "OPEN").is("worker_id", null).gt("deadline", new Date().toISOString());
+    // The board shows work that is funded and still in time — including bounties somebody has
+    // already taken. Filtering those out made the board look empty whenever the community was
+    // busiest, and hid the one signal that tells a newcomer this thing is actually used.
+    // Whether a row can be CLAIMED is a separate question, answered per-card by bountyState().
+    //
+    // Past the deadline it drops off: the contract refuses claim() there, so showing it would
+    // only offer a button that reverts.
+    q = q.in("status", ["OPEN", "SUBMITTED"]).gt("deadline", new Date().toISOString());
   } else if (view === "mine-posted") {
     if (!address) return [];
     q = q.ilike("poster_id", address);
