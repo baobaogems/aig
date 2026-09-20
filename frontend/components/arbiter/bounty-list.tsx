@@ -18,6 +18,9 @@ interface Detail {
   // Already returned by GET /api/bounty?id= (store.getBountyDetail) — the page simply was
   // not declaring it, so the criterion text was fetched and then thrown away.
   rubric: null | { items_json: RubricItem[] };
+  // The frozen snapshot — what was actually judged. Hidden by the API from anyone who is not
+  // a party to the bounty, so it arrives as an empty string for outside readers.
+  submission: null | { content_snapshot: string; source_url: string | null; submitted_at: string };
   verdict: null | { id: string; decision: string; total_score: number; confidence: number; verdict_hash: string; release_tx: string | null; verdict_json: { rubric_scores: RubricScore[]; confidence_reasoning: string; refusal_reason: string | null } };
   escalation: null | { poster_action: string };
 }
@@ -126,6 +129,22 @@ export function BountyList({ bounties, loading, onChanged }: { bounties: BountyR
                     <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[var(--color-ink)]">
                       {detail.bounty.brief}
                     </p>
+
+                    {detail.submission && detail.submission.content_snapshot && (
+                      <details className="mt-4">
+                        <summary className="cursor-pointer text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">
+                          Bài đã nộp — đúng bản được chấm
+                        </summary>
+                        {detail.submission.source_url && (
+                          <p className="mt-1.5 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
+                            nguồn: {detail.submission.source_url}
+                          </p>
+                        )}
+                        <p className="mt-2 max-h-72 overflow-y-auto whitespace-pre-wrap rounded-lg bg-white/60 p-3 text-sm leading-relaxed text-[var(--color-ink)]">
+                          {detail.submission.content_snapshot}
+                        </p>
+                      </details>
+                    )}
 
                     {detail.bounty.status === "SUBMITTED" && (
                       <div className="mt-4">

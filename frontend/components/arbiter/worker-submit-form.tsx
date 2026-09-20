@@ -1,8 +1,12 @@
 "use client";
 
-// worker-submit-form.tsx — F2: worker pastes the deliverable → server snapshots it at
-// submit time. Labels, hints and per-field errors, same as the poster form; the request
-// body is unchanged.
+// worker-submit-form.tsx — F2: worker hands in the work → server snapshots it at submit time.
+//
+// Phase 06 added the second way in. A link used to be stored as a reference the arbiter
+// never read, which meant "gửi link" did not actually work: the code said so out loud
+// ("a bare link is not judgeable"). Now the server fetches the link and judges what it finds.
+//
+// Either way one thing is stored — the text — and it is frozen at submit time.
 
 import { useState } from "react";
 import { PillButton } from "@/components/ui/pill-button";
@@ -14,6 +18,8 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
   const [bountyId, setBountyId] = useState("");
   const [content, setContent] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
+  /** Which way the work is being handed in. They are alternatives, not a form to fill twice. */
+  const [mode, setMode] = useState<"paste" | "link">("paste");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [errors, setErrors] = useState<Errors>({});
@@ -28,8 +34,10 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
 
   async function submit() {
     const e: Errors = {};
-    if (!bountyId.trim()) e.bountyId = "Paste the id of the bounty you are answering.";
-    if (!content.trim()) e.content = "There is nothing here to judge yet.";
+    if (!bountyId.trim()) e.bountyId = "Dán id của bounty bạn đang trả lời.";
+    if (mode === "paste" && !content.trim()) e.content = "Chưa có gì để chấm.";
+    if (mode === "link" && !/^https?:\/\//i.test(sourceUrl.trim()))
+      e.content = "Cần một link http hoặc https công khai.";
     setErrors(e);
     if (Object.keys(e).length > 0) { setMsg(""); return; }
 
@@ -37,11 +45,20 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
     try {
       const res = await fetch("/api/submission", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bounty_id: bountyId.trim(), content, source_url: sourceUrl.trim() || undefined }),
+        body: JSON.stringify({
+          bounty_id: bountyId.trim(),
+          // Send only the one that is in play; the server judges pasted text when both arrive.
+          content: mode === "paste" ? content : undefined,
+          source_url: sourceUrl.trim() || undefined,
+        }),
       });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setMsg("Submitted. This exact text is frozen — later edits to the source no longer count.");
+      setMsg(
+        mode === "link"
+          ? "Đã nộp. Arbiter đã đọc link và đóng băng nội dung đọc được — sửa nguồn sau này không đổi kết quả."
+          : "Đã nộp. Đúng đoạn văn bản này bị đóng băng — sửa nguồn sau này không tính.",
+      );
       setContent("");
       onChanged();
     } catch (err) { setMsg(`Could not submit: ${err instanceof Error ? err.message : err}`); }
@@ -68,22 +85,52 @@ export function WorkerSubmitForm({ onChanged }: { onChanged: () => void }) {
           />
         </FormField>
 
-        <FormField
-          id="content"
-          label="Your work"
-          hint="Paste the finished text. This snapshot is exactly what gets judged, word for word."
-          error={errors.content}
-        >
-          <textarea id="content" rows={8} className={inp("content")} value={content} onChange={(e) => edit(setContent, "content")(e.target.value)} />
-        </FormField>
+        <div className="flex gap-1.5">
+          {([["paste", "Dán nội dung"], ["link", "Gửi link"]] as const).map(([k, label]) => (
+            <button
+              key={k}
+              onClick={() => setMode(k)}
+              className={
+                "rounded-[var(--radius-pill)] px-3.5 py-1.5 text-sm transition-colors " +
+                (mode === k
+                  ? "bg-[var(--color-ink)] text-white"
+                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]")
+              }
+            >
+              {label}
+            </button>
+          ))}
+        </div>
 
-        <FormField id="source-url" label="Where it lives (optional)" hint="Stored as a reference only. The arbiter judges the text above, not this link.">
-          <input id="source-url" className={`${FIELD_INPUT_CLASS} ${fieldBorder(false)}`} placeholder="https://" value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />
-        </FormField>
+        {mode === "paste" ? (
+          <FormField
+            id="content"
+            label="Bài của bạn"
+            hint="Dán bài đã hoàn thành. Chính đoạn này bị đóng băng và được chấm, từng chữ một."
+            error={errors.content}
+          >
+            <textarea id="content" rows={8} className={inp("content")} value={content} onChange={(e) => edit(setContent, "content")(e.target.value)} />
+          </FormField>
+        ) : (
+          <FormField
+            id="source-url"
+            label="Link công khai tới bài"
+            hint="Arbiter sẽ tự tải và đọc nội dung ở link này, rồi đóng băng đúng những gì đọc được. Trang cần JavaScript mới hiện chữ thì sẽ không đọc được — khi đó hãy dán thẳng nội dung."
+            error={errors.content}
+          >
+            <input
+              id="source-url"
+              className={`${FIELD_INPUT_CLASS} ${fieldBorder(!!errors.content)}`}
+              placeholder="https://gist.github.com/…"
+              value={sourceUrl}
+              onChange={(e) => edit(setSourceUrl, "content")(e.target.value)}
+            />
+          </FormField>
+        )}
 
         <div>
           <PillButton variant="primary" disabled={busy} onClick={submit}>
-            {busy ? "Submitting…" : "Submit for judgment"}
+            {busy ? "Đang nộp…" : mode === "link" ? "Đọc link và nộp" : "Nộp để chấm"}
           </PillButton>
         </div>
       </div>
