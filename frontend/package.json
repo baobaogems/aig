@@ -11,7 +11,8 @@
     "arbiter:gate2": "NODE_OPTIONS=--conditions=react-server tsx scripts/arbiter-gate2.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "authz:check": "tsx scripts/authz-matrix-check.ts"
+    "authz:check": "tsx scripts/authz-matrix-check.ts",
+    "arbiter:e2e": "NODE_OPTIONS=--conditions=react-server tsx scripts/arbiter-e2e-two-roles.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.115.0",
