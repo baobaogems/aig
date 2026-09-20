@@ -39,6 +39,36 @@ Những thứ sau **KHÔNG** nằm trong git, chỉ tồn tại trên đúng m�
 
 ---
 
+## ⚠️ Hai cái bẫy đã cắn dự án này rồi
+
+**1. `NEXT_PUBLIC_*` được nhúng lúc BUILD.** Một biến tồn tại nhưng rỗng sẽ đóng gói chuỗi rỗng
+vào bundle trình duyệt, và không lệnh chạy nào cứu được. Đặt biến **trước** khi build, rồi mới
+deploy. Đã từng ship `SOURCE_CHAIN_ID = Number("") = 0` đúng kiểu này.
+
+**2. Vercel mặc định đánh dấu biến Production là *sensitive*, và sensitive thì đọc lại không
+được.** Ghi `DRY_RUN` kiểu đó tạo ra giá trị **rỗng** chứ không phải `"false"`, mà `vercel env pull`
+lại trả về `""` nên không phân biệt được. Với mọi **cờ bật/tắt** và mọi **địa chỉ công khai**, dùng
+`--no-sensitive` để về sau còn kiểm chứng được:
+
+```bash
+vercel env add DRY_RUN production --value true --no-sensitive --yes
+vercel env pull /tmp/probe && grep '^DRY_RUN' /tmp/probe && rm /tmp/probe
+```
+
+`DRY_RUN` được đọc là `!== "false"`, nên rỗng = **vẫn khoá tiền** (fail-closed). Đó là may, không
+phải thiết kế chống được mọi cách viết — đừng đảo điều kiện đó.
+
+## Hai escrow cùng tồn tại
+
+| | Địa chỉ | Dùng cho |
+|---|---|---|
+| **v2 (hiện tại)** | `0xD4f53A1bD89a05Ac568601b4c30655A678C5f9f1` | mọi bounty từ 20/09/2026 |
+| v1 (lịch sử) | `0x6F4f038d30Cfc3Dd88c9ed1Ce55D44f89cc96FF5` | pilot tháng 8 — **để nguyên, không pause** |
+
+Dựng lại ở nơi khác thì deploy escrow mới và cập nhật **cả hai** biến địa chỉ
+(`ARBITER_ESCROW_ADDRESS` cho server, `NEXT_PUBLIC_ARBITER_ESCROW_ADDRESS` cho trình duyệt).
+Lệch nhau = người dùng ký vào một contract mà server không nhìn.
+
 ## A. Dựng lại từ số 0
 
 Giả định: máy mới, chưa có gì. Chạy tuần tự.
@@ -130,10 +160,12 @@ Mất cả 3 thì phải cấp mới:
 
 | Secret | Cấp lại ở đâu | Việc phải làm sau khi đổi |
 |---|---|---|
-| `AIG_ADMIN_WALLET_PRIVATE_KEY` | Tạo ví mới | ⚠️ **Nặng nhất.** Ví này vừa là poster, vừa là arbiter, vừa là relay. Contract `ArbiterEscrow` giữ arbiter **immutable — không có hàm đổi**. Đổi ví = **phải deploy escrow mới** + cập nhật `ARBITER_ESCROW_ADDRESS`. Escrow cũ vẫn giữ tiền của bounty cũ và chỉ ví cũ mới release được. |
+| `AIG_ADMIN_WALLET_PRIVATE_KEY` | Tạo ví mới | ⚠️ **Nặng nhất.** Ví này là arbiter (và relay v2/v3). Contract `ArbiterEscrow` giữ arbiter **immutable — không có hàm đổi**. Đổi ví = **phải deploy escrow mới** + cập nhật `ARBITER_ESCROW_ADDRESS` **và** `NEXT_PUBLIC_ARBITER_ESCROW_ADDRESS`. Escrow cũ vẫn giữ tiền của bounty cũ và chỉ ví cũ mới release được. *Từ 20/09 ví này **không còn là poster của bounty người khác** — người đăng tự khoá tiền từ ví của họ — nên mất ví không còn đồng nghĩa mất tiền của người dùng.* |
 | `ANTHROPIC_API_KEY` | console.anthropic.com | Cập nhật Vercel + `.env.local`. Không có state dính kèm. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase dashboard → API | Rotate làm **hỏng ngay** mọi route server. Cập nhật Vercel cả 3 env. |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | như trên | Đây là key công khai, có trong bundle browser. Rotate là đổi cả client. |
+| `SESSION_SECRET` | `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"` | Chỉ ký cookie đăng nhập. Mất = mọi người đang đăng nhập bị đá ra, ký lại ví là vào tiếp. **Không** cầm quyền gì on-chain, **không** cần deploy lại. Phải ≥32 ký tự, nếu không server từ chối khởi động đường auth. |
+| `E2E_WORKER_PRIVATE_KEY` | `cast wallet new` | Ví B dùng riêng cho `npm run arbiter:e2e`. Testnet, vứt đi được, **không bao giờ đặt lên Vercel**. Tạo mới rồi cấp ít gas từ ví admin. Lưu ý: Arc **chặn** các khoá Anvil công khai (`Blocked address`), phải sinh ví mới. |
 
 ```bash
 # đặt lại một biến trên Vercel (không paste secret vào chat/terminal history nếu tránh được)

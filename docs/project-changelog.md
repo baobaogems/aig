@@ -2,6 +2,43 @@
 
 All significant changes, features, and fixes documented here.
 
+## [v4.1 — Two roles, two wallets] — 2026-09-20
+
+The arbiter stopped being one person's control panel and became something two strangers can use.
+
+### Added
+
+- **Sign-In With Ethereum for both roles.** The wallet is the account: one connect serves poster and worker, and the address that signs in is the address that gets paid. `lib/auth/siwe-session.ts`, four `/api/auth/*` routes, migration `007_create_auth_nonces.sql`.
+- **`ArbiterEscrow` v2** at `0xD4f53A1bD89a05Ac568601b4c30655A678C5f9f1` (block 63019118): `createBounty` accepts `worker == address(0)`, new `claim()` assigns the first caller permanently, `release()` refuses an unassigned bounty. 32/32 forge tests; deployed bytecode verified byte-identical to source. v1 `0x6F4f…6FF5` stays deployed and unpaused for the August pilot record.
+- **Posters fund their own escrow.** `approve` + `createBounty` are signed in the poster's wallet; `/api/bounty/[id]/confirm-lock` reads `getBounty()` off the chain and only freezes the rubric when poster, amount and deadline all match.
+- **A public job board.** Funded, unclaimed, in-time bounties are listed; workers sign `claim()` and `/api/bounty/[id]/confirm-claim` copies the on-chain winner into the DB. Migration `009_open_bounties.sql`.
+- **Links are judged, not just stored.** `lib/arbiter/fetch-deliverable.ts` fetches a public URL, extracts the text and freezes it as the snapshot.
+- **`npm run authz:check`** — replays the pre-fix attack chain against a running server. **`npm run arbiter:e2e`** — the two-wallet cycle for real on Arc.
+
+### Fixed — security
+
+- **Every write route was unauthenticated.** `poster_id` arrived in the request body, so anyone could act as anyone; with `DRY_RUN=false` that drained the server wallet up to the daily cap (`POST /api/bounty` with an attacker's `worker_id` → `approve-rubric` locked server USDC → submit → judge → auto-release). The caller now comes from a signed session cookie and is checked against that bounty's poster/worker. Unauthenticated writes 401, a stranger's wallet 403.
+- **Deliverables were readable by anyone.** `GET /api/bounty?id=` now strips `content_snapshot` for non-parties.
+- **SSRF in the link fetcher, caught by its own test.** The IPv4-mapped IPv6 check matched only the dotted spelling, but Node normalises `::ffff:10.0.0.1` to `::ffff:a00:1`, so `http://[::ffff:10.0.0.1]/` passed the guard and the server really did dial `10.0.0.1`. Mapped addresses are now parsed into octets instead of string-matched.
+- **Rate limits** on the two routes that spend Anthropic tokens per call (10/hour create, 20/hour judge), keyed by wallet. Fail-open by design; the money paths keep their own fail-closed caps.
+
+### Changed
+
+- `bounties.worker_id` is nullable and is only ever written from an on-chain read. The three release paths that award points now handle null explicitly instead of assuming.
+- `vitest` resolves with the `react-server` condition rather than stubbing `server-only`, so tests load the module the server actually loads. 52 tests.
+- README's scoreboard was months out of date (calibration "in progress", pilot "opens Aug" — both finished in August). Rewritten against what is actually true.
+
+### Not built, deliberately
+
+File upload for deliverables. A public link already covers Gist, GitHub, published Docs and Notion; a storage bucket would add an attack surface and a backup obligation for convenience rather than capability. Reasoning kept in the plan's phase-06 file.
+
+### Operational notes
+
+- Production runs `DRY_RUN=true`. The flip is manual and separate, as before.
+- Vercel marks Production env vars *sensitive* by default and sensitive values cannot be read back — writing `DRY_RUN` that way stored an **empty string**, not `"false"`. `isDryRun()` reads `!== "false"`, so empty failed closed. Flags and public addresses are now written with `--no-sensitive` so they can be verified.
+- Arc rejects the published Anvil keys with **"Blocked address"**; test wallets must be freshly generated.
+- `myarbiter.xyz` is aliased on Vercel but its DNS is still `NXDOMAIN` — the working link is `arbiter-gateway.vercel.app`.
+
 ## [v2.0-alpha — Direct CCTPv2 rebuild] — 2026-05-30
 
 ### Architecture pivot

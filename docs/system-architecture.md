@@ -1,3 +1,71 @@
+# AIG System Architecture
+
+> This file grew up around v2 (the CCTP payment gateway) and most of it still describes that.
+> The product today is **v4 Arbiter**; the v4 section below is current, everything from
+> "AIG System Architecture (v2.0-rebuild)" onward is the v2/v3 record, unedited.
+
+## v4 Arbiter — two roles, two wallets (current, 2026-09-20)
+
+### Who is who
+
+```
+Người đăng (A)                Arbiter server                 Người làm (B)
+     │                              │                              │
+     │  1. ký SIWE ─────────────────▶ cookie phiên (HMAC)  ◀──── 1. ký SIWE
+     │                              │                              │
+     │  2. POST /api/bounty ────────▶ sinh rubric (LLM)             │
+     │  3. duyệt rubric ────────────▶ trả về tham số cần ký         │
+     │  4. ký approve + createBounty(worker=0x0)  ──▶ Arc           │
+     │  5. POST confirm-lock ───────▶ ĐỌC getBounty() từ chain      │
+     │                                khớp → đóng băng rubric, mở việc
+     │                              │                              │
+     │                              │  6. việc lên chợ ────────────▶
+     │                              │  7. ký claim() ──────▶ Arc ◀──┤
+     │                              │  8. POST confirm-claim ◀──────┤
+     │                              │     ĐỌC worker từ chain       │
+     │                              │  9. nộp bài / link ◀──────────┤
+     │                              │ 10. chấm → tiers.ts quyết định
+     │                              │ 11. release() ────▶ Arc ──▶ trả B
+```
+
+### Ba quy tắc chi phối toàn bộ thiết kế
+
+1. **Danh tính đến từ chữ ký, không từ request body.** `lib/auth/siwe-session.ts` mở cookie đã ký
+   HMAC; `lib/auth/require-role.ts` đối chiếu địa chỉ đó với poster/worker của đúng bounty. Không
+   route ghi nào đọc địa chỉ từ body. Kiểm bằng `npm run authz:check`.
+2. **Chain là nguồn sự thật, DB là bản sao.** `worker_id` và `escrow_tx` **chỉ** được ghi sau khi
+   server tự đọc `getBounty()` trên chain. Client báo "tôi ký rồi" không đủ; tx hash bịa không
+   thay đổi gì.
+3. **Model không cầm tiền.** LLM đề xuất điểm + bằng chứng + độ tự tin. `lib/arbiter/tiers.ts`
+   (thuần, tất định, có test) tính tổng có trọng số và quyết định tier. Hợp đồng chỉ nhận
+   `release()` từ ví arbiter, và từ chối bounty chưa ai nhận.
+
+### Tầng auth
+
+| File | Việc |
+|---|---|
+| `lib/auth/siwe-session.ts` | cấp/đốt nonce (bảng `auth_nonces`), verify chữ ký EIP-4361, đóng/mở cookie HMAC |
+| `lib/auth/siwe-context.ts` | domain + chainId mà server coi là "chính mình" — dùng chung cho cả cấp nonce lẫn verify |
+| `lib/auth/require-role.ts` | `requireSession` / `requirePoster` / `requireWorker` / `requireParty` |
+| `lib/auth/rate-limit.ts` | cửa sổ trượt cho 2 route tốn token LLM; **fail-open** có chủ đích |
+
+Nonce nằm trong Postgres chứ không phải bộ nhớ, vì hai request của cùng một lần đăng nhập có thể
+rơi vào hai instance serverless khác nhau.
+
+### Hợp đồng
+
+`ArbiterEscrow` v2 — `createBounty` (worker có thể là `0x0`) · **`claim`** (ai gọi trước
+thắng, gán vĩnh viễn) · `release` (chỉ arbiter, từ chối bounty chưa ai nhận) · `refund` (chỉ
+poster, sau hạn) · `pause`/`unpause`. `MAX_BOUNTY = 50e6` là trần cứng ở tầng hợp đồng.
+
+### Đọc link như đọc thứ thù địch
+
+`lib/arbiter/fetch-deliverable.ts` sàng lọc **địa chỉ đã phân giải**, không phải tên miền, và
+sàng lại sau **mỗi** lần chuyển hướng. Nội dung lấy về vẫn đi qua rào `<untrusted_data>` như
+mọi bài nộp khác.
+
+---
+
 # AIG System Architecture (v2.0-rebuild)
 
 Active path: **v2 — direct CCTPv2 from Ethereum Sepolia → Arc Network**.

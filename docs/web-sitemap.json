@@ -2,10 +2,9 @@
   "$schema": "aig-web-sitemap/v1",
   "project": "Arbiter Invisible Gateway (AIG v4)",
   "purpose": "Runtime map of the deployed web app: what routes exist, what data moves through them, where that data rests, and which env var feeds which file. Companion to status_AIG.json (state) and docs/system-architecture.md (design intent).",
-  "measuredAt": "2026-08-13T21:25:00+07:00",
-  "measuredOn": "branch feat/reskin @ e214304 (working tree)",
-  "howMeasured": "Routes enumerated with `find frontend/app -name page.tsx -o -name route.ts` and cross-checked against the `next build` route table. Env vars enumerated with `grep -roE 'process\\.env\\.[A-Z0-9_]+'` over app/ lib/ components/ scripts/. Vercel env names from `vercel env ls production`. DB objects from `grep -i 'create table|view' frontend/supabase/migrations/*.sql`. Nothing here was written from memory.",
-
+  "measuredAt": "2026-09-20T12:10:00+07:00",
+  "measuredOn": "branch main @ 3120bdd",
+  "howMeasured": "Routes taken from the `next build` route table on main @ 3120bdd. Contract address read back from Vercel production env and confirmed against an on-chain `arbiter()` call. Auth behaviour verified with `npm run authz:check` against a running server.",
   "staleWarning": {
     "rule": "Any block below carrying its own `staleWarning` could NOT be verified by running something. Treat it as a claim, not a fact, and re-measure before relying on it.",
     "reMeasureCommands": [
@@ -15,7 +14,6 @@
       "cd frontend && vercel env ls production"
     ]
   },
-
   "deployment": {
     "platform": "Vercel",
     "project": "arbiter-gateway",
@@ -26,7 +24,6 @@
     "trigger": "push to origin/main -> Production build",
     "entryBehavior": "GET / issues a 307 redirect to /dashboard (app/page.tsx is a bare redirect())"
   },
-
   "routes": {
     "pages": [
       {
@@ -40,14 +37,28 @@
         "file": "frontend/app/dashboard/page.tsx",
         "render": "static shell, client component",
         "purpose": "Merchant dashboard. Wallet connect (wagmi injected), metrics row, recent-payments feed, QR receive code, points, agent-nanopayments card.",
-        "reads": ["/api/dashboard", "/api/points", "/api/nanopay/agents", "/api/nanopay/transfers", "Supabase realtime (payment feed, browser-side anon key)"]
+        "reads": [
+          "/api/dashboard",
+          "/api/points",
+          "/api/nanopay/agents",
+          "/api/nanopay/transfers",
+          "Supabase realtime (payment feed, browser-side anon key)"
+        ]
       },
       {
         "path": "/arbiter",
         "file": "frontend/app/arbiter/page.tsx",
         "render": "static shell, client component",
         "purpose": "The v4 driving UI for flows F1-F5: create bounty, approve rubric, worker submit, judge, act on escalation, refund. Also renders the public track record (override_rate) via agent_stats.",
-        "reads": ["/api/bounty", "/api/bounty/[id]/approve-rubric", "/api/submission", "/api/judge", "/api/escalation", "/api/settle", "/api/refund"]
+        "reads": [
+          "/api/bounty",
+          "/api/bounty/[id]/approve-rubric",
+          "/api/submission",
+          "/api/judge",
+          "/api/escalation",
+          "/api/settle",
+          "/api/refund"
+        ]
       },
       {
         "path": "/home",
@@ -63,7 +74,6 @@
         "purpose": "Customer payment page (v2 CCTP rail). Customer signs USDC.approve + TokenMessengerV2.depositForBurn on Ethereum Sepolia; server bridges and mints on Arc."
       }
     ],
-
     "api": [
       {
         "path": "POST /api/agent/execute",
@@ -151,7 +161,6 @@
       }
     ]
   },
-
   "runtimeDataFlows": [
     {
       "name": "v4 Arbiter — bounty lifecycle (the money path)",
@@ -184,16 +193,30 @@
       ]
     }
   ],
-
   "dataStores": [
     {
       "store": "Supabase (Postgres)",
       "role": "Primary application database. The only stateful store AIG owns.",
       "migrations": "frontend/supabase/migrations/001..006 — these files ARE the schema source of truth",
       "objects": {
-        "tables": ["payment_sessions (001)", "points_ledger (002)", "merchants (003)", "nano_agents (004)", "bounties (006)", "rubrics (006)", "submissions (006)", "verdicts (006)", "escalations (006)"],
-        "views": ["points_balance (materialized)", "agent_stats (view — computes the public override_rate)"],
-        "functions": ["nano record function (005)"]
+        "tables": [
+          "payment_sessions (001)",
+          "points_ledger (002)",
+          "merchants (003)",
+          "nano_agents (004)",
+          "bounties (006)",
+          "rubrics (006)",
+          "submissions (006)",
+          "verdicts (006)",
+          "escalations (006)"
+        ],
+        "views": [
+          "points_balance (materialized)",
+          "agent_stats (view — computes the public override_rate)"
+        ],
+        "functions": [
+          "nano record function (005)"
+        ]
       },
       "accessPaths": {
         "server": "SUPABASE_SERVICE_ROLE_KEY — full access, server routes only",
@@ -216,60 +239,223 @@
       "store": "Vercel",
       "role": "Stateless compute + the only copy of production env var VALUES.",
       "implication": "Env values are write-only in the dashboard. The recoverable copy lives in frontend/.env.local on the laptop and nowhere else. See docs/RECOVERY.md."
+    },
+    {
+      "name": "auth_nonces",
+      "where": "Supabase Postgres",
+      "holds": "Single-use SIWE nonces. Spent when used_at is set; expired after 5 minutes.",
+      "migration": "007"
+    },
+    {
+      "name": "rate_limits",
+      "where": "Supabase Postgres",
+      "holds": "Sliding-window request log for the two LLM-spending routes, keyed by wallet.",
+      "migration": "008"
     }
   ],
-
   "externalServices": [
-    { "service": "Anthropic API", "usedBy": "frontend/lib/arbiter/client.ts", "purpose": "Rubric generation + grading", "failureMode": "No judging at all. Money path halts; nothing is released incorrectly.", "cost": "Paid per token — the arbiter dry-run CLI spends real credits." },
-    { "service": "Supabase", "usedBy": "lib/agent.ts, lib/points.ts, arbiter routes, payment-feed-table.tsx", "purpose": "Application database + realtime", "failureMode": "Spend ledger unreadable -> fails closed -> zero autonomous release. Dashboard blank." },
-    { "service": "Circle Iris v2 (attestation)", "usedBy": "frontend/lib/cctp.ts", "endpoint": "https://iris-api-sandbox.circle.com/v2", "purpose": "CCTP burn attestation", "failureMode": "v2 bridge hangs at 'bridging'; burns are NOT lost — they remain mintable once attestation lands." },
-    { "service": "Circle Gateway", "usedBy": "frontend/lib/nanopay.ts", "purpose": "x402 nanopayment settlement + balances", "failureMode": "402 flow dead; transfers list empty." },
-    { "service": "Arc testnet RPC", "usedBy": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts", "purpose": "All chain reads/writes", "knownIssue": "The public endpoint drops roughly 1 request in 4, returning 'request limit reached' as HTTP 200 with no error code, so viem does not retry it. lib/rpc-retry.ts exists specifically for this." },
-    { "service": "Ethereum Sepolia RPC", "usedBy": "components/providers.tsx (client)", "purpose": "Customer-side approve + burn" },
-    { "service": "Vercel", "purpose": "Hosting + build + env storage" },
-    { "service": "GitHub", "repo": "https://github.com/baobaogems/aig", "visibility": "PUBLIC", "purpose": "Code of record — but NOT of the internal tracking files, which are gitignored." }
+    {
+      "service": "Anthropic API",
+      "usedBy": "frontend/lib/arbiter/client.ts",
+      "purpose": "Rubric generation + grading",
+      "failureMode": "No judging at all. Money path halts; nothing is released incorrectly.",
+      "cost": "Paid per token — the arbiter dry-run CLI spends real credits."
+    },
+    {
+      "service": "Supabase",
+      "usedBy": "lib/agent.ts, lib/points.ts, arbiter routes, payment-feed-table.tsx",
+      "purpose": "Application database + realtime",
+      "failureMode": "Spend ledger unreadable -> fails closed -> zero autonomous release. Dashboard blank."
+    },
+    {
+      "service": "Circle Iris v2 (attestation)",
+      "usedBy": "frontend/lib/cctp.ts",
+      "endpoint": "https://iris-api-sandbox.circle.com/v2",
+      "purpose": "CCTP burn attestation",
+      "failureMode": "v2 bridge hangs at 'bridging'; burns are NOT lost — they remain mintable once attestation lands."
+    },
+    {
+      "service": "Circle Gateway",
+      "usedBy": "frontend/lib/nanopay.ts",
+      "purpose": "x402 nanopayment settlement + balances",
+      "failureMode": "402 flow dead; transfers list empty."
+    },
+    {
+      "service": "Arc testnet RPC",
+      "usedBy": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts",
+      "purpose": "All chain reads/writes",
+      "knownIssue": "The public endpoint drops roughly 1 request in 4, returning 'request limit reached' as HTTP 200 with no error code, so viem does not retry it. lib/rpc-retry.ts exists specifically for this."
+    },
+    {
+      "service": "Ethereum Sepolia RPC",
+      "usedBy": "components/providers.tsx (client)",
+      "purpose": "Customer-side approve + burn"
+    },
+    {
+      "service": "Vercel",
+      "purpose": "Hosting + build + env storage"
+    },
+    {
+      "service": "GitHub",
+      "repo": "https://github.com/baobaogems/aig",
+      "visibility": "PUBLIC",
+      "purpose": "Code of record — but NOT of the internal tracking files, which are gitignored."
+    }
   ],
-
   "envMatrix": {
     "note": "`code` = the file that actually reads it. `vercelProduction` = present in `vercel env ls production` on 13/08. A var in code but not on Vercel means production falls back to a default or breaks; a var on Vercel but not in code is dead weight.",
     "serverSecrets": [
-      { "name": "ANTHROPIC_API_KEY", "code": "lib/arbiter/client.ts", "vercelProduction": true },
-      { "name": "AIG_ADMIN_WALLET_PRIVATE_KEY", "code": "lib/escrow.ts, lib/cctp.ts, api/nanopay/transfers/route.ts", "vercelProduction": true, "note": "This one key is poster + arbiter + relay. Compromise = full control of the money path." },
-      { "name": "SUPABASE_SERVICE_ROLE_KEY", "code": "lib/agent.ts, lib/points.ts, scripts/seed-dashboard-data.ts", "vercelProduction": true }
+      {
+        "name": "ANTHROPIC_API_KEY",
+        "code": "lib/arbiter/client.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "AIG_ADMIN_WALLET_PRIVATE_KEY",
+        "code": "lib/escrow.ts, lib/cctp.ts, api/nanopay/transfers/route.ts",
+        "vercelProduction": true,
+        "note": "This one key is poster + arbiter + relay. Compromise = full control of the money path."
+      },
+      {
+        "name": "SUPABASE_SERVICE_ROLE_KEY",
+        "code": "lib/agent.ts, lib/points.ts, scripts/seed-dashboard-data.ts",
+        "vercelProduction": true
+      }
     ],
     "safetySwitches": [
-      { "name": "DRY_RUN", "code": "lib/arbiter/run.ts, lib/escrow.ts", "vercelProduction": true, "note": "Every on-chain write refuses unless DRY_RUN is exactly false." },
-      { "name": "PER_BOUNTY_CAP_USDC", "code": "api/bounty/route.ts, lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts", "vercelProduction": true },
-      { "name": "PER_DAY_CAP_USDC", "code": "lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts", "vercelProduction": true }
+      {
+        "name": "DRY_RUN",
+        "code": "lib/arbiter/run.ts, lib/escrow.ts",
+        "vercelProduction": true,
+        "note": "Every on-chain write refuses unless DRY_RUN is exactly false."
+      },
+      {
+        "name": "PER_BOUNTY_CAP_USDC",
+        "code": "api/bounty/route.ts, lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "PER_DAY_CAP_USDC",
+        "code": "lib/arbiter/run.ts, lib/arbiter/spend-ledger.ts",
+        "vercelProduction": true
+      }
     ],
     "configuration": [
-      { "name": "ARBITER_ESCROW_ADDRESS", "code": "lib/escrow.ts", "vercelProduction": true },
-      { "name": "ARBITER_MODEL", "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts", "vercelProduction": true },
-      { "name": "PROMPT_VERSION", "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts", "vercelProduction": true },
-      { "name": "ARC_TESTNET_RPC_URL", "code": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts", "vercelProduction": true },
-      { "name": "ARC_CHAIN_ID", "code": "lib/chains.ts", "vercelProduction": true },
-      { "name": "USDC_ADDRESS_ARC_TESTNET", "code": "lib/escrow-poster.ts", "vercelProduction": true },
-      { "name": "CCTP_MESSAGE_TRANSMITTER_ARC", "code": "lib/cctp.ts", "vercelProduction": true },
-      { "name": "CIRCLE_IRIS_API_V2", "code": "lib/cctp.ts", "vercelProduction": false, "note": "Falls back to the hardcoded sandbox default in lib/cctp.ts." },
-      { "name": "CIRCLE_GATEWAY_FACILITATOR_URL", "code": "lib/nanopay.ts", "vercelProduction": false },
-      { "name": "NANOPAY_SELLER_ADDRESS", "code": "lib/nanopay.ts", "vercelProduction": false }
+      {
+        "name": "ARBITER_ESCROW_ADDRESS",
+        "code": "lib/escrow.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "ARBITER_MODEL",
+        "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "PROMPT_VERSION",
+        "code": "lib/arbiter/client.ts, scripts/arbiter-dryrun.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "ARC_TESTNET_RPC_URL",
+        "code": "lib/chains.ts, lib/escrow.ts, lib/cctp.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "ARC_CHAIN_ID",
+        "code": "lib/chains.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "USDC_ADDRESS_ARC_TESTNET",
+        "code": "lib/escrow-poster.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "CCTP_MESSAGE_TRANSMITTER_ARC",
+        "code": "lib/cctp.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "CIRCLE_IRIS_API_V2",
+        "code": "lib/cctp.ts",
+        "vercelProduction": false,
+        "note": "Falls back to the hardcoded sandbox default in lib/cctp.ts."
+      },
+      {
+        "name": "CIRCLE_GATEWAY_FACILITATOR_URL",
+        "code": "lib/nanopay.ts",
+        "vercelProduction": false
+      },
+      {
+        "name": "NANOPAY_SELLER_ADDRESS",
+        "code": "lib/nanopay.ts",
+        "vercelProduction": false
+      }
     ],
     "publicClientSide": [
-      { "name": "NEXT_PUBLIC_SUPABASE_URL", "code": "lib/agent.ts, lib/points.ts, payment-feed-table.tsx", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY", "code": "payment-feed-table.tsx", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_SOURCE_CHAIN_ID", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_USDC_ADDRESS_SOURCE", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_ARC_CCTP_DOMAIN", "code": "lib/payment-flow-v2.ts", "vercelProduction": true },
-      { "name": "NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL", "code": "components/providers.tsx", "vercelProduction": false, "DRIFT": "Vercel has ETHEREUM_SEPOLIA_RPC_URL (no NEXT_PUBLIC_ prefix). A non-prefixed var is never exposed to the browser, so the client is running on whatever default providers.tsx falls back to. Either rename on Vercel or change the code." }
+      {
+        "name": "NEXT_PUBLIC_SUPABASE_URL",
+        "code": "lib/agent.ts, lib/points.ts, payment-feed-table.tsx",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "code": "payment-feed-table.tsx",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_SOURCE_CHAIN_ID",
+        "code": "lib/payment-flow-v2.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_USDC_ADDRESS_SOURCE",
+        "code": "lib/payment-flow-v2.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_CCTP_TOKEN_MESSENGER_SOURCE",
+        "code": "lib/payment-flow-v2.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_ARC_CCTP_DOMAIN",
+        "code": "lib/payment-flow-v2.ts",
+        "vercelProduction": true
+      },
+      {
+        "name": "NEXT_PUBLIC_ETHEREUM_SEPOLIA_RPC_URL",
+        "code": "components/providers.tsx",
+        "vercelProduction": false,
+        "DRIFT": "Vercel has ETHEREUM_SEPOLIA_RPC_URL (no NEXT_PUBLIC_ prefix). A non-prefixed var is never exposed to the browser, so the client is running on whatever default providers.tsx falls back to. Either rename on Vercel or change the code."
+      }
     ],
     "deadOnVercel": {
       "note": "Present in Vercel Production, read by no code in the current tree. Safe to delete; kept listed so nobody mistakes them for live config.",
-      "names": ["BRIDGE_BACKEND", "NEXT_PUBLIC_BRIDGE_BACKEND", "USDC_ADDRESS_BSC_TESTNET", "BSC_TESTNET_RPC_URL", "CCTP_TOKEN_MESSENGER_BSC"]
+      "names": [
+        "BRIDGE_BACKEND",
+        "NEXT_PUBLIC_BRIDGE_BACKEND",
+        "USDC_ADDRESS_BSC_TESTNET",
+        "BSC_TESTNET_RPC_URL",
+        "CCTP_TOKEN_MESSENGER_BSC"
+      ]
     },
     "scriptOnly": [
-      { "name": "BASE_URL", "code": "scripts/nano-agent.mts" },
-      { "name": "DEPOSIT_AMOUNT", "code": "scripts/nano-agent.mts" }
-    ]
+      {
+        "name": "BASE_URL",
+        "code": "scripts/nano-agent.mts"
+      },
+      {
+        "name": "DEPOSIT_AMOUNT",
+        "code": "scripts/nano-agent.mts"
+      }
+    ],
+    "SESSION_SECRET": "Signs the session cookie (lib/auth/siwe-session.ts). >=32 chars. Losing it logs everyone out; it grants nothing on-chain.",
+    "NEXT_PUBLIC_ARC_CHAIN_ID": "Arc chain id for the browser (components/providers.tsx, lib/arc-chain-client.ts). Inlined at BUILD time.",
+    "NEXT_PUBLIC_ARC_RPC_URL": "Arc RPC for the browser. Public endpoint, no key.",
+    "NEXT_PUBLIC_ARBITER_ESCROW_ADDRESS": "Escrow address the browser signs against (lib/arc-addresses-client.ts). Must match ARBITER_ESCROW_ADDRESS.",
+    "NEXT_PUBLIC_USDC_ADDRESS_ARC": "USDC address the browser approves (lib/arc-addresses-client.ts).",
+    "E2E_WORKER_PRIVATE_KEY": "Throwaway wallet B for scripts/arbiter-e2e-two-roles.ts. Local only, testnet only, never on Vercel."
   }
 }
