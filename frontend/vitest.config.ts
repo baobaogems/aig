@@ -28,6 +28,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
-    include: ["lib/**/*.test.ts", "scripts/**/*.test.ts"],
+    // app/** is here so route handlers are covered: a bug that only shows up when the handler
+    // is called (wrong status, stale validation) is invisible to a test that reads source.
+    include: ["lib/**/*.test.ts", "scripts/**/*.test.ts", "app/**/*.test.ts"],
   },
 });
