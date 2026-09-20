@@ -6,29 +6,33 @@
 // The detail page is a server component so a stranger can read the brief and the criteria
 // with no wallet and no JavaScript. Everything that needs a session is fenced off here.
 //
-// This panel also inherited the judge flow and the poster's approve/reject from the old
-// accordion on the board. That move is the point of the redesign: the actions now live on the
-// thing they act on, addressable by URL, instead of inside a row that had to be expanded.
+// Judging is NOT a button. Handing work in and finding out whether it passed is one action
+// from the worker's side: they submit, the arbiter grades, the result appears. A "Chấm bài
+// này" button sitting under a fresh submission asked the worker to request their own grade,
+// and left the bounty parked in SUBMITTED if nobody pressed it.
+//
+// So submitting starts the run, and a page that loads on an ungraded submission starts it
+// too — that second path is what rescues a run whose tab was closed halfway.
 //
 // What it offers depends on who is asking — and the server checks again regardless. Every
 // route re-derives the caller from the session cookie and refuses a stranger whatever this
 // component chose to render.
 // =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ClaimButton } from "@/components/arbiter/claim-button";
 import { WorkerSubmitForm } from "@/components/arbiter/worker-submit-form";
 import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
 import { JudgingProgress } from "@/components/arbiter/judging-progress";
 import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 import { useJudgeStream } from "@/components/arbiter/use-judge-stream";
-import { PillButton } from "@/components/ui/pill-button";
 import { isClaimable, type BountyState } from "@/lib/arbiter/bounty-display";
+import { submissionWindow } from "@/lib/arbiter/submission-window";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
 
 interface Detail {
-  bounty: { id: string; status: string; poster_id: string; worker_id: string | null };
+  bounty: { id: string; status: string; poster_id: string; worker_id: string | null; deadline: string };
   rubric: null | { items_json: RubricItem[] };
   // Shape mirrors GET /api/bounty?id= — kept local rather than imported from the server
   // module so this client component never pulls a server-only import chain.
@@ -59,6 +63,12 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
   const { stage, setStage, busy, setBusy, judge } = useJudgeStream(load);
 
+  const same = (a?: string | null, b?: string | null) =>
+    Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+  const isWorker = same(session, detail?.bounty.worker_id);
+  const isPoster = same(session, detail?.bounty.poster_id);
+  const isParty = isWorker || isPoster;
+
   // The page was rendered on the server and knows nothing about this browser, so the panel
   // asks once on mount. Until the answers arrive it offers nothing, rather than flashing a
   // button the visitor may not be entitled to.
@@ -74,13 +84,18 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
     };
   }, [load]);
 
-  const same = (a?: string | null, b?: string | null) =>
-    Boolean(a && b && a.toLowerCase() === b.toLowerCase());
+  // Rescue path: a submission that was never graded (the tab closed mid-run, or the stream
+  // broke) would otherwise sit in SUBMITTED forever waiting for a button that no longer
+  // exists. Fires at most once per mount so a failing run cannot become a loop.
+  const autoJudged = useRef(false);
+  useEffect(() => {
+    if (autoJudged.current || busy || !detail) return;
+    if (detail.bounty.status !== "SUBMITTED" || detail.verdict) return;
+    if (!isParty) return; // the server only accepts a judge call from the two parties
+    autoJudged.current = true;
+    void judge(bountyId, (detail.rubric?.items_json ?? []).map((r) => r.criterion));
+  });
 
-  const isWorker = same(session, detail?.bounty.worker_id);
-  const isPoster = same(session, detail?.bounty.poster_id);
-  const isParty = isWorker || isPoster;
-  const criteria = (detail?.rubric?.items_json ?? []).map((r) => r.criterion);
 
   /** F4 — the poster answers an escalated verdict; every action feeds the public override rate. */
   async function act(action: "APPROVE" | "REJECT") {
@@ -111,8 +126,19 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
     }
   }
 
-  const heading = isWorker && state === "unclaimed" ? "Nộp bài"
-    : detail?.bounty.status === "SUBMITTED" && isParty ? "Chấm bài"
+  // One rule, the same one the server enforces, so the form is never offered when a submission
+  // would be rejected — nor hidden when it would be accepted.
+  const submitWindow = detail
+    ? submissionWindow({
+        status: detail.bounty.status,
+        lastDecision: detail.verdict?.decision ?? null,
+        deadline: detail.bounty.deadline,
+        now: Date.now(),
+      })
+    : null;
+
+  const heading = isWorker && submitWindow?.allowed ? (submitWindow.isRetry ? "Sửa và nộp lại" : "Nộp bài")
+    : busy ? "Đang chấm bài"
     : isClaimable(state) ? "Nhận việc này"
     : "Việc này";
 
@@ -127,17 +153,31 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
         </div>
 
         <div className="mt-3">
-          {/* Worker, work not yet handed in — coming from the bounty's own page there is no
-              id to paste and therefore none to paste wrong. */}
-          {isWorker && detail?.bounty.status === "OPEN" && (
-            <WorkerSubmitForm bountyId={bountyId} onChanged={load} />
+          {/* Worker's turn. Coming from the bounty's own page there is no id to paste and
+              therefore none to paste wrong. Submitting starts the grading run immediately —
+              handing work in and learning whether it passed is one action, not two. */}
+          {isWorker && submitWindow?.allowed && (
+            <>
+              {submitWindow.isRetry && (
+                <p className="mb-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                  Lượt trước chưa đạt. Đọc phần chấm bên dưới để biết tiêu chí nào hụt, sửa rồi
+                  nộp lại — bộ tiêu chí không đổi, nên sửa đúng chỗ là qua.
+                </p>
+              )}
+              <WorkerSubmitForm
+                bountyId={bountyId}
+                onChanged={async () => {
+                  await load();
+                  autoJudged.current = true; // this run is ours; don't let the rescue path double-fire
+                  await judge(bountyId, (detail?.rubric?.items_json ?? []).map((r) => r.criterion));
+                }}
+              />
+            </>
           )}
 
-          {/* Either party may start the judging run; the server re-checks. */}
-          {detail?.bounty.status === "SUBMITTED" && isParty && (
-            <PillButton disabled={busy} onClick={() => judge(bountyId, criteria)}>
-              {busy ? "Đang chấm…" : "Chấm bài này"}
-            </PillButton>
+          {/* Grading in flight, or waiting on someone. The reason comes from the same rule. */}
+          {isWorker && submitWindow && !submitWindow.allowed && (
+            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">{submitWindow.reason}</p>
           )}
 
           {!isWorker && isClaimable(state) &&

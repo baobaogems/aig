@@ -1,6 +1,6 @@
 // /app/api/submission/route.ts — F2: worker submits → content SNAPSHOT frozen at submit time.
 //
-// POST { bounty_id, content? , source_url? } → { submission }
+// POST { bounty_id, content? , source_url? } → { submission, isRetry }
 //
 // Three ways to hand work in, one thing stored: the text that will be judged.
 //   - content    : pasted straight in
@@ -15,6 +15,7 @@ import { NextRequest } from "next/server";
 import { getBountyDetail, insertSubmission, updateBountyStatus } from "@/lib/arbiter/store";
 import { requireWorker } from "@/lib/auth/require-role";
 import { DeliverableFetchError, fetchDeliverable } from "@/lib/arbiter/fetch-deliverable";
+import { submissionWindow } from "@/lib/arbiter/submission-window";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,10 +33,17 @@ export async function POST(req: NextRequest) {
     if (gate instanceof Response) return gate;
 
     const detail = await getBountyDetail(bounty_id);
-    if (detail.bounty.status !== "OPEN")
-      return Response.json({ error: `bounty is ${detail.bounty.status}, expected OPEN` }, { status: 409 });
-    if (new Date(detail.bounty.deadline).getTime() < Date.now())
-      return Response.json({ error: "bounty deadline has passed" }, { status: 409 });
+
+    // A failing verdict is the start of a loop, not the end of the road: the worker reads what
+    // was wrong and hands in a better attempt. One rule, shared with the UI, decides whether
+    // this attempt is accepted — see lib/arbiter/submission-window.ts.
+    const window = submissionWindow({
+      status: detail.bounty.status,
+      lastDecision: detail.verdict?.decision ?? null,
+      deadline: detail.bounty.deadline,
+      now: Date.now(),
+    });
+    if (!window.allowed) return Response.json({ error: window.reason }, { status: 409 });
 
     const url = typeof source_url === "string" && source_url.trim() ? source_url.trim() : null;
     const pasted = typeof content === "string" ? content.trim() : "";
@@ -70,7 +78,8 @@ export async function POST(req: NextRequest) {
       source_url: url,
     });
     await updateBountyStatus(bounty_id, "SUBMITTED");
-    return Response.json({ submission });
+    // isRetry lets the UI say "bản nộp lại" rather than pretending this is a first attempt.
+    return Response.json({ submission, isRetry: window.isRetry });
   } catch (err) {
     console.error("[API /submission]:", err);
     return Response.json({ error: err instanceof Error ? err.message : "unknown error" }, { status: 500 });
