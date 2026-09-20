@@ -8,6 +8,7 @@ import { NextRequest } from "next/server";
 import { getBountyDetail, setVerdictReleaseTx, updateBountyStatus } from "@/lib/arbiter/store";
 import { isDryRun } from "@/lib/escrow";
 import { awardBountyPoints } from "@/lib/points";
+import { requirePoster } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,6 +19,10 @@ export async function POST(req: NextRequest) {
     const { bounty_id } = await req.json();
     if (typeof bounty_id !== "string" || !bounty_id)
       return Response.json({ error: "bounty_id required" }, { status: 400 });
+
+    // Settling moves money. Poster only.
+    const gate = await requirePoster(req, bounty_id);
+    if (gate instanceof Response) return gate;
 
     const detail = await getBountyDetail(bounty_id);
     if (!detail.verdict) return Response.json({ error: "no verdict yet — judge first" }, { status: 409 });

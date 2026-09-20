@@ -9,6 +9,7 @@ import { NextRequest } from "next/server";
 import { getBountyDetail, insertEscalation, setVerdictReleaseTx, updateBountyStatus } from "@/lib/arbiter/store";
 import { isDryRun } from "@/lib/escrow";
 import { awardBountyPoints } from "@/lib/points";
+import { requirePoster } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "bounty_id required" }, { status: 400 });
     if (poster_action !== "APPROVE" && poster_action !== "REJECT")
       return Response.json({ error: "poster_action must be APPROVE or REJECT" }, { status: 400 });
+
+    // APPROVE releases real USDC. Poster only — this was the most dangerous open route.
+    const gate = await requirePoster(req, bounty_id);
+    if (gate instanceof Response) return gate;
 
     const detail = await getBountyDetail(bounty_id);
     if (!detail.verdict || detail.verdict.id !== verdict_id)

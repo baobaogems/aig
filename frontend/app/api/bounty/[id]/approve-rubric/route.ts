@@ -8,6 +8,7 @@
 import { NextRequest } from "next/server";
 import { freezeRubric, getBountyDetail } from "@/lib/arbiter/store";
 import { isDryRun } from "@/lib/escrow";
+import { requirePoster } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -16,6 +17,11 @@ export const maxDuration = 60; // on-chain approve+create (live mode) can take ~
 export async function POST(_req: NextRequest, ctx: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await ctx.params;
+
+    // Freezing the rubric is what commits the money. Only the poster may do it.
+    const gate = await requirePoster(_req, id);
+    if (gate instanceof Response) return gate;
+
     const detail = await getBountyDetail(id);
 
     if (detail.bounty.status !== "DRAFT")

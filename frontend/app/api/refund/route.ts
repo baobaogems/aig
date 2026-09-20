@@ -11,6 +11,7 @@
 import { NextRequest } from "next/server";
 import { getBountyDetail, updateBountyStatus } from "@/lib/arbiter/store";
 import { isDryRun } from "@/lib/escrow";
+import { requirePoster } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -21,6 +22,11 @@ export async function POST(req: NextRequest) {
     const { bounty_id } = await req.json();
     if (typeof bounty_id !== "string" || !bounty_id)
       return Response.json({ error: "bounty_id required" }, { status: 400 });
+
+    // The contract also requires msg.sender == poster; refusing here gives a readable error
+    // instead of a reverted transaction.
+    const gate = await requirePoster(req, bounty_id);
+    if (gate instanceof Response) return gate;
 
     const detail = await getBountyDetail(bounty_id);
     const { bounty } = detail;

@@ -5,6 +5,7 @@
 
 import { NextRequest } from "next/server";
 import { getBountyDetail, insertSubmission, updateBountyStatus } from "@/lib/arbiter/store";
+import { requireWorker } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +18,10 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "bounty_id required" }, { status: 400 });
     if (typeof content !== "string" || content.trim().length < 10)
       return Response.json({ error: "content required (≥10 chars) — paste the deliverable text; a bare link is not judgeable" }, { status: 400 });
+
+    // Only the worker assigned to this bounty may submit against it.
+    const gate = await requireWorker(req, bounty_id);
+    if (gate instanceof Response) return gate;
 
     const detail = await getBountyDetail(bounty_id);
     if (detail.bounty.status !== "OPEN")

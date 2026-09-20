@@ -18,6 +18,7 @@ import { BountyList } from "@/components/arbiter/bounty-list";
 import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-stats-strip";
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { Drawer } from "@/components/ui/drawer";
+import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
 
 interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
 
@@ -29,6 +30,8 @@ export default function ArbiterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState<OpenDrawer>(null);
+  // The signed-in address, as the SERVER sees it. Null means "read-only visitor".
+  const [session, setSession] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -49,7 +52,8 @@ export default function ArbiterPage() {
   return (
     <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-16 pt-12">
       <div className="mx-auto grid max-w-3xl gap-6">
-        <header>
+        <header className="flex flex-wrap items-start justify-between gap-4">
+          <div>
           <EyebrowLabel>arbiter</EyebrowLabel>
           <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
             Every verdict this arbiter has reached
@@ -58,6 +62,8 @@ export default function ArbiterPage() {
             An AI arbiter escrows USDC on Arc testnet and decides — with measured confidence — whether
             a deliverable earned payment. Transparent and accountable: every verdict hash is on-chain.
           </p>
+          </div>
+          <WalletConnectButton onSession={setSession} />
         </header>
 
         <AgentStatsStrip stats={stats} />
@@ -74,10 +80,18 @@ export default function ArbiterPage() {
           </h2>
           {/* Operator actions. Outlined, not filled: on this page they are secondary to
               reading the record, and red stays reserved for the primary action inside. */}
-          <div className="flex gap-2">
-            <button className={actionClass} onClick={() => setDrawer("create")}>+ New bounty</button>
-            <button className={actionClass} onClick={() => setDrawer("submit")}>Submit work</button>
-          </div>
+          {/* Read the record without signing in; doing anything needs a wallet. The server
+              enforces this too — this only avoids offering a button that would 401. */}
+          {session ? (
+            <div className="flex gap-2">
+              <button className={actionClass} onClick={() => setDrawer("create")}>+ New bounty</button>
+              <button className={actionClass} onClick={() => setDrawer("submit")}>Submit work</button>
+            </div>
+          ) : (
+            <p className="text-sm text-[var(--color-ink-muted)]">
+              Kết nối ví để đăng hoặc nhận việc.
+            </p>
+          )}
         </div>
 
         <BountyList bounties={bounties} loading={loading} onChanged={refresh} />
