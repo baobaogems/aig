@@ -2,6 +2,29 @@
 
 All significant changes, features, and fixes documented here.
 
+## [v4.2 — A board you can read] — 2026-09-20
+
+### Added
+
+- **`/arbiter/bounty/[id]`** — a shareable page per bounty: amount, deadline, state, the full brief, the frozen rubric with weights, and the decision thresholds. Renders for a stranger with no wallet and no account.
+- **Scoring criteria are public.** Other boards hide the task behind a connect button; being able to read the rubric *before* committing a weekend to the work is the point, and the page states that the criteria froze when the money was locked and cannot be moved by anyone, poster included.
+- **Card state and a live countdown.** `Chưa ai nhận` / `Đang làm` / `Đã nộp · chờ chấm`, a quotable short code (`AIG-3F9C2A`), and a countdown driven by one interval for the whole list.
+
+### Changed
+
+- The board no longer hides claimed bounties. It looked emptiest exactly when the community was busiest, removing the only signal that the thing is used. Claimability is now derived per card rather than filtered out of the query.
+- The countdown was computed once at render, so a tab open for twenty minutes showed the most important number on the screen twenty minutes wrong.
+- `RubricTable` extracted and shared with the poster's preview; the redaction rule moved to `lib/arbiter/bounty-view.ts` and is used by both the API route and the page.
+- Opened from a bounty's own page, the submit form no longer asks for a pasted UUID.
+
+### Not changed, deliberately
+
+"Number of people who submitted" is not shown, because it cannot exceed one: `claim()` assigns a worker permanently on-chain. Showing a competition count would require a contract v3 (multiple submissions, a winner-picking rule) — a different product, planned separately if ever.
+
+### Tests
+
+73 (was 52). Thresholds on the page are read from `tiers.ts`, and a test fails if any is hard-coded into the JSX.
+
 ## [v4.1 — Two roles, two wallets] — 2026-09-20
 
 The arbiter stopped being one person's control panel and became something two strangers can use.

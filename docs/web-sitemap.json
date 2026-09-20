@@ -2,8 +2,8 @@
   "$schema": "aig-web-sitemap/v1",
   "project": "Arbiter Invisible Gateway (AIG v4)",
   "purpose": "Runtime map of the deployed web app: what routes exist, what data moves through them, where that data rests, and which env var feeds which file. Companion to status_AIG.json (state) and docs/system-architecture.md (design intent).",
-  "measuredAt": "2026-09-20T12:10:00+07:00",
-  "measuredOn": "branch main @ 3120bdd",
+  "measuredAt": "2026-09-20T13:05:00+07:00",
+  "measuredOn": "branch main @ eb7d6b7",
   "howMeasured": "Routes taken from the `next build` route table on main @ 3120bdd. Contract address read back from Vercel production env and confirmed against an on-chain `arbiter()` call. Auth behaviour verified with `npm run authz:check` against a running server.",
   "staleWarning": {
     "rule": "Any block below carrying its own `staleWarning` could NOT be verified by running something. Treat it as a claim, not a fact, and re-measure before relying on it.",
