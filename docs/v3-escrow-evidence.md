@@ -1,7 +1,34 @@
 # Escrow v3 — bằng chứng
 
-> Trạng thái: **CHƯA DEPLOY.** File này dựng sẵn khung; mọi ô "CHƯA XÁC MINH" phải được điền
-> bằng số đo thật trước khi coi v3 là đang chạy. Không điền bằng phán đoán.
+> Trạng thái: **ĐÃ DEPLOY LÊN ARC TESTNET 20/09/2026.** Chưa nối vào Production
+> (env Vercel chưa đổi, code chưa push). Ô nào chưa đo được vẫn ghi **CHƯA XÁC MINH**.
+
+## Địa chỉ
+
+| | Địa chỉ | Cửa sổ | Dùng làm gì |
+|---|---|---|---|
+| **v3 chính** | `0xA4BB0B0448277B433A2c01b6F828771e9C5920B1` | settle 48h · claim 72h | bản sẽ dùng thật |
+| v3 cửa sổ ngắn | `0x968bf4863EF570576Bc4cAf752e237e0D2218638` | settle 120s · claim 180s | **chỉ để thử** `timeoutRelease`/`expireClaim` trong một phiên; **không** nối vào app |
+| v2 (đóng băng) | `0xD4f53A1bD89a05Ac568601b4c30655A678C5f9f1` | — | bounty cũ kết thúc ở đây |
+
+- Deploy tx v3 chính: `0xe52a9f570e93b131d708156124d1147ef26309a86f5aee85060523bb6739adef`, **block 63109048**
+- Deploy tx bản thử: `0xc706f5ed454670e10e070e97a5840713ca8961b64d24c56324b38dd104ecb4ff`, block 63109123
+- Chain 5042002 (Arc testnet) · USDC `0x3600000000000000000000000000000000000000`
+- arbiter = owner = `0x0809a724862D6636874809775Ba3623080c5ceF8`
+
+### Bytecode
+
+`cast code` so với `contracts/out/ArbiterEscrow.sol/ArbiterEscrow.json` → **cùng độ dài 12314**,
+khác đúng **25 đoạn, tất cả đều là immutable** (local để 0 làm chỗ trống):
+
+| On-chain | Là gì |
+|---|---|
+| `0809a724…c5cef8` (3 lần) | địa chỉ arbiter |
+| `36` | byte đầu địa chỉ USDC `0x3600…` |
+| `2a300` = 172800 | settleWindow = 48h |
+| `3f480` = 259200 | claimWindow = 72h |
+
+Không có khác biệt nào khác ⇒ **bytecode khớp**.
 
 ## Vì sao có v3
 
@@ -38,6 +65,8 @@ v3 thêm đúng một khái niệm — `submittedAt` — và mặc định đả
 
 ## Kết quả đo
 
+### Tự động
+
 | Hạng mục | Kết quả |
 |---|---|
 | `forge test` | **55/55 PASS** (32 test cũ viết lại theo API mới + 23 mới) |
@@ -45,15 +74,44 @@ v3 thêm đúng một khái niệm — `submittedAt` — và mặc định đả
 | `forge build --sizes` | runtime **6.156 B**, còn dư 18.420 B |
 | Test tầng app | **229 PASS**, gồm test route handler cho mọi nhánh tiền |
 | `tsc --noEmit` / `eslint` / `next build` | sạch |
-| Địa chỉ v3 trên Arc testnet | **CHƯA XÁC MINH** — chưa deploy |
-| Block deploy | **CHƯA XÁC MINH** |
-| Bytecode khớp | **CHƯA XÁC MINH** |
-| Vòng tiền thật T1 tự trả | **CHƯA XÁC MINH** |
-| Vòng tiền thật phản đối (50%) | **CHƯA XÁC MINH** |
-| Vòng tiền thật từ chối (phí huỷ) | **CHƯA XÁC MINH** |
-| `timeoutRelease` bằng ví worker | **CHƯA XÁC MINH** |
 
-Lệnh để đo phần còn thiếu: xem `plans/260920-2147-arbiter-dispute-mechanism/phase-06-deploy-migrate-v2-to-v3.md`.
+### Vòng tiền thật trên Arc testnet
+
+Chạy bằng `frontend/scripts/escrow-v3-live-round.ts` — **chỉ nói chuyện với chain**, không
+qua Supabase, không qua route app. Mỗi khẳng định đọc **số dư**, không đọc giá trị trả về.
+
+Người đăng + arbiter `0x0809a724…c5ceF8`, người làm `0xBF2DCFa2…00B91`, mỗi vòng 1 USDC.
+
+| Nhánh | Người làm nhận | Người đăng nhận lại | tx |
+|---|---|---|---|
+| T1 tự trả (bps 10000) | 1.0 | 0 | [`0x7e1c655b…`](0x7e1c655b46d6e5d6b48fbf8760765220572fe00c1bdaa941ce3081bdd40a7548) |
+| Phản đối T1 (bps 5000) | 0.5 | 0.5 | [`0x75babfb9…`](0x75babfb92228f4f05c99024dd6b12aa8b500f32860aa1a3aa11051a246832701) |
+| Từ chối T2, phí huỷ (bps 3000) | 0.3 | 0.7 | [`0xd7bd9056…`](0xd7bd90566dde4560f770aed8b6484856dff0d58310dedc3f773fff6a83a45205) |
+| Người làm tự nhận sau hết hạn | 1.0 | 0 | [`0x1b0431ab…`](0x1b0431ab0eb2b1787d3e2b26c9b5214181f3316a863489bbcbe88e38972f9f3e) |
+
+Bốn nhánh trên chạy xong đều: **escrow nhả ra đúng số đã khoá, không đồng nào kẹt lại**,
+`workerAmount + posterAmount` luôn bằng đúng số tiền, verdict hash lên chain khớp.
+
+| Kiểm tra khác | Kết quả |
+|---|---|
+| **Hoàn tiền sau khi đã có bài nộp** | **BỊ CHẶN** ✓ — đây chính là lỗ L5, đã đóng trên chain thật |
+| **`timeoutRelease` do ví người làm tự ký** | ✓ nhận đủ 100%, **không cần arbiter ký gì** |
+| **`expireClaim` mở lại việc bị bỏ** | ✓ worker về `address(0)`, **số dư escrow không đổi** |
+
+Bốn nhánh chia tiền + chặn hoàn tiền chạy trên **cả hai** bản (chính và cửa sổ ngắn);
+`timeoutRelease`/`expireClaim` chỉ chạy được trên bản cửa sổ ngắn, vì bản chính phải chờ 48h.
+
+> **Bẫy khi tự đo lại:** trên Arc **gas trả bằng chính USDC**. Ví nào ký giao dịch thì ví đó
+> bị trừ thêm ~0.002 USDC. Đo số dư ví người ký rồi kết luận "trả thiếu" là sai — lần đầu
+> em đã mắc đúng lỗi này. Nhân chứng đúng là **số dư của escrow**, không phải ví người ký.
+
+### Chưa đo được
+
+| Hạng mục | Vì sao |
+|---|---|
+| Vòng đầy đủ qua giao diện (chấm bài → thanh toán) | **migration 010 chưa chạy** trên Supabase; DB chưa có `submitted_at`/`escrow_version` |
+| Nối vào Production | env Vercel chưa đổi, code chưa push |
+| `timeoutRelease` trên bản chính (48h) | phải chờ đủ 48 giờ |
 
 ## v2 — không đụng vào
 
