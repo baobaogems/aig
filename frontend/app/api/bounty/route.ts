@@ -1,6 +1,8 @@
 // /app/api/bounty/route.ts — F1 create (brief → rubric gen → DRAFT) + reads for the /arbiter page.
 //
-// POST { poster_id, worker_id, brief, amount_usdc, deadline } → { bounty, rubric }
+// POST { worker_id?, brief, amount_usdc, deadline } → { bounty, rubric }
+//   poster_id is NOT read from the body — it comes from the session cookie.
+//   worker_id omitted = an OPEN bounty anyone may claim (the normal case since Phase 04).
 // GET                 → { bounties, stats }   (list + agent_stats view, one payload for the page)
 // GET ?id=<uuid>      → BountyDetail          (bounty + rubric + submission + verdict + escalation)
 
@@ -37,7 +39,6 @@ export async function POST(req: NextRequest) {
     if (worker_id != null && !ADDR_RE.test(worker_id))
       return Response.json({ error: "worker_id must be a wallet address" }, { status: 400 });
 
-    if (!ADDR_RE.test(worker_id ?? "")) return Response.json({ error: "worker_id must be a wallet address" }, { status: 400 });
     if (typeof brief !== "string" || brief.trim().length < 20)
       return Response.json({ error: "brief required (≥20 chars)" }, { status: 400 });
     const amount = Number(amount_usdc);

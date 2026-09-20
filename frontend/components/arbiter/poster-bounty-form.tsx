@@ -85,7 +85,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       setDraft({ id: j.bounty.id, rubric: j.rubric.items_json });
       setMsg("");
       onChanged();
-    } catch (err) { setMsg(`Could not create it: ${err instanceof Error ? err.message : err}`); }
+    } catch (err) { setMsg(`Không tạo được: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 
@@ -105,7 +105,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
         setDraft(null);
       }
       onChanged();
-    } catch (err) { setMsg(`Could not freeze it: ${err instanceof Error ? err.message : err}`); }
+    } catch (err) { setMsg(`Không đóng băng được: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 

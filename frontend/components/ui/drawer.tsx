@@ -25,22 +25,44 @@ export function Drawer({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Esc closes. Body scroll is locked while open so the sheet does not scroll the page
-  // behind it on a phone.
+  // onClose is written as an inline arrow by every caller, so it is a NEW function on every
+  // parent render. Holding it in a ref keeps it out of the dependency lists below; putting it
+  // in them made the effects re-run constantly, and one of those effects moves focus.
+  const onCloseRef = useRef(onClose);
+  // Written in an effect, not during render — React forbids touching a ref while rendering.
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Esc closes, and the page behind is scroll-locked so the sheet does not drag it on a phone.
+  // Depends on `open` alone — see the note above.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") onCloseRef.current();
     };
     document.addEventListener("keydown", onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    panelRef.current?.focus();
     return () => {
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = prev;
     };
-  }, [open, onClose]);
+  }, [open]);
+
+  // Focus moves into the panel EXACTLY ONCE, when it opens.
+  //
+  // This is the bug that made the drawer unusable for typing: focus() lived in the effect
+  // above, whose deps included the unstable onClose, so every parent render re-ran it and
+  // yanked the caret out of whatever field was being typed into. Vietnamese made it obvious —
+  // a letter needs several keystrokes, and the caret never survived long enough to finish one.
+  //
+  // Splitting it out means no amount of re-rendering can steal focus again: the effect body
+  // only runs on an open→closed→open transition.
+  useEffect(() => {
+    if (!open) return;
+    panelRef.current?.focus();
+  }, [open]);
 
   if (!open) return null;
 
