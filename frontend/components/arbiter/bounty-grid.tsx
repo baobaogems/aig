@@ -6,15 +6,19 @@
 // Separate from the page so both sections (open work, finished work) get the same grid and
 // the same gaps. Two sections that lay out their cards slightly differently read as two
 // different products bolted together.
+//
+// The per-second clock lives HERE, not on the page. On the page it re-rendered the drawers
+// once a second, which interrupted IME composition mid-character: typing "đá" in Vietnamese
+// came out "dá". Nothing in this subtree takes text input, so ticking here is free.
 // =============================================================================
 
 import { BountyCard, type BountyCardData } from "@/components/arbiter/bounty-card";
+import { useCountdown } from "@/components/arbiter/use-countdown";
 import { ClaimButton } from "@/components/arbiter/claim-button";
 import { isClaimable, bountyState } from "@/lib/arbiter/bounty-display";
 
 export function BountyGrid({
   bounties,
-  now,
   loading,
   emptyTitle,
   emptyHint,
@@ -22,7 +26,6 @@ export function BountyGrid({
   onChanged,
 }: {
   bounties: BountyCardData[];
-  now: number;
   loading?: boolean;
   emptyTitle: string;
   emptyHint: string;
@@ -30,6 +33,8 @@ export function BountyGrid({
   signedIn?: boolean;
   onChanged?: () => void;
 }) {
+  const now = useCountdown();
+
   if (loading) {
     return <p className="text-sm text-[var(--color-ink-muted)]">Đang tải…</p>;
   }

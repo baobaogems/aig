@@ -26,7 +26,6 @@ import { FilterBar } from "@/components/ui/filter-bar";
 import { PillButton } from "@/components/ui/pill-button";
 import { Drawer } from "@/components/ui/drawer";
 import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
-import { useCountdown } from "@/components/arbiter/use-countdown";
 import type { BountyCardData } from "@/components/arbiter/bounty-card";
 
 interface BountyRow extends BountyCardData {
@@ -57,9 +56,6 @@ export default function ArbiterPage() {
   const [availability, setAvailability] = useState<Availability>("open");
   const [role, setRole] = useState<Role>("all");
 
-  // One clock for every card on the page.
-  const now = useCountdown();
-
   const refresh = useCallback(async () => {
     try {
       const res = await fetch(`/api/bounty?view=${ROLE_VIEW[role]}`);
@@ -82,14 +78,23 @@ export default function ArbiterPage() {
 
   // Split once, render twice. A bounty is "open" while it is still workable; everything that
   // has been judged, paid, refunded or run out of time belongs to the record below.
+  //
+  // Deliberately NOT recomputed on a per-second clock. This page owns the drawers, and the
+  // drawers own text inputs: re-rendering it every second interrupted IME composition, so
+  // typing "đá" in Vietnamese produced "dá" — the second keystroke of the đ was wiped by a
+  // re-render before it could combine. The ticking clock now lives inside BountyGrid, which
+  // contains no inputs. Section membership therefore updates on data refresh rather than the
+  // instant a deadline passes, which is also the calmer behaviour: a card should not jump to
+  // another section while someone is reading it.
   const { open, done } = useMemo(() => {
+    const at = Date.now();
     const isOpen = (b: BountyRow) =>
-      OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > now;
+      OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > at;
     return {
       open: bounties.filter(isOpen),
       done: bounties.filter((b) => !isOpen(b)),
     };
-  }, [bounties, now]);
+  }, [bounties]);
 
   const showOpen = availability !== "done";
   const showDone = availability !== "open";
@@ -171,7 +176,6 @@ export default function ArbiterPage() {
           {showOpen && (
             <BountyGrid
               bounties={open}
-              now={now}
               loading={loading}
               signedIn={Boolean(session)}
               onChanged={refresh}
@@ -190,7 +194,6 @@ export default function ArbiterPage() {
             />
             <BountyGrid
               bounties={done}
-              now={now}
               loading={loading}
               emptyTitle="Chưa có việc nào kết thúc."
               emptyHint="Việc sẽ chuyển xuống đây sau khi được chấm, hoàn tiền, hoặc quá hạn."

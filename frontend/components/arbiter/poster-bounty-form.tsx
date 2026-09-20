@@ -27,7 +27,15 @@ type Errors = Partial<Record<"brief" | "amount" | "deadline", string>>;
 export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   const [brief, setBrief] = useState("");
   const [amount, setAmount] = useState("5");
-  const [deadline, setDeadline] = useState("");
+  // Seven days out, formatted for <input type="datetime-local"> (which wants local time with
+  // no timezone suffix). An empty default invited picking "now", which is already in the past
+  // by the time the form is submitted — the screenshot that reported this bug showed exactly
+  // that: a deadline one minute behind the clock.
+  const [deadline, setDeadline] = useState(() => {
+    const d = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  });
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [errors, setErrors] = useState<Errors>({});
@@ -47,12 +55,13 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   /** Mirrors the server's rules so the failure lands on the field, not in a banner. */
   function validate(): Errors {
     const e: Errors = {};
-    if (brief.trim().length < 20) e.brief = `At least 20 characters — currently ${brief.trim().length}.`;
+    if (brief.trim().length < 20)
+      e.brief = `Cần ít nhất 20 ký tự — hiện mới ${brief.trim().length}. Mô tả càng rõ thì bộ tiêu chí chấm càng đúng ý bạn.`;
     const n = Number(amount);
-    if (!Number.isFinite(n) || n <= 0) e.amount = "Must be more than 0.";
+    if (!Number.isFinite(n) || n <= 0) e.amount = "Phải lớn hơn 0.";
     const dl = new Date(deadline);
-    if (Number.isNaN(dl.getTime())) e.deadline = "Pick a date and time.";
-    else if (dl.getTime() <= Date.now()) e.deadline = "Must be in the future.";
+    if (Number.isNaN(dl.getTime())) e.deadline = "Chọn ngày giờ.";
+    else if (dl.getTime() <= Date.now()) e.deadline = "Hạn chót phải ở tương lai.";
     return e;
   }
 
@@ -82,7 +91,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
 
   async function approveRubric() {
     if (!draft) return;
-    setBusy(true); setMsg("Freezing the rubric…");
+    setBusy(true); setMsg("Đang đóng băng bộ tiêu chí…");
     try {
       const res = await fetch(`/api/bounty/${draft.id}/approve-rubric`, { method: "POST" });
       const j = await res.json();
@@ -107,25 +116,25 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       <div className="grid gap-4">
         <FormField
           id="brief"
-          label="What needs to be done"
-          hint="Plain language. The arbiter turns this into the scoring rubric, so anything you leave out cannot be scored."
+          label="Cần làm gì"
+          hint="Viết bằng lời thường. Trọng tài biến đúng đoạn này thành bộ tiêu chí chấm — thứ gì bạn không nói ra thì không chấm được."
           error={errors.brief}
         >
           <textarea id="brief" rows={5} className={inp("brief")} value={brief} onChange={(e) => edit(setBrief, "brief")(e.target.value)} />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="amount" label="Amount to escrow" hint="In USDC, held on Arc testnet." error={errors.amount}>
+          <FormField id="amount" label="Tiền treo" hint="Tính bằng USDC, khoá trong escrow trên Arc testnet." error={errors.amount}>
             <input id="amount" type="number" min="0.1" step="0.1" className={inp("amount")} value={amount} onChange={(e) => edit(setAmount, "amount")(e.target.value)} />
           </FormField>
-          <FormField id="deadline" label="Deadline" hint="Must be in the future." error={errors.deadline}>
+          <FormField id="deadline" label="Hạn chót" hint="Quá hạn mà chưa ai nộp thì bạn đòi lại được tiền." error={errors.deadline}>
             <input id="deadline" type="datetime-local" className={inp("deadline")} value={deadline} onChange={(e) => edit(setDeadline, "deadline")(e.target.value)} />
           </FormField>
         </div>
 
         <div>
           <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty}>
-            {busy && !draft ? "Drafting the rubric…" : "Create and draft the rubric"}
+            {busy && !draft ? "Đang soạn tiêu chí…" : "Tạo việc và soạn tiêu chí"}
           </PillButton>
         </div>
       </div>
@@ -133,7 +142,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       {draft && (
         <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-5">
           <h3 className="text-sm font-semibold text-[var(--color-ink)]">
-            The arbiter proposes to score it like this
+            Trọng tài đề xuất chấm theo bộ tiêu chí này
           </h3>
           <div className="mt-1">
             <RubricTable items={draft.rubric} frozen={false} />
