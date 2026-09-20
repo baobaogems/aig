@@ -26,13 +26,20 @@ import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button"
 import { JudgingProgress } from "@/components/arbiter/judging-progress";
 import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 import { useJudgeStream } from "@/components/arbiter/use-judge-stream";
+import { SettlementPanel } from "@/components/arbiter/settlement-panel";
+import { useCountdown } from "@/components/arbiter/use-countdown";
 import { isClaimable, type BountyState } from "@/lib/arbiter/bounty-display";
 import { submissionWindow } from "@/lib/arbiter/submission-window";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
 
 interface Detail {
-  bounty: { id: string; status: string; poster_id: string; worker_id: string | null; deadline: string };
+  bounty: {
+    id: string; status: string; poster_id: string; worker_id: string | null; deadline: string;
+    amount_usdc: number;
+    /** When the arbiter recorded the submission on-chain. Drives the settlement clock. */
+    submitted_at: string | null;
+  };
   rubric: null | { items_json: RubricItem[] };
   // Shape mirrors GET /api/bounty?id= — kept local rather than imported from the server
   // module so this client component never pulls a server-only import chain.
@@ -61,7 +68,11 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
     if (r.ok) setDetail(await r.json());
   }, [bountyId]);
 
-  const { stage, setStage, busy, setBusy, judge } = useJudgeStream(load);
+  const { stage, busy, judge } = useJudgeStream(load);
+  // Ticking clock rather than a Date.now() read during render: the submission window closes
+  // at the deadline, and a tab left open must stop offering the form at that moment, not at
+  // whatever moment it last happened to re-render.
+  const now = useCountdown();
 
   const same = (a?: string | null, b?: string | null) =>
     Boolean(a && b && a.toLowerCase() === b.toLowerCase());
@@ -78,6 +89,9 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
       .then((r) => (r.ok ? r.json() : null))
       .then((j) => alive && setSession(j?.address ?? null))
       .catch(() => alive && setSession(null));
+    // Fetch-on-mount: `load` only sets state after an await, so there is no cascading render
+    // here. The rule cannot see past the call and flags it anyway.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load();
     return () => {
       alive = false;
@@ -97,35 +111,6 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
   });
 
 
-  /** F4 — the poster answers an escalated verdict; every action feeds the public override rate. */
-  async function act(action: "APPROVE" | "REJECT") {
-    if (!detail?.verdict) return;
-    setBusy(true);
-    try {
-      const res = await fetch("/api/escalation", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          verdict_id: detail.verdict.id,
-          bounty_id: bountyId,
-          poster_action: action,
-        }),
-      });
-      const j = await res.json();
-      if (!res.ok) throw new Error(j.error);
-      setStage(null);
-      await load();
-    } catch (e) {
-      setStage({
-        kind: "error",
-        afterVerdict: false,
-        message: e instanceof Error ? e.message : String(e),
-      });
-    } finally {
-      setBusy(false);
-    }
-  }
-
   // One rule, the same one the server enforces, so the form is never offered when a submission
   // would be rejected — nor hidden when it would be accepted.
   const submitWindow = detail
@@ -133,7 +118,7 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
         status: detail.bounty.status,
         lastDecision: detail.verdict?.decision ?? null,
         deadline: detail.bounty.deadline,
-        now: Date.now(),
+        now,
       })
     : null;
 
@@ -202,14 +187,25 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
       {stage && <JudgingProgress stage={stage} />}
 
+      {/* Everything that ends the bounty, with the cost of each choice on the button itself. */}
+      {detail && (
+        <SettlementPanel
+          bountyId={bountyId}
+          amountUsdc={Number(detail.bounty.amount_usdc)}
+          submittedAt={detail.bounty.submitted_at}
+          status={detail.bounty.status}
+          verdict={detail.verdict}
+          isPoster={isPoster}
+          isWorker={isWorker}
+          onChanged={load}
+        />
+      )}
+
       {detail?.verdict && (
         <VerdictCertificate
           verdict={detail.verdict}
           rubric={detail.rubric?.items_json ?? null}
-          bountyStatus={detail.bounty.status}
           escalation={detail.escalation}
-          busy={busy}
-          onAct={isPoster ? act : () => {}}
         />
       )}
     </section>

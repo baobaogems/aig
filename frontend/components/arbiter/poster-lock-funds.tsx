@@ -125,6 +125,16 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
 
   return (
     <div className="flex flex-col gap-2">
+      {/* Said before the money is locked, not buried in terms afterwards. This is the single
+          most surprising consequence of the rules, and a poster who learns it only once a
+          deliverable has arrived will reasonably feel tricked. */}
+      {step === "idle" && (
+        <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
+          Trước khi khoá: nếu chưa ai nộp bài, hết hạn bạn lấy lại đủ tiền. Một khi đã có bài
+          nộp được chấm là hợp lệ, bạn không rút lại toàn bộ được nữa — duyệt thì trả đủ, từ
+          chối thì người làm vẫn nhận một phần theo điểm máy chấm, phần còn lại về ví bạn.
+        </p>
+      )}
       <PillButton onClick={run} disabled={step !== "idle"}>
         {label[step]}
       </PillButton>

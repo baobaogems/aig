@@ -11,7 +11,6 @@
 // advertise a threshold different from the one actually gating the payout.
 
 import { TierPill } from "@/components/ui/tier-pill";
-import { PillButton } from "@/components/ui/pill-button";
 import { ThresholdBar } from "@/components/ui/threshold-bar";
 import { TIER_THRESHOLDS } from "@/lib/arbiter/tiers";
 
@@ -32,16 +31,13 @@ interface Verdict {
 }
 
 export function VerdictCertificate({
-  verdict, rubric, bountyStatus, escalation, busy, onAct,
+  verdict, rubric, escalation,
 }: {
   verdict: Verdict;
   /** The frozen rubric this verdict scored against. Its criterion text is what makes a
    *  score mean anything — "95/100" alone never says 95 out of what. */
   rubric: RubricItem[] | null;
-  bountyStatus: string;
   escalation: null | { poster_action: string };
-  busy: boolean;
-  onAct: (action: "APPROVE" | "REJECT") => void;
 }) {
   const color = TIER_COLOR[verdict.decision] ?? "var(--color-tier-t3)";
   const { rubric_scores, confidence_reasoning, refusal_reason } = verdict.verdict_json;
@@ -148,48 +144,28 @@ export function VerdictCertificate({
         )}
       </div>
 
-      {/* ESCALATE and FAIL both land here, and they mean opposite things. ESCALATE is "I am
-          not sure enough to decide this"; FAIL at high confidence is "I am sure this did not
-          pass, and I still may not act on it alone". One shared sentence read as the machine
-          dodging responsibility. */}
-      {bountyStatus === "JUDGED" && !escalation && (
-        <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
-          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
-            {verdict.decision === "FAIL"
-              ? "The arbiter is confident this did not meet the rubric — but it has no authority to take money off the worker, so the call is yours."
-              : "The arbiter was not confident enough to decide this alone, so it stopped and asked you."}
-          </p>
-          <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-            Its only power over the escrow is to release it; it can never refund or reclaim. Whatever
-            you choose is recorded and counts toward the public override rate.
-          </p>
-          <div className="mt-3 flex flex-wrap gap-3">
-            <PillButton variant="primary" disabled={busy} onClick={() => onAct("APPROVE")}>
-              Approve — pay the worker
-            </PillButton>
-            <PillButton variant="secondary" disabled={busy} onClick={() => onAct("REJECT")}>
-              Reject — withhold payment
-            </PillButton>
-          </div>
-        </div>
-      )}
+      {/* The buttons used to live here, unpriced. They moved to settlement-panel.tsx, which
+          shows what each one costs before it is pressed — this component stays a record of
+          what the arbiter concluded, and records do not ask you to decide anything. */}
       {escalation && (
         <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
           {/* "Overruling" only applies where the arbiter took a side. On an ESCALATE it
               asked; answering a question is not overruling anyone. */}
           <p className="text-sm leading-relaxed text-[var(--color-ink)]">
-            You <span className="font-semibold">{escalation.poster_action === "APPROVE" ? "approved" : "rejected"}</span>{" "}
+            You{" "}
+            <span className="font-semibold">
+              {escalation.poster_action === "APPROVE" ? "approved" : escalation.poster_action === "OBJECT" ? "objected to" : "rejected"}
+            </span>{" "}
             {verdict.decision === "ESCALATE"
               ? "this — the answer the arbiter asked for."
               : "this, going against what the arbiter concluded."}
           </p>
-          {/* escalation/route.ts:5 — a REJECT is recorded and the bounty stays JUDGED. The
-              refund is the poster's own on-chain call after the deadline; saying "the money
-              was refunded" here described something the system does not do. */}
-          {escalation.poster_action === "REJECT" && (
+          {/* Since v3 a refusal settles immediately at the kill fee rather than leaving the
+              escrow to sit until the deadline. The old copy here promised the opposite. */}
+          {escalation.poster_action !== "APPROVE" && (
             <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-ink-muted)]">
-              The escrow still holds the funds. Reclaiming them is your own on-chain call once the
-              deadline has passed — the arbiter cannot move money back.
+              The escrow was split at once: the worker kept the kill fee for the score the arbiter
+              gave, and the remainder went back to you. Nothing is left waiting on a deadline.
             </p>
           )}
         </div>
