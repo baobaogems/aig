@@ -24,6 +24,10 @@ export interface BountyRow {
   status: BountyStatus;
   escrow_tx: string | null;
   created_at: string;
+  /** When the arbiter recorded a plausible submission on-chain. Null = poster may still refund. */
+  submitted_at: string | null;
+  /** Which escrow contract holds this bounty's money. 2 = frozen v2, 3 = current. */
+  escrow_version: number;
 }
 
 export interface RubricRow {
@@ -51,13 +55,18 @@ export interface VerdictRow {
   total_score: number;
   verdict_hash: string;
   release_tx: string | null;
+  /** Worker share in basis points at settlement. Null until settled. */
+  worker_bps: number | null;
   created_at: string;
 }
+
+/** What the poster did about a verdict. OBJECT is the T1 override, added in v3. */
+export type PosterAction = "APPROVE" | "REJECT" | "OBJECT";
 
 export interface EscalationRow {
   id: string;
   verdict_id: string;
-  poster_action: "APPROVE" | "REJECT";
+  poster_action: PosterAction;
   acted_at: string;
   note: string | null;
 }
@@ -161,6 +170,34 @@ export async function updateBountyStatus(bountyId: string, status: BountyStatus)
 
 // ---------------- submissions (F2 — snapshot at submit time) ----------------
 
+/**
+ * Record that work was handed in, mirroring the on-chain `markSubmitted`.
+ *
+ * Conditional on submitted_at still being null so a retry cannot move the clock forward and
+ * quietly extend the poster's window at the worker's expense.
+ */
+export async function markBountySubmitted(bountyId: string, at: string): Promise<void> {
+  const { error } = await db()
+    .from("bounties")
+    .update({ submitted_at: at })
+    .eq("id", bountyId)
+    .is("submitted_at", null);
+  if (error) throw new Error(`markBountySubmitted: ${error.message}`);
+}
+
+/** Record how the escrow was split. Written in the same step as the release tx, never apart. */
+export async function setVerdictSettlement(
+  verdictId: string,
+  releaseTx: string,
+  workerBps: number,
+): Promise<void> {
+  const { error } = await db()
+    .from("verdicts")
+    .update({ release_tx: releaseTx, worker_bps: workerBps })
+    .eq("id", verdictId);
+  if (error) throw new Error(`setVerdictSettlement: ${error.message}`);
+}
+
 export async function insertSubmission(input: {
   bounty_id: string;
   content_snapshot: string;
@@ -207,7 +244,7 @@ export async function setVerdictReleaseTx(verdictId: string, releaseTx: string):
 
 export async function insertEscalation(input: {
   verdict_id: string;
-  poster_action: "APPROVE" | "REJECT";
+  poster_action: PosterAction;
   note?: string | null;
 }): Promise<EscalationRow> {
   const { data, error } = await db()

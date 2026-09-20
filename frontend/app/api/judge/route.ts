@@ -5,13 +5,20 @@
 //
 // THE GATE-2 GAP CLOSES HERE: the verdict row is persisted to Supabase in the same request
 // that produced it, so the per-day spend ledger (verdicts.release_tx) counts every release.
-// Persist-order safety: verdict row is written BEFORE any status/points side-effects; if the
-// release happened (live T1), release_tx lands in the same insert.
+//
+// SINCE v3 THIS ROUTE MOVES NO MONEY. A plausible verdict (T1/T2) records the submission
+// on-chain, which shuts the poster's unilateral refund and starts their window. Payment is a
+// separate, later act — /api/settlement/* or /api/escalation.
+//
+// `markSubmitted` is not an afterthought that can be skipped: without it the worker has no
+// `timeoutRelease`, which is their only right that does not depend on this server being
+// alive. So a failed mark is an error the caller sees, never a silent "done".
 
 import { NextRequest } from "next/server";
 import { judgeAndSettle } from "@/lib/arbiter/run";
-import { getBountyDetail, insertVerdict, updateBountyStatus, type BountyStatus } from "@/lib/arbiter/store";
-import { awardBountyPoints } from "@/lib/points";
+import {
+  getBountyDetail, insertVerdict, markBountySubmitted, updateBountyStatus, type BountyStatus,
+} from "@/lib/arbiter/store";
 import { requireParty } from "@/lib/auth/require-role";
 import { LIMIT_JUDGE, enforceRateLimit } from "@/lib/auth/rate-limit";
 
@@ -73,28 +80,25 @@ export async function POST(req: NextRequest) {
           submission_id: submission.id,
           verdict: v,
           verdict_hash: result.judge.hash,
-          release_tx: result.release?.txHash ?? null,
+          release_tx: null,
         });
+
+        // The clock only exists in the database once it exists on-chain, never the other way
+        // round: a window the contract does not honour would be a promise we cannot keep.
+        if (result.clockStarted) await markBountySubmitted(bounty.id, new Date().toISOString());
+
         emit("verdict", {
           verdict_id: row.id, decision: v.decision, total_score: v.total_score,
           confidence: v.confidence, verdict_hash: result.judge.hash,
-          release_tx: result.release?.txHash ?? null, settlement_note: result.settlementNote ?? null,
+          clock_started: result.clockStarted, settlement_note: result.settlementNote ?? null,
         });
 
-        // Status: RELEASED only when USDC actually moved; REFUSE → REFUSED; everything else
-        // (ESCALATE / FAIL / dry-run RELEASE) waits for a human → JUDGED.
-        const status: BountyStatus = result.release ? "RELEASED" : v.decision === "REFUSE" ? "REFUSED" : "JUDGED";
+        // No payout happens here any more, so no bounty leaves this route RELEASED.
+        // REFUSE closes it; everything else waits for a person or for the clock.
+        const status: BountyStatus = v.decision === "REFUSE" ? "REFUSED" : "JUDGED";
         await updateBountyStatus(bounty.id, status);
 
-        if (result.release) {
-          // Real money moved → real points (F5). Dry-run never reaches here.
-          if (bounty.worker_id) {
-            await awardBountyPoints(bounty.worker_id, bounty.id, result.release.amountUsdc);
-          } else {
-            console.error(`[points] released ${bounty.id} but worker_id is null — DB out of step with chain`);
-          }
-        }
-        emit("done", { status });
+        emit("done", { status, clock_started: result.clockStarted });
       } catch (err) {
         console.error("[API /judge]:", err);
         emit("error", { message: err instanceof Error ? err.message : String(err) });

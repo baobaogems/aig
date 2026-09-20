@@ -84,6 +84,9 @@ describe("POST /api/bounty — input the handler must refuse", () => {
     ["an amount over the per-bounty cap", { amount_usdc: 9_999 }, 400, /amount_usdc/],
     ["a deadline in the past", { deadline: new Date(Date.now() - 1000).toISOString() }, 400, /deadline/],
     ["a deadline that is not a date", { deadline: "thứ ba tuần sau" }, 400, /deadline/],
+    // Shorter than CLAIM_WINDOW: someone could claim it, go quiet, and by the time
+    // expireClaim could free it there would be no time left to claim it again.
+    ["a deadline inside the claim window", { deadline: new Date(Date.now() + 3_600_000).toISOString() }, 400, /hạn chót/],
   ];
 
   it.each(cases)("rejects %s", async (_label, over, status, message) => {

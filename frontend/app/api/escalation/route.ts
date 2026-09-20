@@ -1,19 +1,31 @@
-// /app/api/escalation/route.ts — F4: poster acts on a T2/T3 verdict.
+// /app/api/escalation/route.ts — F4: the poster acts on a verdict.
 //
-// POST { verdict_id, bounty_id, poster_action: APPROVE|REJECT, note? }
-//   APPROVE → release the escrow (live) and mark RELEASED; dry-run records the action only.
-//   REJECT  → recorded; bounty stays JUDGED (refund is the poster's on-chain call after deadline).
+// POST { verdict_id, bounty_id, poster_action: APPROVE|REJECT, note?, criteria? }
+//
+// APPROVE → the worker is paid in full.
+// REJECT  → the worker is paid the KILL FEE for the score the arbiter gave, and the poster
+//           gets the rest back. Rejecting is always allowed; it is never free.
+//
+// WHY REJECTING COSTS SOMETHING
+// -----------------------------
+// In v2 a rejection cost the poster nothing: the money stayed locked and came home at the
+// deadline, while the deliverable was already in their hands. Free work, with no way to tell
+// an honest rejection from a theft. There is no court here to make that distinction, so the
+// only honest lever is to price EVERY rejection, and let the arbiter's own score set the
+// price. A deliverable the arbiter scored below the fail line still costs nothing to refuse.
+//
 // EVERY action lands in `escalations` — that table IS the override_rate (agent_stats view).
 
 import { NextRequest } from "next/server";
-import { getBountyDetail, insertEscalation, setVerdictReleaseTx, updateBountyStatus } from "@/lib/arbiter/store";
-import { isDryRun } from "@/lib/escrow";
-import { awardBountyPoints } from "@/lib/points";
+import { getBountyDetail, insertEscalation } from "@/lib/arbiter/store";
+import { killFeeBps } from "@/lib/arbiter/kill-fee";
+import { settleBounty } from "@/lib/arbiter/settle-bounty";
+import { decideTier } from "@/lib/arbiter/tiers";
 import { requirePoster } from "@/lib/auth/require-role";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 60; // APPROVE in live mode waits for the release receipt
+export const maxDuration = 60; // settling waits for the receipt
 
 export async function POST(req: NextRequest) {
   try {
@@ -26,7 +38,7 @@ export async function POST(req: NextRequest) {
     if (poster_action !== "APPROVE" && poster_action !== "REJECT")
       return Response.json({ error: "poster_action must be APPROVE or REJECT" }, { status: 400 });
 
-    // APPROVE releases real USDC. Poster only — this was the most dangerous open route.
+    // Both branches move real USDC. Poster only — this was the most dangerous open route.
     const gate = await requirePoster(req, bounty_id);
     if (gate instanceof Response) return gate;
 
@@ -37,29 +49,38 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: `already acted: ${detail.escalation.poster_action}` }, { status: 409 });
     if (detail.bounty.status !== "JUDGED")
       return Response.json({ error: `bounty is ${detail.bounty.status}, expected JUDGED` }, { status: 409 });
+    if (detail.verdict.release_tx)
+      return Response.json({ error: `already settled: ${detail.verdict.release_tx}` }, { status: 409 });
 
-    // Record the human action FIRST — the override stat must survive a failed release.
+    // A rejection must be answerable: say which frozen criterion the work missed. The rubric
+    // was frozen before anyone claimed the job, so this is a check against a fixed target
+    // rather than an opinion formed after seeing the work.
+    if (poster_action === "REJECT" && (typeof note !== "string" || note.trim().length < 10)) {
+      return Response.json(
+        { error: "cần nêu lý do từ chối (ít nhất 10 ký tự), đối chiếu tiêu chí đã đóng băng" },
+        { status: 400 },
+      );
+    }
+
+    // Record the human action FIRST — the override stat must survive a failed settlement.
     const escalation = await insertEscalation({ verdict_id, poster_action, note: note ?? null });
 
-    if (poster_action === "REJECT") {
-      // Money stays locked; poster refunds on-chain after the deadline (PRD F4).
-      return Response.json({ escalation, note: "recorded — bounty stays JUDGED; refund after deadline is on-chain" });
-    }
+    const bps =
+      poster_action === "APPROVE"
+        ? 10_000
+        : killFeeBps({
+            totalScore: detail.verdict.total_score,
+            // Recomputed from the stored numbers, never taken from the request: the price of
+            // a rejection is not something the person paying it gets to choose.
+            tier: decideTier({
+              totalScore: detail.verdict.total_score,
+              confidence: detail.verdict.confidence,
+              outOfScope: detail.verdict.decision === "REFUSE",
+            }).tier,
+          });
 
-    if (isDryRun()) {
-      return Response.json({ escalation, note: "DRY_RUN — approval recorded, no USDC moved" });
-    }
-
-    const { releaseEscrow } = await import("@/lib/escrow");
-    const release = await releaseEscrow(bounty_id, detail.verdict.verdict_hash as `0x${string}`);
-    await setVerdictReleaseTx(verdict_id, release.txHash); // ledger counts it from here
-    await updateBountyStatus(bounty_id, "RELEASED");
-    if (detail.bounty.worker_id) {
-      await awardBountyPoints(detail.bounty.worker_id, bounty_id, release.amountUsdc);
-    } else {
-      console.error(`[points] released ${bounty_id} but worker_id is null — DB out of step with chain`);
-    }
-    return Response.json({ escalation, release_tx: release.txHash });
+    const outcome = await settleBounty(detail, bps, `poster ${poster_action}`);
+    return Response.json({ escalation, ...outcome });
   } catch (err) {
     console.error("[API /escalation]:", err);
     return Response.json({ error: err instanceof Error ? err.message : "unknown error" }, { status: 500 });

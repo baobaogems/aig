@@ -13,6 +13,7 @@ import { requireSession } from "@/lib/auth/require-role";
 import { scopeDetailToViewer } from "@/lib/arbiter/bounty-view";
 import { SESSION_COOKIE, openSession } from "@/lib/auth/siwe-session";
 import { LIMIT_CREATE_BOUNTY, enforceRateLimit } from "@/lib/auth/rate-limit";
+import { CLAIM_WINDOW_MS, minimumDeadlineMs } from "@/lib/arbiter/settlement-clock";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -47,6 +48,14 @@ export async function POST(req: NextRequest) {
     const dl = new Date(deadline ?? "");
     if (Number.isNaN(dl.getTime()) || dl.getTime() <= Date.now())
       return Response.json({ error: "deadline must be a future datetime" }, { status: 400 });
+    // A deadline inside the claim window makes `expireClaim` useless: someone could take the
+    // job, go quiet, and by the time the bounty could be reopened it is too late to claim it
+    // at all. Refusing here is cheaper than shipping a bounty nobody can rescue.
+    if (dl.getTime() < minimumDeadlineMs(Date.now()))
+      return Response.json(
+        { error: `hạn chót phải cách ít nhất ${CLAIM_WINDOW_MS / 3_600_000} giờ, để việc bị nhận rồi bỏ còn cứu được` },
+        { status: 400 },
+      );
 
     // Arbiter proposes the rubric; the poster reviews and freezes it in the next step (F1).
     const gen = await generateRubric(brief.trim());

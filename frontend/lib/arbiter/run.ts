@@ -94,9 +94,12 @@ export interface SettleInput {
 export interface SettleResult {
   judge: JudgeResult;
   dryRun: boolean;
-  /** Present only when USDC actually moved. */
-  release?: { txHash: string; worker: string; amountUsdc: number };
-  /** Why an otherwise-releasable verdict did not pay out (cap, dry-run, or a failed send). */
+  /**
+   * True once the submission is recorded on-chain: the poster can no longer refund alone,
+   * and the settlement clock is running. Money has NOT moved.
+   */
+  clockStarted: boolean;
+  /** Why no clock was started, or why the payout waits (cap, dry-run, T3). */
   settlementNote?: string;
 }
 
@@ -105,7 +108,16 @@ export interface SettleResult {
  *
  * The money decision is NOT the model's: gradeSubmission returns a decision already computed
  * by tiers.ts from the score/confidence the model proposed, with the spend caps applied.
- * This function's only added authority is "carry out a RELEASE decision".
+ *
+ * SINCE v3 THIS FUNCTION MOVES NO MONEY AT ALL.
+ * A T1 verdict used to pay out inside this call, which left the poster with a decision already
+ * executed and nothing to say about it. Now a plausible verdict (T1 or T2) only starts the
+ * clock: it shuts the poster's unilateral refund and opens their window to object at a price.
+ * Payment happens later, through settle-bounty.ts, by one of three doors — the poster
+ * approving, the poster paying to override, or the window expiring.
+ *
+ * T3 deliberately starts no clock: the arbiter found the work implausible, so the escrow
+ * stays on the poster's refund path rather than counting down towards paying for it.
  */
 export async function judgeAndSettle(input: SettleInput): Promise<SettleResult> {
   const dryRun = isDryRun();
@@ -126,27 +138,22 @@ export async function judgeAndSettle(input: SettleInput): Promise<SettleResult> 
   });
 
   if (dryRun) {
-    return { judge, dryRun, settlementNote: "DRY_RUN — verdict only, no money moved" };
-  }
-  if (judge.verdict.decision !== "RELEASE") {
-    // ESCALATE / FAIL / REFUSE are human-facing outcomes; Phase 04 flows own what happens next.
-    return { judge, dryRun, settlementNote: `decision=${judge.verdict.decision} — no autonomous release` };
+    return { judge, dryRun, clockStarted: false, settlementNote: "DRY_RUN — verdict only, nothing on-chain" };
   }
 
-  // Re-check the day cap immediately before spending. The judge call takes ~15-20s; another
-  // release can land in that window, and the check that authorised this one is already stale.
-  const fresh = await liveCaps();
-  if (input.amountUsdc > fresh.perDayRemainingUsdc) {
+  // FAIL / REFUSE: the work was not plausible. No clock, so the poster's refund stays open
+  // and a spray of junk submissions cannot lock up an escrow.
+  const plausible = judge.verdict.decision === "RELEASE" || judge.verdict.decision === "ESCALATE";
+  if (!plausible) {
     return {
       judge,
       dryRun,
-      settlementNote:
-        `day cap reached at settle time (${fresh.daySpend.spentUsdc}/${fresh.daySpend.capUsdc} USDC` +
-        `${fresh.daySpend.degraded ? ", ledger unreadable — failing closed" : ""}) — escalate to poster instead`,
+      clockStarted: false,
+      settlementNote: `decision=${judge.verdict.decision} — work not plausible, no settlement clock`,
     };
   }
 
-  const { releaseEscrow } = await import("../escrow");
-  const release = await releaseEscrow(input.bountyId, judge.hash);
-  return { judge, dryRun, release };
+  const { markSubmittedOnChain } = await import("../escrow");
+  await markSubmittedOnChain(input.bountyId);
+  return { judge, dryRun, clockStarted: true };
 }

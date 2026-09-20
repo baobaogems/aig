@@ -68,7 +68,11 @@ export interface OnChainBounty {
   worker: `0x${string}`;
   amount: bigint;
   deadline: bigint;
-  released: boolean;
+  /** 0 = nobody has taken the job. */
+  claimedAt: bigint;
+  /** 0 = nothing handed in. Non-zero shuts the poster's unilateral refund. */
+  submittedAt: bigint;
+  settled: boolean;
   refunded: boolean;
 }
 
@@ -92,49 +96,102 @@ export async function awaitReceipt(hash: `0x${string}`, label: string) {
   return withRpcRetry(() => arcPublicClient().waitForTransactionReceipt({ hash, timeout: 120_000 }), { label });
 }
 
-export interface ReleaseResult {
+/**
+ * Record on-chain that a deliverable exists. This is what shuts the poster's unilateral
+ * refund and starts the settlement clock.
+ *
+ * Call it ONLY for work the verdict found plausible (T1/T2). Marking junk would lock an
+ * escrow the poster is entitled to get back, which is the mirror image of the abuse v3
+ * exists to stop.
+ */
+export async function markSubmittedOnChain(bountyId: string): Promise<{ txHash: `0x${string}` }> {
+  if (isDryRun()) throw new Error("markSubmittedOnChain called while DRY_RUN is on");
+
+  const onChain = await getBounty(bountyId);
+  if (!onChain) throw new Error(`markSubmitted: bounty ${bountyId} not found on-chain`);
+  if (onChain.settled || onChain.refunded) throw new Error(`markSubmitted: bounty ${bountyId} already settled`);
+  // Already marked is not an error: the clock is running, which is all the caller wanted.
+  if (onChain.submittedAt > 0n) return { txHash: "0x" as `0x${string}` };
+
+  const txHash = await withRpcRetry(
+    () =>
+      serverWallet().writeContract({
+        address: escrowAddress(),
+        abi: arbiterEscrowAbi,
+        functionName: "markSubmitted",
+        args: [toBountyKey(bountyId)],
+      }),
+    { label: "markSubmitted" },
+  );
+  const receipt = await awaitReceipt(txHash, "markSubmitted receipt");
+  if (receipt.status !== "success") throw new Error(`markSubmitted: tx ${txHash} reverted on-chain`);
+  return { txHash };
+}
+
+export interface SettleResultOnChain {
   txHash: `0x${string}`;
   worker: `0x${string}`;
+  /** What the worker actually received — not what the verdict wished for. */
   amountUsdc: number;
+  /** What went back to the poster. Non-zero whenever workerBps < 10000. */
+  posterAmountUsdc: number;
+  workerBps: number;
 }
 
 /**
- * Release escrowed USDC to the worker, committing the verdict hash on-chain.
+ * Settle the escrow, splitting it between worker and poster.
  *
  * Pre-flight checks are deliberately redundant with the contract's own reverts: a clear
  * server-side error is cheaper to debug than a reverted transaction, and a refused
- * release must never look like a successful one.
+ * settlement must never look like a successful one.
  */
-export async function releaseEscrow(bountyId: string, verdictHash: `0x${string}`): Promise<ReleaseResult> {
-  if (isDryRun()) throw new Error("releaseEscrow called while DRY_RUN is on — refusing to move money");
+export async function settleEscrow(
+  bountyId: string,
+  verdictHash: `0x${string}`,
+  workerBps: number,
+): Promise<SettleResultOnChain> {
+  if (isDryRun()) throw new Error("settleEscrow called while DRY_RUN is on — refusing to move money");
   if (!verdictHash || verdictHash === "0x" || /^0x0+$/.test(verdictHash)) {
-    throw new Error("releaseEscrow: empty verdictHash — a release must carry an auditable verdict");
+    throw new Error("settleEscrow: empty verdictHash — a settlement must carry an auditable verdict");
+  }
+  if (!Number.isInteger(workerBps) || workerBps < 0 || workerBps > 10_000) {
+    throw new Error(`settleEscrow: workerBps ${workerBps} outside 0..10000`);
   }
 
   const onChain = await getBounty(bountyId);
-  if (!onChain) throw new Error(`releaseEscrow: bounty ${bountyId} not found on-chain`);
-  if (onChain.released) throw new Error(`releaseEscrow: bounty ${bountyId} already released`);
-  if (onChain.refunded) throw new Error(`releaseEscrow: bounty ${bountyId} already refunded`);
+  if (!onChain) throw new Error(`settleEscrow: bounty ${bountyId} not found on-chain`);
+  if (onChain.settled) throw new Error(`settleEscrow: bounty ${bountyId} already settled`);
+  if (onChain.refunded) throw new Error(`settleEscrow: bounty ${bountyId} already refunded`);
+  if (onChain.submittedAt === 0n) {
+    throw new Error(`settleEscrow: bounty ${bountyId} has no submission on-chain — markSubmitted first`);
+  }
 
-  // Retrying the send is safe: the contract allows one release per bounty, ever, so a
+  // Retrying the send is safe: the contract allows one settlement per bounty, ever, so a
   // duplicate submission reverts instead of paying twice.
   const txHash = await withRpcRetry(
     () =>
       serverWallet().writeContract({
         address: escrowAddress(),
         abi: arbiterEscrowAbi,
-        functionName: "release",
-        args: [toBountyKey(bountyId), verdictHash],
+        functionName: "settle",
+        args: [toBountyKey(bountyId), verdictHash, workerBps],
       }),
-    { label: "release" },
+    { label: "settle" },
   );
 
-  // Wait for the receipt: unlike the v2 CCTP relay (SSE, Vercel window), a release is the
-  // final settlement step — the caller must know it actually mined before recording it.
-  const receipt = await awaitReceipt(txHash, "release receipt");
-  if (receipt.status !== "success") throw new Error(`releaseEscrow: tx ${txHash} reverted on-chain`);
+  const receipt = await awaitReceipt(txHash, "settle receipt");
+  if (receipt.status !== "success") throw new Error(`settleEscrow: tx ${txHash} reverted on-chain`);
 
-  return { txHash, worker: onChain.worker, amountUsdc: unitsToUsdc(onChain.amount) };
+  const total = unitsToUsdc(onChain.amount);
+  const workerAmount = unitsToUsdc((onChain.amount * BigInt(workerBps)) / 10_000n);
+  return {
+    txHash,
+    worker: onChain.worker,
+    amountUsdc: workerAmount,
+    // The remainder, exactly as the contract computes it — never recomputed from bps.
+    posterAmountUsdc: Math.round((total - workerAmount) * 1e6) / 1e6,
+    workerBps,
+  };
 }
 
 /**

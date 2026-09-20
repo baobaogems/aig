@@ -1,12 +1,14 @@
-// route.test.ts — POST /api/judge, the only route that can move money.
+// route.test.ts — POST /api/judge.
 //
 // Judging is an SSE stream, so a failure inside the stream still arrives as HTTP 200 with an
 // `error` event. That is exactly the shape a test can miss by checking `res.status` alone —
 // every test here reads the events.
 //
-// The money assertions are the point: status RELEASED only when USDC actually moved, points
-// only alongside a real release, and the verdict row written BEFORE any status side-effect,
-// so the spend ledger can never under-count a release.
+// SINCE v3 THIS ROUTE MOVES NO MONEY, and these tests exist mostly to keep it that way. What
+// a plausible verdict does instead is start the clock: record the submission on-chain, which
+// shuts the poster's unilateral refund and opens their window. The assertions below are
+// therefore about what must NOT happen (no payout, no points) and about the one thing that
+// must (the clock starts, and only for work the arbiter found plausible).
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -44,6 +46,7 @@ function settleResult(over: Record<string, unknown> = {}) {
   return {
     judge: { verdict: verdict(), hash: "0xdeadbeef" },
     dryRun: false,
+    clockStarted: true,
     ...over,
   };
 }
@@ -123,36 +126,55 @@ describe("POST /api/judge — states it refuses, before spending anything", () =
   });
 });
 
-describe("POST /api/judge — the money path", () => {
-  it("RELEASED + points only when USDC actually moved", async () => {
-    judgeAndSettle.mockResolvedValue(settleResult({
-      release: { txHash: "0xtx", worker: WORKER.toLowerCase(), amountUsdc: 5 },
-    }));
+describe("POST /api/judge — what it must NOT do any more", () => {
+  it("does not pay, does not award points, and leaves the bounty JUDGED on a T1 verdict", async () => {
+    judgeAndSettle.mockResolvedValue(settleResult());
     const b = judgeable();
     const evs = await events(await post({ bounty_id: b.id }));
 
     expect(evs.map((e) => e.event)).toEqual(["judging", "verdict", "done"]);
-    expect(evs[1].data.release_tx).toBe("0xtx");
-    expect(evs[2].data.status).toBe("RELEASED");
-    expect(state.bounties.get(b.id)!.status).toBe("RELEASED");
-    expect(awardBountyPoints).toHaveBeenCalledWith(WORKER.toLowerCase(), b.id, 5);
+    expect(evs[2].data.status).toBe("JUDGED");
+    expect(state.bounties.get(b.id)!.status).toBe("JUDGED");
+    expect(awardBountyPoints).not.toHaveBeenCalled();
+    expect(state.writes.some((w) => w.op === "setVerdictSettlement")).toBe(false);
   });
 
-  it("a RELEASE verdict that did NOT pay out stays JUDGED, and awards nothing", async () => {
-    // Dry run, spend cap, or a failed send — the verdict says release, the chain did not.
-    judgeAndSettle.mockResolvedValue(settleResult({ dryRun: true, settlementNote: "DRY_RUN" }));
+  it("records no release tx on the verdict it writes", async () => {
+    judgeAndSettle.mockResolvedValue(settleResult());
+    await events(await post({ bounty_id: judgeable().id }));
+    const write = state.writes.find((w) => w.op === "insertVerdict")!.args as { release_tx: unknown };
+    expect(write.release_tx).toBeNull();
+  });
+});
+
+describe("POST /api/judge — starting the clock", () => {
+  it("marks the submission once the chain has it, so the poster can no longer refund alone", async () => {
+    judgeAndSettle.mockResolvedValue(settleResult());
     const b = judgeable();
     const evs = await events(await post({ bounty_id: b.id }));
 
-    expect(evs[2].data.status).toBe("JUDGED");
-    expect(evs[1].data.release_tx).toBeNull();
-    expect(awardBountyPoints).not.toHaveBeenCalled();
+    expect(evs[1].data.clock_started).toBe(true);
+    expect(state.bounties.get(b.id)!.submitted_at).toBeTruthy();
   });
 
-  it("maps REFUSE to REFUSED and FAIL/ESCALATE to JUDGED", async () => {
-    for (const [decision, expected] of [["REFUSE", "REFUSED"], ["FAIL", "JUDGED"], ["ESCALATE", "JUDGED"]]) {
+  it("starts no clock for work the arbiter found implausible — the poster's refund stays open", async () => {
+    judgeAndSettle.mockResolvedValue(
+      settleResult({ judge: { verdict: verdict({ decision: "FAIL", total_score: 20 }), hash: "0xh" },
+        clockStarted: false, settlementNote: "not plausible" }),
+    );
+    const b = judgeable();
+    const evs = await events(await post({ bounty_id: b.id }));
+
+    expect(evs[1].data.clock_started).toBe(false);
+    expect(state.bounties.get(b.id)!.submitted_at).toBeNull();
+    expect(state.writes.some((w) => w.op === "markBountySubmitted")).toBe(false);
+  });
+
+  it("maps REFUSE to REFUSED and everything else to JUDGED", async () => {
+    for (const [decision, expected] of [["REFUSE", "REFUSED"], ["FAIL", "JUDGED"], ["ESCALATE", "JUDGED"], ["RELEASE", "JUDGED"]]) {
       judgeAndSettle.mockResolvedValue(settleResult({
         judge: { verdict: verdict({ decision }), hash: "0xh" },
+        clockStarted: decision === "ESCALATE" || decision === "RELEASE",
       }));
       const b = judgeable();
       const evs = await events(await post({ bounty_id: b.id }));
@@ -161,9 +183,7 @@ describe("POST /api/judge — the money path", () => {
   });
 
   it("writes the verdict row BEFORE the status change, so the ledger cannot miss it", async () => {
-    judgeAndSettle.mockResolvedValue(settleResult({
-      release: { txHash: "0xtx", worker: WORKER.toLowerCase(), amountUsdc: 5 },
-    }));
+    judgeAndSettle.mockResolvedValue(settleResult());
     await events(await post({ bounty_id: judgeable().id }));
     const ops = state.writes.map((w) => w.op);
     expect(ops.indexOf("insertVerdict")).toBeLessThan(ops.lastIndexOf("updateBountyStatus"));
@@ -177,16 +197,14 @@ describe("POST /api/judge — the money path", () => {
     expect(evs.at(-1)!.event).toBe("error");
     expect(evs.at(-1)!.data.message).toMatch(/401/);
     expect(state.bounties.get(b.id)!.status).toBe("SUBMITTED"); // unchanged — nothing was decided
-    expect(awardBountyPoints).not.toHaveBeenCalled();
   });
 
-  it("does not award points when the chain paid but the DB has no worker", async () => {
-    judgeAndSettle.mockResolvedValue(settleResult({
-      release: { txHash: "0xtx", worker: WORKER.toLowerCase(), amountUsdc: 5 },
-    }));
-    const b = judgeable({ worker_id: null });
-    const evs = await events(await post({ bounty_id: b.id }));
-    expect(evs.at(-1)!.data.status).toBe("RELEASED");
-    expect(awardBountyPoints).not.toHaveBeenCalled();
+  /// A failed mark costs the worker timeoutRelease, their only right that does not depend on
+  /// this server. It must never be swallowed into a cheerful "done".
+  it("surfaces a failed on-chain mark as an error, never as done", async () => {
+    judgeAndSettle.mockRejectedValue(new Error("markSubmitted: tx reverted on-chain"));
+    const evs = await events(await post({ bounty_id: judgeable().id }));
+    expect(evs.at(-1)!.event).toBe("error");
+    expect(evs.at(-1)!.data.message).toMatch(/markSubmitted/);
   });
 });

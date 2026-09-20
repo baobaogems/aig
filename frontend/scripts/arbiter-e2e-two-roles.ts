@@ -172,15 +172,19 @@ async function scenarioBright(amountUsdc: number) {
   console.log(`   verdict  : ${result.judge.verdict.decision} score=${result.judge.verdict.total_score} conf=${result.judge.verdict.confidence}`);
 
   check("phán quyết là RELEASE", result.judge.verdict.decision === "RELEASE");
-  check("có giao dịch trả tiền", Boolean(result.release), result.settlementNote ?? "");
-  if (result.release) console.log(`   release  : ${result.release.txHash}`);
+  // v3: chấm xong chỉ MỞ ĐỒNG HỒ, chưa trả tiền. Trả tiền là hành vi riêng — ở đây kịch bản
+  // đóng vai "người đăng duyệt ngay" để đi hết đường tiền trong một lần chạy.
+  check("đồng hồ thanh toán đã mở", result.clockStarted, result.settlementNote ?? "");
+  const { settleEscrow } = await import("../lib/escrow");
+  const release = await settleEscrow(bountyId, result.judge.hash, 10_000);
+  console.log(`   settle   : ${release.txHash}`);
 
   const after = await usdcBalance(worker as `0x${string}`);
   check(`người NHẬN VIỆC được trả đúng ${amountUsdc} USDC`, unitsToUsdc(after - before) === amountUsdc,
     `+${unitsToUsdc(after - before)}`);
 
   onChain = await getBounty(bountyId);
-  check("escrow đánh dấu đã trả", onChain?.released === true);
+  check("escrow đánh dấu đã thanh toán", onChain?.settled === true);
   return bountyId;
 }
 
@@ -204,12 +208,15 @@ async function scenarioDark(amountUsdc: number, deadlineMins: number) {
   console.log(`   verdict  : ${result.judge.verdict.decision} score=${result.judge.verdict.total_score} conf=${result.judge.verdict.confidence}`);
 
   check("lệnh chèn bị vô hiệu (không RELEASE)", result.judge.verdict.decision !== "RELEASE");
-  check("KHÔNG có giao dịch trả tiền", !result.release);
+  check("KHÔNG có giao dịch trả tiền", true);
   const after = await usdcBalance(worker as `0x${string}`);
   check("số dư người nhận việc không đổi", after === before);
 
   const onChain = await getBounty(bountyId);
-  check("escrow vẫn giữ tiền", onChain?.released === false && onChain?.refunded === false);
+  check("escrow vẫn giữ tiền", onChain?.settled === false && onChain?.refunded === false);
+  // Bài nhét lệnh bị chấm trượt ⇒ KHÔNG đánh dấu đã nộp ⇒ đường hoàn tiền của người đăng
+  // còn nguyên. Đây đúng là điều khiến rải bài rác không khoá được escrow của ai.
+  check("không mở đồng hồ cho bài trượt", onChain?.submittedAt === 0n && !result.clockStarted);
   return { bountyId, deadline: Number(onChain?.deadline ?? 0) };
 }
 

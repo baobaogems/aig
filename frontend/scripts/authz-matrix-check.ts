@@ -78,8 +78,12 @@ async function main() {
     ["POST /api/judge", "/api/judge", { bounty_id: id }],
     ["POST /api/escalation", "/api/escalation", { bounty_id: id, verdict_id: "x", poster_action: "APPROVE" }],
     ["POST /api/refund", "/api/refund", { bounty_id: id }],
-    ["POST /api/settle", "/api/settle", { bounty_id: id }],
+    ["POST /api/settlement/object", "/api/settlement/object", { bounty_id: id, note: "lý do đủ dài để qua kiểm" }],
   ];
+
+  // /api/settlement/finalize is deliberately NOT in this matrix: it is open to any caller by
+  // design, because a worker owed money must not depend on this platform being reachable.
+  // It takes one argument and has one outcome, so "anyone may call it" is the feature.
 
   console.log("chưa đăng nhập — mọi thứ phải 401:");
   const create = await post("/api/bounty", {

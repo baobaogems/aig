@@ -21,7 +21,9 @@
 // that throw and a forgiving double would hide it.
 // =============================================================================
 
-import type { BountyRow, BountyDetail, BountyStatus, RubricRow, SubmissionRow, VerdictRow } from "@/lib/arbiter/store";
+import type {
+  BountyRow, BountyDetail, BountyStatus, EscalationRow, RubricRow, SubmissionRow, VerdictRow,
+} from "@/lib/arbiter/store";
 
 /** A secret only these tests use. Set before any module that reads it is imported. */
 export const TEST_SESSION_SECRET = "test-secret-at-least-32-characters-long-xxxx";
@@ -35,6 +37,7 @@ interface State {
   rubrics: Map<string, RubricRow>;
   submissions: Map<string, SubmissionRow>;
   verdicts: Map<string, VerdictRow>;
+  escalations: Map<string, EscalationRow>;
   /** Everything written through the doubles, in order — assertions read this. */
   writes: Array<{ op: string; args: unknown }>;
   /** Rate-limit rows, keyed by bucket. The limiter counts these for real. */
@@ -43,12 +46,12 @@ interface State {
 
 export const state: State = {
   bounties: new Map(), rubrics: new Map(), submissions: new Map(),
-  verdicts: new Map(), writes: [], rateRows: [],
+  verdicts: new Map(), escalations: new Map(), writes: [], rateRows: [],
 };
 
 export function resetState(): void {
   state.bounties.clear(); state.rubrics.clear(); state.submissions.clear();
-  state.verdicts.clear(); state.writes = []; state.rateRows = [];
+  state.verdicts.clear(); state.escalations.clear(); state.writes = []; state.rateRows = [];
 }
 
 let seq = 0;
@@ -65,6 +68,7 @@ export function seedBounty(over: Partial<BountyRow> = {}, extra: {
     brief: "Viết một bài giới thiệu sản phẩm dài khoảng 300 chữ.",
     amount_usdc: 5, deadline: new Date(Date.now() + 86_400_000).toISOString(),
     status: "OPEN" as BountyStatus, escrow_tx: null, created_at: new Date().toISOString(),
+    submitted_at: null, escrow_version: 3,
     ...over,
   };
   state.bounties.set(id, bounty);
@@ -90,7 +94,7 @@ export function seedBounty(over: Partial<BountyRow> = {}, extra: {
     state.verdicts.set(id, {
       id: nextId("verdict"), submission_id: state.submissions.get(id)?.id ?? "none",
       verdict_json: {} as VerdictRow["verdict_json"], decision: "FAIL", confidence: 80,
-      total_score: 40, verdict_hash: "0xhash", release_tx: null,
+      total_score: 40, verdict_hash: "0xhash", release_tx: null, worker_bps: null,
       created_at: new Date().toISOString(), ...extra.verdict,
     });
   }
@@ -109,7 +113,7 @@ function detailOf(bountyId: string): BountyDetail {
     rubric: state.rubrics.get(bountyId) ?? null,
     submission: state.submissions.get(bountyId) ?? null,
     verdict: state.verdicts.get(bountyId) ?? null,
-    escalation: null,
+    escalation: state.escalations.get(bountyId) ?? null,
   };
 }
 
@@ -148,8 +152,13 @@ export const storeModule = {
       confidence: (input.verdict as { confidence: number }).confidence,
       total_score: (input.verdict as { total_score: number }).total_score,
       verdict_hash: String(input.verdict_hash), release_tx: (input.release_tx as string | null) ?? null,
-      created_at: new Date().toISOString(),
+      worker_bps: null, created_at: new Date().toISOString(),
     } as unknown as VerdictRow;
+    // Store it against its bounty, or a route that writes a verdict and then reads the detail
+    // back would see nothing — and the double would be hiding a whole class of ordering bug.
+    for (const [bountyId, sub] of state.submissions) {
+      if (sub.id === row.submission_id) state.verdicts.set(bountyId, row);
+    }
     return row;
   },
 
@@ -157,6 +166,34 @@ export const storeModule = {
     state.writes.push({ op: "updateBountyStatus", args: { bountyId, status } });
     const b = state.bounties.get(bountyId);
     if (b) state.bounties.set(bountyId, { ...b, status });
+  },
+
+  async markBountySubmitted(bountyId: string, at: string) {
+    state.writes.push({ op: "markBountySubmitted", args: { bountyId, at } });
+    const b = state.bounties.get(bountyId);
+    // Conditional on submitted_at being null, exactly like the real update — a retry must
+    // not be able to slide the poster's window forward at the worker's expense.
+    if (b && b.submitted_at == null) state.bounties.set(bountyId, { ...b, submitted_at: at });
+  },
+
+  async setVerdictSettlement(verdictId: string, releaseTx: string, workerBps: number) {
+    state.writes.push({ op: "setVerdictSettlement", args: { verdictId, releaseTx, workerBps } });
+    for (const [bountyId, v] of state.verdicts) {
+      if (v.id === verdictId) state.verdicts.set(bountyId, { ...v, release_tx: releaseTx, worker_bps: workerBps });
+    }
+  },
+
+  async insertEscalation(input: Record<string, unknown>) {
+    state.writes.push({ op: "insertEscalation", args: input });
+    const row = {
+      id: nextId("escalation"), verdict_id: String(input.verdict_id),
+      poster_action: input.poster_action, note: (input.note as string | null) ?? null,
+      acted_at: new Date().toISOString(),
+    } as unknown as EscalationRow;
+    for (const [bountyId, v] of state.verdicts) {
+      if (v.id === row.verdict_id) state.escalations.set(bountyId, row);
+    }
+    return row;
   },
 
   async listBounties() { return [...state.bounties.values()]; },

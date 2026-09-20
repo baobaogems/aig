@@ -37,6 +37,15 @@ export async function POST(req: NextRequest) {
       return Response.json({ error: "bounty was released — nothing to refund" }, { status: 409 });
     if (bounty.status === "REFUNDED")
       return Response.json({ error: "already refunded" }, { status: 409 });
+    // v3's central rule, and the reason this file needed changing at all: once work has been
+    // handed in, the poster can no longer take the money back on their own. They keep every
+    // other option — approve, reject at the kill fee, object to a T1 — but not this one.
+    // The contract refuses it too; this is the readable version of that revert.
+    if (bounty.submitted_at)
+      return Response.json(
+        { error: "đã có bài nộp — không hoàn tiền đơn phương được nữa. Hãy duyệt, hoặc từ chối kèm lý do." },
+        { status: 409 },
+      );
     if (new Date(bounty.deadline).getTime() > Date.now())
       return Response.json(
         { error: `deadline not reached (${bounty.deadline}) — the contract only refunds after it` },

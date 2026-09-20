@@ -120,34 +120,44 @@ async function runCycle() {
   console.log(`   confidence : ${v.confidence_reasoning.slice(0, 160)}`);
 
   console.log(`\n▶ 3/3 settle`);
-  if (!result.release) {
-    console.log(`   NO RELEASE — ${result.settlementNote}`);
+  // v3 splits judging from paying: judgeAndSettle only records the submission on-chain, which
+  // starts the settlement clock. Paying is a separate act. Gate 2 asks whether the whole
+  // chain of custody works, so the script performs that second act itself.
+  if (!result.clockStarted) {
+    console.log(`   NO SETTLEMENT CLOCK — ${result.settlementNote}`);
     console.log(`   escrow still holds the funds; poster can refund after the deadline.`);
-    console.log(`\nGATE 2: not met on this run (verdict did not authorise an autonomous release).`);
+    console.log(`\nGATE 2: not met on this run (verdict did not authorise an autonomous payout).`);
     process.exit(1);
   }
-  console.log(`   release tx : ${result.release.txHash}`);
+  if (v.decision !== "RELEASE") {
+    console.log(`   decision ${v.decision} — a human decides this one; nothing paid automatically.`);
+    console.log(`\nGATE 2: not met on this run (verdict escalated rather than authorising payment).`);
+    process.exit(1);
+  }
+  const { settleEscrow } = await import("../lib/escrow");
+  const release = await settleEscrow(bountyId, result.judge.hash, 10_000);
+  console.log(`   settle tx  : ${release.txHash}`);
 
   // Verify against the chain, not against our own return value.
   const onChain = await getBounty(bountyId);
   const workerAfter = await usdcBalance(worker as `0x${string}`);
   // Decode the release receipt's own logs — no block-range query, so this works on any RPC.
   const receipt = await withRpcRetry(
-    () => pub.getTransactionReceipt({ hash: result.release!.txHash as `0x${string}` }),
-    { label: "release receipt" },
+    () => pub.getTransactionReceipt({ hash: release.txHash }),
+    { label: "settle receipt" },
   );
-  const [released] = parseEventLogs({ abi: arbiterEscrowAbi, eventName: "Released", logs: receipt.logs });
-  const emittedHash = released?.args.verdictHash;
-  const emittedKeyOk = released?.args.bountyId === toBountyKey(bountyId);
+  const [settledLog] = parseEventLogs({ abi: arbiterEscrowAbi, eventName: "Settled", logs: receipt.logs });
+  const emittedHash = settledLog?.args.verdictHash;
+  const emittedKeyOk = settledLog?.args.bountyId === toBountyKey(bountyId);
 
   const paidDelta = unitsToUsdc(workerAfter - workerBefore);
   const hashOk = emittedHash === result.judge.hash && emittedKeyOk;
-  console.log(`   released   : ${onChain?.released ? "true ✓" : "false ✗"}`);
+  console.log(`   settled    : ${onChain?.settled ? "true ✓" : "false ✗"}`);
   console.log(`   worker +   : ${paidDelta} USDC ${paidDelta === amountUsdc ? "✓" : "✗"}`);
-  console.log(`   on-chain verdictHash: ${emittedHash ?? "(no Released log found)"} ${hashOk ? "✓ matches verdict" : "✗"}`);
+  console.log(`   on-chain verdictHash: ${emittedHash ?? "(no Settled log found)"} ${hashOk ? "✓ matches verdict" : "✗"}`);
 
-  const pass = Boolean(onChain?.released) && paidDelta === amountUsdc && hashOk;
-  console.log(`\nGATE 2: ${pass ? "PASSED — escrow locked, verdict judged, USDC released, hash on-chain" : "FAILED — see ✗ above"}`);
+  const pass = Boolean(onChain?.settled) && paidDelta === amountUsdc && hashOk;
+  console.log(`\nGATE 2: ${pass ? "PASSED — escrow locked, verdict judged, USDC settled, hash on-chain" : "FAILED — see ✗ above"}`);
   process.exit(pass ? 0 : 1);
 }
 
