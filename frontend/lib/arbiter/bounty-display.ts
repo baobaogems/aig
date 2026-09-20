@@ -69,6 +69,30 @@ export function timeLeft(deadline: string, now: number): string {
   return `còn ${Math.floor(hours / 24)} ngày`;
 }
 
+/**
+ * What the status strip should say.
+ *
+ * A countdown on a finished bounty produces a card that contradicts itself — the chip saying
+ * "Đã xong" above a strip saying "đã quá hạn", which are both true and together say nothing.
+ * Once a bounty is settled the useful fact is the OUTCOME, so the strip switches to it.
+ */
+export function stripLabel(state: BountyState, status: string, deadline: string, now: number): string {
+  if (state !== "closed") return timeLeft(deadline, now);
+
+  switch (status) {
+    case "RELEASED":
+      return "đã trả tiền cho người làm";
+    case "REFUNDED":
+      return "đã hoàn tiền cho người đăng";
+    case "REFUSED":
+      return "trọng tài từ chối chấm";
+    case "JUDGED":
+      return "đã chấm — chờ người đăng quyết";
+    default:
+      return "đã kết thúc";
+  }
+}
+
 /** True while the deadline is close enough that the countdown should feel urgent. */
 export function isUrgent(deadline: string, now: number): boolean {
   const ms = new Date(deadline).getTime() - now;

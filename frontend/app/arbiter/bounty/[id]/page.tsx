@@ -17,6 +17,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
+import { AmountBlock } from "@/components/ui/amount-block";
 import { RubricTable } from "@/components/arbiter/rubric-table";
 import { DecisionThresholds } from "@/components/arbiter/decision-thresholds";
 import { BountyActionPanel } from "@/components/arbiter/bounty-action-panel";
@@ -53,7 +54,9 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
   }
 
   const { detail, isParty } = scoped;
-  const { bounty, rubric, submission, verdict } = detail;
+  // The verdict renders inside BountyActionPanel (VerdictCertificate), which also carries the
+  // poster's approve/reject — the decision and the response to it belong in one block.
+  const { bounty, rubric, submission } = detail;
 
   // Rendered on the server, so this is the state at request time. The board's live ticker is
   // the place for a second-by-second countdown; here the number only has to be honest.
@@ -75,11 +78,11 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
             </span>
           </div>
 
-          <p className="mt-3 font-[family-name:var(--font-heading)] text-3xl font-semibold text-[var(--color-ink)]">
-            {bounty.amount_usdc} USDC
-          </p>
-          <p className="mt-1 text-xs text-[var(--color-ink-muted)]">
-            đã khoá trong escrow trên Arc testnet · {timeLeft(bounty.deadline, now)}
+          <div className="mt-3 max-w-xs">
+            <AmountBlock amountUsdc={bounty.amount_usdc} label="Tiền treo trong escrow" size="lg" />
+          </div>
+          <p className="mt-2 text-xs text-[var(--color-ink-muted)]">
+            khoá trên Arc testnet · {timeLeft(bounty.deadline, now)}
           </p>
         </header>
 
@@ -120,17 +123,6 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
                 Đã có bài nộp. Nội dung chỉ người đăng và người làm đọc được.
               </p>
             )}
-          </Section>
-        )}
-
-        {verdict && (
-          <Section title="Phán quyết">
-            <p className="text-sm text-[var(--color-ink)]">
-              {verdict.decision} · điểm {verdict.total_score} · tự tin {verdict.confidence}
-            </p>
-            <p className="mt-1 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
-              hash: {verdict.verdict_hash}
-            </p>
           </Section>
         )}
 

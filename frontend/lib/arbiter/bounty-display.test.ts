@@ -9,6 +9,7 @@ import {
   isClaimable,
   isUrgent,
   shortCode,
+  stripLabel,
   timeLeft,
 } from "./bounty-display";
 
@@ -121,5 +122,35 @@ describe("shortCode", () => {
 
   it("traces back to the head of the id by eye", () => {
     expect(uuid.replace(/-/g, "").toUpperCase()).toContain(shortCode(uuid).slice(4));
+  });
+});
+
+describe("stripLabel", () => {
+  it("counts down while the bounty is still live", () => {
+    expect(stripLabel("unclaimed", "OPEN", at(3 * DAY), T0)).toBe("còn 3 ngày");
+    expect(stripLabel("in-progress", "OPEN", at(2 * HOUR), T0)).toBe("còn 2 giờ");
+  });
+
+  it("reports the outcome once settled, never a countdown", () => {
+    // A finished card showing "đã quá hạn" contradicts its own "Đã xong" chip: both true,
+    // together meaningless.
+    for (const [status, expected] of [
+      ["RELEASED", "đã trả tiền cho người làm"],
+      ["REFUNDED", "đã hoàn tiền cho người đăng"],
+      ["REFUSED", "trọng tài từ chối chấm"],
+      ["JUDGED", "đã chấm — chờ người đăng quyết"],
+    ] as const) {
+      expect(stripLabel("closed", status, at(-DAY), T0)).toBe(expected);
+    }
+  });
+
+  it("never says 'quá hạn' on a closed bounty, however long ago it ended", () => {
+    for (const status of ["RELEASED", "REFUNDED", "REFUSED", "JUDGED"]) {
+      expect(stripLabel("closed", status, at(-99 * DAY), T0)).not.toMatch(/quá hạn/);
+    }
+  });
+
+  it("still says so for work that merely ran out of time", () => {
+    expect(stripLabel("expired", "OPEN", at(-1), T0)).toBe("đã quá hạn");
   });
 });

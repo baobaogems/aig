@@ -16,6 +16,8 @@ export interface BountyRow {
   /** null while the bounty is open and nobody has claimed it. */
   worker_id: string | null;
   claim_tx?: string | null;
+  /** How many criteria the frozen rubric has. Derived in listBounties; not a column. */
+  rubric_count?: number;
   brief: string;
   amount_usdc: number;
   deadline: string;
@@ -253,7 +255,15 @@ export async function getBountyDetail(bountyId: string): Promise<BountyDetail> {
 }
 
 export async function listBounties(view: BountyView = "all", address?: string | null): Promise<BountyRow[]> {
-  let q = db().from("bounties").select().order("created_at", { ascending: false }).limit(50);
+  // The board shows "N tiêu chí chấm" on each card, which is the length of items_json — a
+  // count of rows would always be 1 and tell nobody anything. So the array is joined in and
+  // reduced to a number HERE; the rubric bodies never reach the client, where they would be
+  // 50 unused blobs on a list view.
+  let q = db()
+    .from("bounties")
+    .select("*, rubrics(items_json)")
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   if (view === "marketplace") {
     // The board shows work that is funded and still in time — including bounties somebody has
@@ -274,7 +284,13 @@ export async function listBounties(view: BountyView = "all", address?: string | 
 
   const { data, error } = await q;
   if (error) throw new Error(`list bounties: ${error.message}`);
-  return (data ?? []) as BountyRow[];
+
+  type Joined = BountyRow & { rubrics?: { items_json?: unknown[] }[] | null };
+  return (data ?? []).map((row) => {
+    const { rubrics, ...bounty } = row as Joined;
+    const items = rubrics?.[0]?.items_json;
+    return { ...bounty, rubric_count: Array.isArray(items) ? items.length : 0 } as BountyRow;
+  });
 }
 
 /**

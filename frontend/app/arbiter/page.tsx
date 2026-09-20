@@ -1,39 +1,50 @@
 "use client";
 
 // =============================================================================
-// /app/arbiter/page.tsx — AIG v4 Arbiter.
+// /app/arbiter/page.tsx — the board.
 //
-// The landing's primary CTA promises "See it settle on Arc" — a promise to SHOW,
-// not an invitation to fill in a form. So this page is an evidence display: the
-// track record reads as one band, the bounty ledger is the spine, and the two
-// operator forms (F1 create, F2 submit) live in drawers behind buttons.
+// Redesigned from a wall of identical rows (see plans/ ui-redesign stop 1–4). The failures it
+// was built to fix, by name:
 //
-// Flows F1–F5 and every API call are unchanged; this is the display layer only.
+//   D1  ten rows with identical spacing read as one undifferentiated block. Now: two sections,
+//       56px apart, against 12–16px inside a card — the eye separates them without a rule.
+//   E1  the amount had the least weight on screen. Now it is the card's anchor (AmountBlock).
+//   H1  "date · worker" glued two kinds of fact together. Now they live in different places.
+//   —   four tabs flattened two independent questions ("still open?" and "mine?") into one
+//       row where they looked like alternatives. Now: two labelled filter groups.
+//
+// One filled accent button on the page (E3), and it is the one that puts money into escrow.
 // =============================================================================
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { PosterBountyForm } from "@/components/arbiter/poster-bounty-form";
 import { WorkerSubmitForm } from "@/components/arbiter/worker-submit-form";
-import { BountyList } from "@/components/arbiter/bounty-list";
+import { BountyGrid } from "@/components/arbiter/bounty-grid";
 import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-stats-strip";
-import { EyebrowLabel } from "@/components/ui/eyebrow-label";
+import { SectionHeader } from "@/components/ui/section-header";
+import { FilterBar } from "@/components/ui/filter-bar";
+import { PillButton } from "@/components/ui/pill-button";
 import { Drawer } from "@/components/ui/drawer";
 import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
-import { MarketplaceBoard } from "@/components/arbiter/marketplace-board";
+import { useCountdown } from "@/components/arbiter/use-countdown";
+import type { BountyCardData } from "@/components/arbiter/bounty-card";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string | null; deadline: string; created_at: string }
+interface BountyRow extends BountyCardData {
+  created_at: string;
+}
 
 type OpenDrawer = null | "create" | "submit";
+type Availability = "open" | "done" | "all";
+type Role = "all" | "posted" | "claimed";
 
-/** Which slice of the board is on screen. "all" is the public record — the page's first job. */
-type Tab = "all" | "marketplace" | "mine-posted" | "mine-claimed";
+/** Which server view answers a given role filter. Availability is applied client-side. */
+const ROLE_VIEW: Record<Role, string> = {
+  all: "all",
+  posted: "mine-posted",
+  claimed: "mine-claimed",
+};
 
-const TABS: { key: Tab; label: string; signedInOnly: boolean }[] = [
-  { key: "all", label: "Toàn bộ hồ sơ", signedInOnly: false },
-  { key: "marketplace", label: "Chợ việc", signedInOnly: false },
-  { key: "mine-posted", label: "Tôi đăng", signedInOnly: true },
-  { key: "mine-claimed", label: "Tôi nhận", signedInOnly: true },
-];
+const OPEN_STATUSES = new Set(["OPEN", "SUBMITTED"]);
 
 export default function ArbiterPage() {
   const [bounties, setBounties] = useState<BountyRow[]>([]);
@@ -41,39 +52,61 @@ export default function ArbiterPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState<OpenDrawer>(null);
-  // The signed-in address, as the SERVER sees it. Null means "read-only visitor".
   const [session, setSession] = useState<string | null>(null);
-  const [tab, setTab] = useState<Tab>("all");
+
+  const [availability, setAvailability] = useState<Availability>("open");
+  const [role, setRole] = useState<Role>("all");
+
+  // One clock for every card on the page.
+  const now = useCountdown();
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/bounty?view=${tab}`);
+      const res = await fetch(`/api/bounty?view=${ROLE_VIEW[role]}`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setBounties(j.bounties); setStats(j.stats); setError("");
-    } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
-    finally { setLoading(false); }
-  }, [tab]);
+      setBounties(j.bounties);
+      setStats(j.stats);
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setLoading(false);
+    }
+  }, [role]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  useEffect(() => {
+    setLoading(true);
+    refresh();
+  }, [refresh]);
 
-  const actionClass =
-    "rounded-[var(--radius-pill)] border border-[var(--color-ink)]/15 bg-white/70 px-4 py-2 text-sm " +
-    "font-medium text-[var(--color-ink)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]";
+  // Split once, render twice. A bounty is "open" while it is still workable; everything that
+  // has been judged, paid, refunded or run out of time belongs to the record below.
+  const { open, done } = useMemo(() => {
+    const isOpen = (b: BountyRow) =>
+      OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > now;
+    return {
+      open: bounties.filter(isOpen),
+      done: bounties.filter((b) => !isOpen(b)),
+    };
+  }, [bounties, now]);
+
+  const showOpen = availability !== "done";
+  const showDone = availability !== "open";
 
   return (
-    <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-16 pt-12">
-      <div className="mx-auto grid max-w-3xl gap-6">
+    <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
+      <div className="mx-auto grid max-w-5xl gap-14">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
-          <EyebrowLabel>arbiter</EyebrowLabel>
-          <h1 className="mt-2 font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
-            Every verdict this arbiter has reached
-          </h1>
-          <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            An AI arbiter escrows USDC on Arc testnet and decides — with measured confidence — whether
-            a deliverable earned payment. Transparent and accountable: every verdict hash is on-chain.
-          </p>
+            <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
+              Arbiter
+            </h1>
+            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
+              Người đăng khoá USDC vào escrow trên Arc testnet. Một trọng tài AI chấm bài theo
+              bộ tiêu chí đã đóng băng, và tiền tự đi khi bài đủ điểm — mọi phán quyết đều ghi
+              hash lên chain.
+            </p>
           </div>
           <WalletConnectButton onSession={setSession} />
         </header>
@@ -81,63 +114,96 @@ export default function ArbiterPage() {
         <AgentStatsStrip stats={stats} />
 
         {error && (
-          <p className="rounded-xl px-4 py-3 text-sm" style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}>
+          <p
+            className="rounded-xl px-4 py-3 text-sm"
+            style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}
+          >
             {error}
           </p>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-1.5">
-            {TABS.filter((t) => !t.signedInOnly || session).map((t) => (
-              <button
-                key={t.key}
-                onClick={() => { setLoading(true); setTab(t.key); }}
-                className={
-                  "rounded-[var(--radius-pill)] px-3.5 py-1.5 text-sm transition-colors " +
-                  (tab === t.key
-                    ? "bg-[var(--color-ink)] text-white"
-                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]")
-                }
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-          {/* Operator actions. Outlined, not filled: on this page they are secondary to
-              reading the record, and red stays reserved for the primary action inside. */}
-          {/* Read the record without signing in; doing anything needs a wallet. The server
-              enforces this too — this only avoids offering a button that would 401. */}
-          {session ? (
-            <div className="flex gap-2">
-              <button className={actionClass} onClick={() => setDrawer("create")}>+ New bounty</button>
-              <button className={actionClass} onClick={() => setDrawer("submit")}>Submit work</button>
-            </div>
-          ) : (
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              Kết nối ví để đăng hoặc nhận việc.
-            </p>
-          )}
-        </div>
-
-        {/* The marketplace is a different question than the ledger — "what can I take?" rather
-            than "what has this arbiter decided?" — so it gets its own presentation. */}
-        {tab === "marketplace" ? (
-          <MarketplaceBoard
-            bounties={bounties}
-            loading={loading}
-            signedIn={Boolean(session)}
-            onChanged={refresh}
+        <section className="grid gap-5">
+          <SectionHeader
+            eyebrow="đang mở"
+            title="Chợ việc"
+            description="Việc đã khoá tiền và còn hạn. Đọc tiêu chí chấm trước khi nhận — không cần đăng nhập."
+            action={
+              session ? (
+                <div className="flex flex-wrap gap-2">
+                  {/* The only filled accent button on the page: it is the one that moves money. */}
+                  <PillButton onClick={() => setDrawer("create")}>Đăng việc</PillButton>
+                  <PillButton variant="secondary" onClick={() => setDrawer("submit")}>
+                    Nộp bài
+                  </PillButton>
+                </div>
+              ) : (
+                <p className="text-sm text-[var(--color-ink-muted)]">Kết nối ví để đăng hoặc nhận việc.</p>
+              )
+            }
           />
-        ) : (
-          <BountyList bounties={bounties} loading={loading} onChanged={refresh} />
+
+          <FilterBar
+            resultCount={showOpen && showDone ? bounties.length : showOpen ? open.length : done.length}
+            groups={[
+              {
+                label: "Trạng thái",
+                value: availability,
+                onChange: (v) => setAvailability(v as Availability),
+                options: [
+                  { value: "open", label: "Đang mở" },
+                  { value: "done", label: "Đã xong" },
+                  { value: "all", label: "Tất cả" },
+                ],
+              },
+              {
+                label: "Vai trò",
+                value: role,
+                onChange: (v) => setRole(v as Role),
+                options: [
+                  { value: "all", label: "Tất cả" },
+                  { value: "posted", label: "Tôi đăng" },
+                  { value: "claimed", label: "Tôi nhận" },
+                ],
+              },
+            ]}
+          />
+
+          {showOpen && (
+            <BountyGrid
+              bounties={open}
+              now={now}
+              loading={loading}
+              signedIn={Boolean(session)}
+              onChanged={refresh}
+              emptyTitle="Chưa có việc nào đang mở."
+              emptyHint="Việc chỉ hiện ở đây sau khi người đăng đã khoá USDC vào escrow."
+            />
+          )}
+        </section>
+
+        {showDone && (
+          <section className="grid gap-5">
+            <SectionHeader
+              eyebrow="kết quả"
+              title="Việc đã xong"
+              description="Những việc đã chấm xong hoặc hết hạn — trả tiền, hoàn tiền, hay người đăng tự quyết. Đây là hồ sơ công khai của trọng tài."
+            />
+            <BountyGrid
+              bounties={done}
+              now={now}
+              loading={loading}
+              emptyTitle="Chưa có việc nào kết thúc."
+              emptyHint="Việc sẽ chuyển xuống đây sau khi được chấm, hoàn tiền, hoặc quá hạn."
+            />
+          </section>
         )}
       </div>
 
       <Drawer
         open={drawer === "create"}
         onClose={() => setDrawer(null)}
-        title="New bounty"
-        description="Describe the job in plain language. The arbiter drafts a rubric from it, which you approve and freeze before any money is locked."
+        title="Đăng việc mới"
+        description="Mô tả công việc bằng lời thường. Trọng tài soạn bộ tiêu chí từ đó; bạn duyệt và đóng băng trước khi khoá tiền."
       >
         <PosterBountyForm onChanged={refresh} />
       </Drawer>
@@ -145,8 +211,8 @@ export default function ArbiterPage() {
       <Drawer
         open={drawer === "submit"}
         onClose={() => setDrawer(null)}
-        title="Submit work"
-        description="What you paste is snapshotted at submit time. Later edits to the source do not count."
+        title="Nộp bài"
+        description="Nội dung được đóng băng ngay lúc nộp. Sửa nguồn sau đó không tính."
       >
         <WorkerSubmitForm onChanged={refresh} />
       </Drawer>
