@@ -10,7 +10,7 @@ import { VerdictCertificate } from "@/components/arbiter/verdict-certificate";
 import { BountyRow } from "@/components/arbiter/bounty-row";
 import { JudgingProgress, type JudgeStage, type JudgeVerdict } from "@/components/arbiter/judging-progress";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
+interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string | null; deadline: string; created_at: string }
 interface RubricScore { item_id: string; weight: number; score: number; evidence: string[]; reasoning: string }
 interface RubricItem { item_id: string; criterion: string; weight: number }
 interface Detail {

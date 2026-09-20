@@ -19,10 +19,21 @@ import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-sta
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { Drawer } from "@/components/ui/drawer";
 import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
+import { MarketplaceBoard } from "@/components/arbiter/marketplace-board";
 
-interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string; deadline: string; created_at: string }
+interface BountyRow { id: string; status: string; amount_usdc: number; brief: string; worker_id: string | null; deadline: string; created_at: string }
 
 type OpenDrawer = null | "create" | "submit";
+
+/** Which slice of the board is on screen. "all" is the public record — the page's first job. */
+type Tab = "all" | "marketplace" | "mine-posted" | "mine-claimed";
+
+const TABS: { key: Tab; label: string; signedInOnly: boolean }[] = [
+  { key: "all", label: "Toàn bộ hồ sơ", signedInOnly: false },
+  { key: "marketplace", label: "Chợ việc", signedInOnly: false },
+  { key: "mine-posted", label: "Tôi đăng", signedInOnly: true },
+  { key: "mine-claimed", label: "Tôi nhận", signedInOnly: true },
+];
 
 export default function ArbiterPage() {
   const [bounties, setBounties] = useState<BountyRow[]>([]);
@@ -32,16 +43,17 @@ export default function ArbiterPage() {
   const [drawer, setDrawer] = useState<OpenDrawer>(null);
   // The signed-in address, as the SERVER sees it. Null means "read-only visitor".
   const [session, setSession] = useState<string | null>(null);
+  const [tab, setTab] = useState<Tab>("all");
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/bounty");
+      const res = await fetch(`/api/bounty?view=${tab}`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       setBounties(j.bounties); setStats(j.stats); setError("");
     } catch (e) { setError(e instanceof Error ? e.message : String(e)); }
     finally { setLoading(false); }
-  }, []);
+  }, [tab]);
 
   useEffect(() => { refresh(); }, [refresh]);
 
@@ -75,9 +87,22 @@ export default function ArbiterPage() {
         )}
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-ink)]">
-            The ledger
-          </h2>
+          <div className="flex flex-wrap gap-1.5">
+            {TABS.filter((t) => !t.signedInOnly || session).map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setLoading(true); setTab(t.key); }}
+                className={
+                  "rounded-[var(--radius-pill)] px-3.5 py-1.5 text-sm transition-colors " +
+                  (tab === t.key
+                    ? "bg-[var(--color-ink)] text-white"
+                    : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]")
+                }
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
           {/* Operator actions. Outlined, not filled: on this page they are secondary to
               reading the record, and red stays reserved for the primary action inside. */}
           {/* Read the record without signing in; doing anything needs a wallet. The server
@@ -94,7 +119,18 @@ export default function ArbiterPage() {
           )}
         </div>
 
-        <BountyList bounties={bounties} loading={loading} onChanged={refresh} />
+        {/* The marketplace is a different question than the ledger — "what can I take?" rather
+            than "what has this arbiter decided?" — so it gets its own presentation. */}
+        {tab === "marketplace" ? (
+          <MarketplaceBoard
+            bounties={bounties}
+            loading={loading}
+            signedIn={Boolean(session)}
+            onChanged={refresh}
+          />
+        ) : (
+          <BountyList bounties={bounties} loading={loading} onChanged={refresh} />
+        )}
       </div>
 
       <Drawer

@@ -1,6 +1,11 @@
 "use client";
 
-// poster-bounty-form.tsx — F1: brief + amount + deadline → rubric preview → approve/freeze.
+// poster-bounty-form.tsx — F1: brief + amount + deadline → rubric preview → approve → sign.
+//
+// Phase 03/04 changed two things here. The poster is no longer typed into a box — it is
+// whoever signed in, because an address you type is a claim and an address you sign with is
+// proof. And the worker box is gone entirely: bounties open to the board, and the worker
+// arrives by claiming (components/arbiter/claim-button.tsx).
 //
 // Every field has a real label and a format hint, and errors appear under the field that
 // caused them. The checks here mirror app/api/bounty/route.ts exactly — they are a courtesy
@@ -12,15 +17,13 @@
 import { useState } from "react";
 import { PillButton } from "@/components/ui/pill-button";
 import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-field";
+import { PosterLockFunds, type LockParams } from "@/components/arbiter/poster-lock-funds";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
 
-const ADDR_RE = /^0x[0-9a-fA-F]{40}$/;
-type Errors = Partial<Record<"poster" | "worker" | "brief" | "amount" | "deadline", string>>;
+type Errors = Partial<Record<"brief" | "amount" | "deadline", string>>;
 
 export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
-  const [poster, setPoster] = useState("");
-  const [worker, setWorker] = useState("");
   const [brief, setBrief] = useState("");
   const [amount, setAmount] = useState("5");
   const [deadline, setDeadline] = useState("");
@@ -28,6 +31,8 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   const [msg, setMsg] = useState("");
   const [errors, setErrors] = useState<Errors>({});
   const [draft, setDraft] = useState<{ id: string; rubric: RubricItem[] } | null>(null);
+  /** Set once the rubric is approved in LIVE mode: the parameters the poster must now sign. */
+  const [lock, setLock] = useState<LockParams | null>(null);
 
   /** Clear a field's error the moment it is edited. Leaving it red while someone fixes it
    *  keeps telling them they are wrong after they have stopped being wrong. */
@@ -41,8 +46,6 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   /** Mirrors the server's rules so the failure lands on the field, not in a banner. */
   function validate(): Errors {
     const e: Errors = {};
-    if (!ADDR_RE.test(poster)) e.poster = "Needs a wallet address: 0x followed by 40 hex characters.";
-    if (!ADDR_RE.test(worker)) e.worker = "Needs a wallet address: 0x followed by 40 hex characters.";
     if (brief.trim().length < 20) e.brief = `At least 20 characters — currently ${brief.trim().length}.`;
     const n = Number(amount);
     if (!Number.isFinite(n) || n <= 0) e.amount = "Must be more than 0.";
@@ -61,9 +64,10 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
     try {
       const res = await fetch("/api/bounty", {
         method: "POST", headers: { "Content-Type": "application/json" },
+        // No poster_id, no worker_id: the poster comes from the session cookie, and the
+        // bounty opens unassigned so anyone can claim it.
         body: JSON.stringify({
-          poster_id: poster, worker_id: worker, brief,
-          amount_usdc: Number(amount), deadline: new Date(deadline).toISOString(),
+          brief, amount_usdc: Number(amount), deadline: new Date(deadline).toISOString(),
         }),
       });
       const j = await res.json();
@@ -82,8 +86,14 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       const res = await fetch(`/api/bounty/${draft.id}/approve-rubric`, { method: "POST" });
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
-      setMsg(j.note ?? "Rubric frozen. The bounty is open for work.");
-      setDraft(null);
+      if (j.lock) {
+        // Live mode: nothing is frozen yet. The poster signs next.
+        setLock(j.lock as LockParams);
+        setMsg(j.note ?? "");
+      } else {
+        setMsg(j.note ?? "Rubric đã đóng băng. Việc đã mở trên chợ.");
+        setDraft(null);
+      }
       onChanged();
     } catch (err) { setMsg(`Could not freeze it: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
@@ -94,14 +104,6 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   return (
     <div>
       <div className="grid gap-4">
-        <FormField id="poster" label="Your wallet" hint="The address that funds the escrow and gets the refund if work is rejected." error={errors.poster}>
-          <input id="poster" className={inp("poster")} placeholder="0x0000…0000" value={poster} onChange={(e) => edit(setPoster, "poster")(e.target.value)} />
-        </FormField>
-
-        <FormField id="worker" label="Who is doing the work" hint="One bounty is assigned to one worker. This address gets paid on release." error={errors.worker}>
-          <input id="worker" className={inp("worker")} placeholder="0x0000…0000" value={worker} onChange={(e) => edit(setWorker, "worker")(e.target.value)} />
-        </FormField>
-
         <FormField
           id="brief"
           label="What needs to be done"
@@ -147,9 +149,21 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
             ))}
           </ul>
           <div className="mt-4">
-            <PillButton variant="primary" disabled={busy} onClick={approveRubric}>
-              Approve and open the bounty
-            </PillButton>
+            {lock ? (
+              <PosterLockFunds
+                lock={lock}
+                onDone={() => {
+                  setMsg("USDC đã vào escrow. Việc đã lên chợ, chờ người nhận.");
+                  setDraft(null);
+                  setLock(null);
+                  onChanged();
+                }}
+              />
+            ) : (
+              <PillButton variant="primary" disabled={busy} onClick={approveRubric}>
+                Duyệt rubric và khoá tiền
+              </PillButton>
+            )}
           </div>
         </div>
       )}

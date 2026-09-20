@@ -88,7 +88,11 @@ export async function POST(req: NextRequest) {
 
         if (result.release) {
           // Real money moved → real points (F5). Dry-run never reaches here.
-          await awardBountyPoints(bounty.worker_id, bounty.id, result.release.amountUsdc);
+          if (bounty.worker_id) {
+            await awardBountyPoints(bounty.worker_id, bounty.id, result.release.amountUsdc);
+          } else {
+            console.error(`[points] released ${bounty.id} but worker_id is null — DB out of step with chain`);
+          }
         }
         emit("done", { status });
       } catch (err) {

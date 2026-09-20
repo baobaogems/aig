@@ -13,7 +13,9 @@ export type BountyStatus = "DRAFT" | "OPEN" | "SUBMITTED" | "JUDGED" | "RELEASED
 export interface BountyRow {
   id: string;
   poster_id: string;
-  worker_id: string;
+  /** null while the bounty is open and nobody has claimed it. */
+  worker_id: string | null;
+  claim_tx?: string | null;
   brief: string;
   amount_usdc: number;
   deadline: string;
@@ -86,7 +88,8 @@ function must<T>(data: T | null, error: { message: string } | null, op: string):
 
 export async function createBountyWithRubric(input: {
   poster_id: string;
-  worker_id: string;
+  /** null = open to whoever claims it first (the normal case since Phase 04). */
+  worker_id: string | null;
   brief: string;
   amount_usdc: number;
   deadline: string;
@@ -96,7 +99,7 @@ export async function createBountyWithRubric(input: {
     .from("bounties")
     .insert({
       poster_id: input.poster_id,
-      worker_id: input.worker_id,
+      worker_id: input.worker_id ?? null,
       brief: input.brief,
       amount_usdc: input.amount_usdc,
       deadline: input.deadline,
@@ -113,6 +116,25 @@ export async function createBountyWithRubric(input: {
     .single();
   return { bounty, rubric: must(r, re, "insert rubric") as RubricRow };
 }
+
+/**
+ * Record the on-chain claim. Conditional on worker_id still being null, so two people
+ * confirming at once cannot overwrite each other — the loser gets zero rows and can re-read
+ * the chain to see who actually won.
+ */
+export async function setBountyWorker(bountyId: string, worker: string, claimTx: string): Promise<boolean> {
+  const { data, error } = await db()
+    .from("bounties")
+    .update({ worker_id: worker, claim_tx: claimTx })
+    .eq("id", bountyId)
+    .is("worker_id", null)
+    .select("id");
+  if (error) throw new Error(`set bounty worker: ${error.message}`);
+  return (data?.length ?? 0) === 1;
+}
+
+/** Which slice of the board a reader wants. */
+export type BountyView = "all" | "marketplace" | "mine-posted" | "mine-claimed";
 
 /** Freeze the rubric (one-way) and move the bounty DRAFT → OPEN. */
 export async function freezeRubric(bountyId: string, escrowTx?: string): Promise<void> {
@@ -230,8 +252,22 @@ export async function getBountyDetail(bountyId: string): Promise<BountyDetail> {
   };
 }
 
-export async function listBounties(): Promise<BountyRow[]> {
-  const { data, error } = await db().from("bounties").select().order("created_at", { ascending: false }).limit(50);
+export async function listBounties(view: BountyView = "all", address?: string | null): Promise<BountyRow[]> {
+  let q = db().from("bounties").select().order("created_at", { ascending: false }).limit(50);
+
+  if (view === "marketplace") {
+    // The board: locked, open, unclaimed, and still inside its deadline. A bounty past its
+    // deadline is not work anyone can take — the contract refuses claim() on it too.
+    q = q.eq("status", "OPEN").is("worker_id", null).gt("deadline", new Date().toISOString());
+  } else if (view === "mine-posted") {
+    if (!address) return [];
+    q = q.ilike("poster_id", address);
+  } else if (view === "mine-claimed") {
+    if (!address) return [];
+    q = q.ilike("worker_id", address);
+  }
+
+  const { data, error } = await q;
   if (error) throw new Error(`list bounties: ${error.message}`);
   return (data ?? []) as BountyRow[];
 }

@@ -22,7 +22,7 @@ import { BountyStatusBadge } from "@/components/arbiter/bounty-status-badge";
 import { CopyButton } from "@/components/ui/copy-button";
 
 interface BountyRowData {
-  id: string; status: string; amount_usdc: number; brief: string; worker_id: string; created_at?: string;
+  id: string; status: string; amount_usdc: number; brief: string; worker_id: string | null; created_at?: string;
 }
 
 function shortAddress(addr: string): string {
@@ -81,8 +81,17 @@ export function BountyRow({
             {bounty.brief?.trim() || <span className="italic text-[var(--color-ink-muted)]">No brief recorded</span>}
           </span>
           <span className="mt-0.5 block truncate text-xs text-[var(--color-ink-muted)]">
-            {date && <>{date} · </>}worker{" "}
-            <span className="font-[family-name:var(--font-jetbrains-mono)]">{shortAddress(bounty.worker_id)}</span>
+            {date && <>{date} · </>}
+            {bounty.worker_id ? (
+              <>
+                worker{" "}
+                <span className="font-[family-name:var(--font-jetbrains-mono)]">{shortAddress(bounty.worker_id)}</span>
+              </>
+            ) : (
+              // An open bounty has no worker yet. Saying "chưa ai nhận" is the useful fact;
+              // rendering an empty address slot would just look broken.
+              <span className="italic">chưa ai nhận</span>
+            )}
           </span>
           <span className="mt-2 flex items-center justify-between gap-3 sm:hidden">{meta}</span>
         </span>

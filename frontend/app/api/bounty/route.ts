@@ -6,7 +6,7 @@
 
 import { NextRequest } from "next/server";
 import { generateRubric } from "@/lib/arbiter/rubric";
-import { createBountyWithRubric, getAgentStats, getBountyDetail, listBounties } from "@/lib/arbiter/store";
+import { createBountyWithRubric, getAgentStats, getBountyDetail, listBounties, type BountyView } from "@/lib/arbiter/store";
 import { requireSession, sameAddress } from "@/lib/auth/require-role";
 import { SESSION_COOKIE, openSession } from "@/lib/auth/siwe-session";
 import { LIMIT_CREATE_BOUNTY, enforceRateLimit } from "@/lib/auth/rate-limit";
@@ -31,6 +31,11 @@ export async function POST(req: NextRequest) {
 
     const { worker_id, brief, amount_usdc, deadline } = await req.json();
 
+    // worker_id is optional now. Omitted = an OPEN bounty anyone may claim, which is the
+    // normal case; a named worker stays supported for a job promised to one person.
+    if (worker_id != null && !ADDR_RE.test(worker_id))
+      return Response.json({ error: "worker_id must be a wallet address" }, { status: 400 });
+
     if (!ADDR_RE.test(worker_id ?? "")) return Response.json({ error: "worker_id must be a wallet address" }, { status: 400 });
     if (typeof brief !== "string" || brief.trim().length < 20)
       return Response.json({ error: "brief required (≥20 chars)" }, { status: 400 });
@@ -44,7 +49,8 @@ export async function POST(req: NextRequest) {
     // Arbiter proposes the rubric; the poster reviews and freezes it in the next step (F1).
     const gen = await generateRubric(brief.trim());
     const created = await createBountyWithRubric({
-      poster_id, worker_id, brief: brief.trim(), amount_usdc: amount, deadline: dl.toISOString(), rubric: gen.items,
+      poster_id, worker_id: worker_id ?? null, brief: brief.trim(), amount_usdc: amount,
+      deadline: dl.toISOString(), rubric: gen.items,
     });
     return Response.json(created);
   } catch (err) {
@@ -68,8 +74,11 @@ export async function GET(req: NextRequest) {
       }
       return Response.json({ ...detail, viewer_is_party: isParty });
     }
-    const [bounties, stats] = await Promise.all([listBounties(), getAgentStats()]);
-    return Response.json({ bounties, stats });
+    // Which slice of the board: the public marketplace, or one of the caller's own lists.
+    const view = (req.nextUrl.searchParams.get("view") ?? "all") as BountyView;
+    const viewer = openSession(req.cookies.get(SESSION_COOKIE)?.value);
+    const [bounties, stats] = await Promise.all([listBounties(view, viewer), getAgentStats()]);
+    return Response.json({ bounties, stats, viewer });
   } catch (err) {
     console.error("[API /bounty] GET:", err);
     return Response.json({ error: err instanceof Error ? err.message : "unknown error" }, { status: 500 });

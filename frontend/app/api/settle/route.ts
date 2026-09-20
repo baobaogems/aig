@@ -41,7 +41,11 @@ export async function POST(req: NextRequest) {
     const release = await releaseEscrow(bounty_id, detail.verdict.verdict_hash as `0x${string}`);
     await setVerdictReleaseTx(detail.verdict.id, release.txHash);
     await updateBountyStatus(bounty_id, "RELEASED");
-    await awardBountyPoints(detail.bounty.worker_id, bounty_id, release.amountUsdc);
+    if (detail.bounty.worker_id) {
+      await awardBountyPoints(detail.bounty.worker_id, bounty_id, release.amountUsdc);
+    } else {
+      console.error(`[points] released ${bounty_id} but worker_id is null — DB out of step with chain`);
+    }
     return Response.json({ release_tx: release.txHash });
   } catch (err) {
     console.error("[API /settle]:", err);
