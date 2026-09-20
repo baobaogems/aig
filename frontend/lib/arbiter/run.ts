@@ -84,6 +84,8 @@ export async function runCase(c: DryRunCase): Promise<CaseRunResult> {
 
 export interface SettleInput {
   bountyId: string; // uuid — hashed to bytes32 for the contract
+  /** Which escrow contract holds it. v2 has no markSubmitted, so it starts no clock. */
+  escrowVersion: number;
   submissionId: string;
   brief: string;
   rubric: RubricItem[]; // frozen at poster approval — never regenerated at judge time
@@ -150,6 +152,20 @@ export async function judgeAndSettle(input: SettleInput): Promise<SettleResult> 
       dryRun,
       clockStarted: false,
       settlementNote: `decision=${judge.verdict.decision} — work not plausible, no settlement clock`,
+    };
+  }
+
+  // v2 predates the whole idea of a recorded submission, so there is no clock to start and
+  // no timeoutRelease to earn. Those bounties settle the old way: the poster approves, or
+  // the deadline returns the money. Pretending otherwise would promise the worker a right
+  // the contract holding their money does not have.
+  const { isCurrentVersion } = await import("../escrow-version");
+  if (!isCurrentVersion(input.escrowVersion)) {
+    return {
+      judge,
+      dryRun,
+      clockStarted: false,
+      settlementNote: `escrow v${input.escrowVersion} — luật cũ, cần người đăng duyệt`,
     };
   }
 

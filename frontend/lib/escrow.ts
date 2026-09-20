@@ -37,6 +37,35 @@ export function isDryRun(): boolean {
   return process.env.DRY_RUN !== "false";
 }
 
+/**
+ * Release a v2 bounty in full, through the frozen v2 contract.
+ *
+ * Exists so nobody is stranded by the upgrade: bounties that were already open when v3
+ * shipped finish under the rules they were created under. v2 has no split, so this is
+ * all-or-nothing by construction — a partial settlement on a v2 bounty is refused upstream
+ * rather than approximated here.
+ */
+export async function releaseEscrowV2(bountyId: string, verdictHash: `0x${string}`) {
+  if (isDryRun()) throw new Error("releaseEscrowV2 called while DRY_RUN is on — refusing to move money");
+  const { escrowAddressFor } = await import("./escrow-version");
+  const { arbiterEscrowV2Abi } = await import("./escrow-abi-v2");
+  const address = escrowAddressFor(2);
+
+  const txHash = await withRpcRetry(
+    () =>
+      serverWallet().writeContract({
+        address,
+        abi: arbiterEscrowV2Abi,
+        functionName: "release",
+        args: [toBountyKey(bountyId), verdictHash],
+      }),
+    { label: "release (v2)" },
+  );
+  const receipt = await awaitReceipt(txHash, "release receipt (v2)");
+  if (receipt.status !== "success") throw new Error(`releaseEscrowV2: tx ${txHash} reverted on-chain`);
+  return { txHash };
+}
+
 export function escrowAddress(): `0x${string}` {
   const addr = process.env.ARBITER_ESCROW_ADDRESS;
   if (!addr || !addr.startsWith("0x") || addr.length !== 42) {

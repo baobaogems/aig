@@ -111,6 +111,40 @@ describe("REJECT — allowed, never free", () => {
   });
 });
 
+describe("bounties still on the v2 contract", () => {
+  /** v2 has no split. It must pay in full or not at all — never an approximation. */
+  function legacy(score: number) {
+    const b = seedBounty(
+      { status: "JUDGED", amount_usdc: 10, escrow_version: 2, submitted_at: new Date().toISOString() },
+      { submission: {}, verdict: { decision: "ESCALATE", total_score: score, confidence: 60 } },
+    );
+    return { bounty: b, verdictId: state.verdicts.get(b.id)!.id };
+  }
+
+  it("APPROVE pays in full through the frozen v2 path", async () => {
+    const { bounty, verdictId } = legacy(65);
+    const json = await (await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "APPROVE" })).json();
+    expect(json.workerBps).toBe(10_000);
+    expect(json.note).toMatch(/v2/);
+    expect(state.bounties.get(bounty.id)!.status).toBe("RELEASED");
+  });
+
+  it("refuses a kill fee rather than rounding it to something v2 can express", async () => {
+    const { bounty, verdictId } = legacy(69); // would be 30% on v3
+    const res = await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "REJECT", note: REASON });
+    expect(res.status).toBe(500);
+    expect((await res.json()).error).toMatch(/không chia tỉ lệ được/);
+    expect(settled).toHaveLength(0);
+  });
+
+  it("a zero-fee rejection leaves the money for the poster's own refund", async () => {
+    const { bounty, verdictId } = legacy(20); // below the fail line → 0 bps
+    const json = await (await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "REJECT", note: REASON })).json();
+    expect(json.workerBps).toBe(0);
+    expect(json.note).toMatch(/hoàn tiền sau hạn/);
+  });
+});
+
 describe("who and when", () => {
   it("403s the worker — they do not get to approve their own work", async () => {
     const { bounty, verdictId } = judged(65);

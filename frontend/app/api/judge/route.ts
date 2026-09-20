@@ -67,6 +67,7 @@ export async function POST(req: NextRequest) {
 
         const result = await judgeAndSettle({
           bountyId: bounty.id,
+          escrowVersion: bounty.escrow_version,
           submissionId: submission.id,
           brief: bounty.brief,
           rubric: rubric.items_json,

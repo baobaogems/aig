@@ -168,6 +168,7 @@ async function scenarioBright(amountUsdc: number) {
     rubric: c.rubric!,
     deliverable: c.deliverable,
     amountUsdc,
+    escrowVersion: 3,
   });
   console.log(`   verdict  : ${result.judge.verdict.decision} score=${result.judge.verdict.total_score} conf=${result.judge.verdict.confidence}`);
 
@@ -204,6 +205,7 @@ async function scenarioDark(amountUsdc: number, deadlineMins: number) {
     rubric: c.rubric!,
     deliverable: c.deliverable,
     amountUsdc,
+    escrowVersion: 3,
   });
   console.log(`   verdict  : ${result.judge.verdict.decision} score=${result.judge.verdict.total_score} conf=${result.judge.verdict.confidence}`);
 

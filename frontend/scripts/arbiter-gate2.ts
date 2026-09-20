@@ -113,6 +113,7 @@ async function runCycle() {
     rubric: c.rubric,
     deliverable: c.deliverable,
     amountUsdc,
+    escrowVersion: 3,
   });
   const v = result.judge.verdict;
   console.log(`   decision   : ${v.decision} (score=${v.total_score} conf=${v.confidence})`);

@@ -38,6 +38,15 @@ export const escrowDouble = {
   async markSubmittedOnChain() {
     return { txHash: "0xmark" as `0x${string}` };
   },
+
+  /** The frozen v2 path: full payment or nothing, because that contract cannot split. */
+  async releaseEscrowV2(bountyId: string) {
+    if (settled.some((s) => s.bountyId === bountyId)) {
+      throw new Error(`releaseEscrowV2: bounty ${bountyId} already settled`);
+    }
+    settled.push({ bountyId, verdictHash: "0xv2", workerBps: 10_000 });
+    return { txHash: `0xv2-${bountyId}` as `0x${string}` };
+  },
 };
 
 /** Day-cap ledger with room by default; a test tightens it to check the fail-closed path. */

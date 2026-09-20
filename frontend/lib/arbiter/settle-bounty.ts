@@ -14,7 +14,8 @@
 // =============================================================================
 
 import "server-only";
-import { isDryRun, settleEscrow } from "../escrow";
+import { isDryRun, releaseEscrowV2, settleEscrow } from "../escrow";
+import { isCurrentVersion } from "../escrow-version";
 import { awardBountyPoints } from "../points";
 import { liveCaps } from "./spend-ledger";
 import { setVerdictSettlement, updateBountyStatus, type BountyDetail } from "./store";
@@ -73,6 +74,33 @@ export async function settleBounty(
           `${spend.degraded ? ", ledger unreadable — failing closed" : ""}) — needs the poster to settle it`,
       );
     }
+  }
+
+  // A bounty opened on v2 finishes under v2's rules: pay in full or not at all, because that
+  // contract has no split. Refusing a partial here rather than rounding it to something v2
+  // can express — silently paying 100% or 0% of what a person was promised is not a fallback,
+  // it is a different decision made on their behalf.
+  if (!isCurrentVersion(bounty.escrow_version)) {
+    if (workerBps !== 10_000 && workerBps !== 0) {
+      throw new Error(
+        `bounty này ở escrow v${bounty.escrow_version}, không chia tỉ lệ được — chỉ trả đủ hoặc để hoàn sau hạn`,
+      );
+    }
+    if (workerBps === 0) {
+      // v2's only way back to the poster is their own refund after the deadline.
+      return {
+        releaseTx: null, workerBps: 0, workerAmountUsdc: 0, posterAmountUsdc: 0,
+        note: "escrow v2 — không trả cho người làm; người đăng tự hoàn tiền sau hạn",
+      };
+    }
+    const legacy = await releaseEscrowV2(bounty.id, verdict.verdict_hash as `0x${string}`);
+    await setVerdictSettlement(verdict.id, legacy.txHash, 10_000);
+    await updateBountyStatus(bounty.id, "RELEASED");
+    if (bounty.worker_id) await awardBountyPoints(bounty.worker_id, bounty.id, total);
+    return {
+      releaseTx: legacy.txHash, workerBps: 10_000, workerAmountUsdc: total, posterAmountUsdc: 0,
+      note: "escrow v2 — trả đủ theo luật cũ",
+    };
   }
 
   const settled = await settleEscrow(bounty.id, verdict.verdict_hash as `0x${string}`, workerBps);
