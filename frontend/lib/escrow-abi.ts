@@ -28,6 +28,14 @@ export const arbiterEscrowAbi = [
     outputs: [],
   },
   {
+    // v2: a worker takes an open bounty. First caller wins, permanently.
+    name: "claim",
+    type: "function",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "bountyId", type: "bytes32" }],
+    outputs: [],
+  },
+  {
     name: "refund",
     type: "function",
     stateMutability: "nonpayable",
@@ -65,6 +73,14 @@ export const arbiterEscrowAbi = [
       { name: "verdictHash", type: "bytes32", indexed: false },
       { name: "worker", type: "address", indexed: true },
       { name: "amount", type: "uint256", indexed: false },
+    ],
+  },
+  {
+    name: "Claimed",
+    type: "event",
+    inputs: [
+      { name: "bountyId", type: "bytes32", indexed: true },
+      { name: "worker", type: "address", indexed: true },
     ],
   },
   {

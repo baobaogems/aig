@@ -14,8 +14,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
  *
  * Trust model — stated honestly, not as "trustless":
  *  - The poster locks funds; only the arbiter wallet (an AIG server key) can release them to the
- *    pre-assigned worker, and only once, always carrying the verdict hash on-chain.
- *  - The arbiter can never redirect funds: `worker` is fixed at creation and never re-read from input.
+ *    bounty's worker, and only once, always carrying the verdict hash on-chain.
+ *  - A bounty may open UNASSIGNED (worker == address(0)) so it can be listed publicly and claimed.
+ *    `claim` is the only way a worker is ever set, it is first-come, and it is permanent: once a
+ *    worker is on record the payout address can never be changed — not by the poster, not by the
+ *    arbiter, not by the worker. `release` refuses an unassigned bounty outright.
  *  - The poster is protected by `deadline`: after it passes with no release, they can always refund.
  *  - MAX_BOUNTY is the contract-level half of the two-tier spend cap (the other half is server-side);
  *    it bounds the blast radius of a compromised arbiter key to one bounty's worth of testnet USDC.
@@ -47,6 +50,7 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
     event BountyCreated(
         bytes32 indexed bountyId, address indexed poster, address indexed worker, uint256 amount, uint64 deadline
     );
+    event Claimed(bytes32 indexed bountyId, address indexed worker);
     event Released(bytes32 indexed bountyId, bytes32 verdictHash, address indexed worker, uint256 amount);
     event Refunded(bytes32 indexed bountyId, address indexed poster, uint256 amount);
 
@@ -61,6 +65,9 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
     error AlreadySettled();
     error DeadlineNotReached(uint64 deadline);
     error VerdictHashEmpty();
+    error AlreadyClaimed(address worker);
+    error WorkerUnassigned();
+    error DeadlinePassed(uint64 deadline);
 
     modifier onlyArbiter() {
         if (msg.sender != arbiter) revert NotArbiter();
@@ -74,7 +81,8 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
-     * @notice Poster locks USDC for a bounty already assigned to one worker (MVP = 1 bounty, 1 worker).
+     * @notice Poster locks USDC for a bounty.
+     * @param worker The assigned worker, or address(0) to open the bounty for anyone to `claim`.
      * @dev Requires prior `approve(address(this), amount)` by the poster.
      */
     function createBounty(bytes32 bountyId, address worker, uint256 amount, uint64 deadline)
@@ -83,7 +91,7 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
         nonReentrant
     {
         if (bounties[bountyId].poster != address(0)) revert BountyExists();
-        if (worker == address(0)) revert ZeroAddress();
+        // worker == address(0) is legal here: it means "open to whoever claims it first".
         if (amount == 0) revert AmountZero();
         if (amount > MAX_BOUNTY) revert AmountOverCap(amount, MAX_BOUNTY);
         if (deadline <= block.timestamp) revert DeadlineInPast();
@@ -100,6 +108,28 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
     }
 
     /**
+     * @notice Take an open bounty. First caller wins; the assignment is permanent.
+     * @dev This is how a worker proves the payout address is theirs — no server, no signature
+     *      relay, just msg.sender. Deliberately not restricted to an allowlist: on testnet the
+     *      openness is the point. It moves no money, so the blast radius of a wrong claim is
+     *      the poster refunding after the deadline.
+     *
+     *      Claiming after the deadline is refused: that window belongs to the poster's refund,
+     *      and letting someone step in there would only create a race over money already owed back.
+     */
+    function claim(bytes32 bountyId) external whenNotPaused {
+        Bounty storage b = bounties[bountyId];
+        if (b.poster == address(0)) revert BountyUnknown();
+        if (b.released || b.refunded) revert AlreadySettled();
+        if (b.worker != address(0)) revert AlreadyClaimed(b.worker);
+        if (block.timestamp > b.deadline) revert DeadlinePassed(b.deadline);
+
+        b.worker = msg.sender;
+
+        emit Claimed(bountyId, msg.sender);
+    }
+
+    /**
      * @notice Arbiter releases the escrow to the worker, committing the verdict hash on-chain.
      * @param verdictHash keccak256 of the canonical verdict JSON — the public audit artifact.
      * @dev One release per bounty, ever. The worker address comes from storage, never from the caller.
@@ -108,6 +138,9 @@ contract ArbiterEscrow is Ownable, Pausable, ReentrancyGuard {
         Bounty storage b = bounties[bountyId];
         if (b.poster == address(0)) revert BountyUnknown();
         if (b.released || b.refunded) revert AlreadySettled();
+        // An unclaimed bounty has no payee. Paying address(0) would burn the escrow, so refuse
+        // and let the deadline hand the money back to the poster instead.
+        if (b.worker == address(0)) revert WorkerUnassigned();
         if (verdictHash == bytes32(0)) revert VerdictHashEmpty();
 
         b.released = true;

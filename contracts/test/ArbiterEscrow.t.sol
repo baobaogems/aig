@@ -50,6 +50,12 @@ contract ArbiterEscrowTest is Test {
         escrow.createBounty(ID, worker, AMOUNT, deadline);
     }
 
+    /// An OPEN bounty: locked, but nobody is on the hook to do it yet.
+    function _createUnassigned() internal {
+        vm.prank(poster);
+        escrow.createBounty(ID, address(0), AMOUNT, deadline);
+    }
+
     // ---------------------------------------------------------------- create
 
     function test_createBounty_locksUsdc() public {
@@ -253,5 +259,139 @@ contract ArbiterEscrowTest is Test {
 
         assertEq(usdc.balanceOf(worker), amount);
         assertEq(usdc.balanceOf(address(escrow)), 0);
+    }
+
+    // ---------------------------------------------------------------- claim
+
+    function test_createBounty_allowsUnassignedWorker() public {
+        _createUnassigned();
+        ArbiterEscrow.Bounty memory b = escrow.getBounty(ID);
+        assertEq(b.worker, address(0), "open bounty starts with no worker");
+        assertEq(b.amount, AMOUNT, "money is locked even before anyone claims");
+        assertEq(usdc.balanceOf(address(escrow)), AMOUNT);
+    }
+
+    function test_claim_assignsCallerAndEmits() public {
+        _createUnassigned();
+
+        vm.expectEmit(true, true, false, false, address(escrow));
+        emit ArbiterEscrow.Claimed(ID, worker);
+
+        vm.prank(worker);
+        escrow.claim(ID);
+
+        assertEq(escrow.getBounty(ID).worker, worker, "claimer becomes the payee");
+    }
+
+    function test_claim_movesNoMoney() public {
+        _createUnassigned();
+        uint256 escrowBefore = usdc.balanceOf(address(escrow));
+        uint256 workerBefore = usdc.balanceOf(worker);
+
+        vm.prank(worker);
+        escrow.claim(ID);
+
+        assertEq(usdc.balanceOf(address(escrow)), escrowBefore, "claim must not move escrow");
+        assertEq(usdc.balanceOf(worker), workerBefore, "claim is not a payout");
+    }
+
+    function test_claim_revertsOnSecondClaim() public {
+        _createUnassigned();
+        vm.prank(worker);
+        escrow.claim(ID);
+
+        // The payout address is permanent. This is the test that stops a late claimer from
+        // stealing a bounty someone else is already working on.
+        vm.expectRevert(abi.encodeWithSelector(ArbiterEscrow.AlreadyClaimed.selector, worker));
+        vm.prank(stranger);
+        escrow.claim(ID);
+    }
+
+    function test_claim_revertsOnPreAssignedBounty() public {
+        _create(); // worker fixed at creation
+        vm.expectRevert(abi.encodeWithSelector(ArbiterEscrow.AlreadyClaimed.selector, worker));
+        vm.prank(stranger);
+        escrow.claim(ID);
+    }
+
+    function test_claim_revertsAfterDeadline() public {
+        _createUnassigned();
+        vm.warp(deadline + 1);
+
+        // Past the deadline the money is owed back to the poster; nobody may step in front of it.
+        vm.expectRevert(abi.encodeWithSelector(ArbiterEscrow.DeadlinePassed.selector, deadline));
+        vm.prank(worker);
+        escrow.claim(ID);
+    }
+
+    function test_claim_revertsOnUnknownBounty() public {
+        vm.expectRevert(ArbiterEscrow.BountyUnknown.selector);
+        vm.prank(worker);
+        escrow.claim(keccak256("nope"));
+    }
+
+    function test_claim_revertsAfterRefund() public {
+        _createUnassigned();
+        vm.warp(deadline + 1);
+        vm.prank(poster);
+        escrow.refund(ID);
+
+        vm.expectRevert(ArbiterEscrow.AlreadySettled.selector);
+        vm.prank(worker);
+        escrow.claim(ID);
+    }
+
+    function test_claim_blockedWhilePaused() public {
+        _createUnassigned();
+        vm.prank(owner);
+        escrow.pause();
+
+        vm.expectRevert(Pausable.EnforcedPause.selector);
+        vm.prank(worker);
+        escrow.claim(ID);
+    }
+
+    function test_release_revertsOnUnclaimedBounty() public {
+        _createUnassigned();
+
+        // Paying address(0) would burn the escrow. Refuse, and let refund return it instead.
+        vm.expectRevert(ArbiterEscrow.WorkerUnassigned.selector);
+        vm.prank(arbiter);
+        escrow.release(ID, VERDICT);
+    }
+
+    function test_claimThenRelease_paysTheClaimer() public {
+        _createUnassigned();
+        vm.prank(stranger); // whoever got there first, not whoever the poster had in mind
+        escrow.claim(ID);
+
+        vm.prank(arbiter);
+        escrow.release(ID, VERDICT);
+
+        assertEq(usdc.balanceOf(stranger), AMOUNT, "the claimer is paid");
+        assertEq(usdc.balanceOf(address(escrow)), 0, "escrow drained");
+        assertTrue(escrow.getBounty(ID).released);
+    }
+
+    function test_refund_worksOnBountyNobodyClaimed() public {
+        _createUnassigned();
+        uint256 before = usdc.balanceOf(poster);
+        vm.warp(deadline + 1);
+
+        vm.prank(poster);
+        escrow.refund(ID);
+
+        assertEq(usdc.balanceOf(poster), before + AMOUNT, "an unwanted bounty is never stranded");
+        assertTrue(escrow.getBounty(ID).refunded);
+    }
+
+    function testFuzz_claimAssignsAnyCaller(address who) public {
+        vm.assume(who != address(0));
+        _createUnassigned();
+
+        vm.prank(who);
+        escrow.claim(ID);
+
+        assertEq(escrow.getBounty(ID).worker, who);
     }
 }
