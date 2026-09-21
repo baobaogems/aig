@@ -131,15 +131,35 @@ export function SettlementPanel(props: Props) {
   }, [clock.phase, busy, bountyId, call]);
 
   // Re-run the #hash scroll once this panel is actually in the DOM.
+  //
+  // Two things fight this. The panel does not exist when the browser handles the hash — the
+  // page is server-rendered and the panel appears only after the bounty is fetched — and the
+  // router puts the window back at the top during hydration, which swallows a single early
+  // scroll. So it keeps trying briefly until the element holds its place, then stops.
   const scrolledToAnchor = useRef(false);
   useEffect(() => {
     if (scrolledToAnchor.current) return;
     if (typeof window === "undefined" || window.location.hash !== `#${SETTLEMENT_ANCHOR}`) return;
-    const el = document.getElementById(SETTLEMENT_ANCHOR);
-    if (!el) return; // not rendered yet; a later render will bring us back
-    scrolledToAnchor.current = true;
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
-  });
+
+    let tries = 0;
+    const id = window.setInterval(() => {
+      const el = document.getElementById(SETTLEMENT_ANCHOR);
+      if (el) {
+        const { top } = el.getBoundingClientRect();
+        // "auto", not "smooth": a smooth scroll still in flight is trivially cancelled by
+        // the router's own reset, and then nothing visible happens at all.
+        if (top < 0 || top > window.innerHeight * 0.75) {
+          el.scrollIntoView({ block: "center", behavior: "auto" });
+        } else {
+          scrolledToAnchor.current = true;
+          window.clearInterval(id);
+          return;
+        }
+      }
+      if (++tries > 20) window.clearInterval(id); // ~3s, then give up quietly
+    }, 150);
+    return () => window.clearInterval(id);
+  }, []);
 
   /** Worker's way out when this platform is not answering: their own signature, no server. */
   async function selfRelease() {
