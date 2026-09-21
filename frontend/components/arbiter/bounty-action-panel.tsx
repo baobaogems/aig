@@ -189,7 +189,18 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
       {stage && <JudgingProgress stage={stage} />}
 
-      {/* Everything that ends the bounty, with the cost of each choice on the button itself. */}
+
+      {detail?.verdict && (
+        <VerdictCertificate
+          verdict={detail.verdict}
+          rubric={detail.rubric?.items_json ?? null}
+          escalation={detail.escalation}
+        />
+      )}
+
+      {/* AFTER the verdict, deliberately. Deciding whether to pay means reading what the arbiter
+          found first, and this panel used to sit above a long verdict card: you scrolled past the
+          buttons to read the evidence, then could not find them again. Evidence, then decision. */}
       {detail && (
         <SettlementPanel
           bountyId={bountyId}
@@ -201,14 +212,6 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
           isPoster={isPoster}
           isWorker={isWorker}
           onChanged={load}
-        />
-      )}
-
-      {detail?.verdict && (
-        <VerdictCertificate
-          verdict={detail.verdict}
-          rubric={detail.rubric?.items_json ?? null}
-          escalation={detail.escalation}
         />
       )}
     </section>
