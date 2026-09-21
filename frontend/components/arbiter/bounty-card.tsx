@@ -17,9 +17,10 @@
 // =============================================================================
 
 import Link from "next/link";
-import { AmountBlock } from "@/components/ui/amount-block";
+import { AMoney } from "@/components/arbiter/ui/a-money";
+import { AChip } from "@/components/arbiter/ui/a-chip";
+import { Serration } from "@/components/arbiter/ui/serration";
 import {
-  STATE_LABEL,
   type BountyState,
   bountyState,
   isClaimable,
@@ -38,84 +39,126 @@ export interface BountyCardData {
   rubric_count?: number;
 }
 
-/** Only the live state gets a coloured dot; everything else is a quiet grey. */
-const DOT: Record<BountyState, string> = {
-  unclaimed: "bg-[var(--color-accent)]",
-  "in-progress": "bg-[var(--color-ink-muted)]",
-  submitted: "bg-[var(--color-ink-muted)]",
-  expired: "bg-[var(--color-border-light)]",
-  closed: "bg-[var(--color-border-light)]",
-};
-
 export function BountyCard({
   bounty,
   now,
   action,
 }: {
   bounty: BountyCardData;
-  /** Passed in so every card on the board ticks off one clock (use-countdown.ts). */
   now: number;
-  /** Claim button, slotted by the board — the card itself knows nothing about sessions. */
   action?: React.ReactNode;
 }) {
   const state = bountyState(bounty.worker_id, bounty.status, bounty.deadline, now);
   const urgent = isUrgent(bounty.deadline, now);
+  const closed = state === "closed" || state === "expired";
+
+  const formattedDeadline = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Asia/Ho_Chi_Minh",
+  }).format(new Date(bounty.deadline));
 
   return (
     <article
-      className="group flex h-full flex-col overflow-hidden rounded-[var(--radius-card)]
-                 border border-[var(--color-border-light)] bg-white/70
-                 transition-colors hover:border-[var(--color-ink)]/30"
+      className={`a-card flex h-full flex-col ${closed ? "done" : ""}`}
+      style={{
+        background: "var(--a-card)",
+        border: "1px solid var(--a-line-dim)",
+        position: "relative",
+        transition: "0.16s",
+      }}
     >
-      <div className="flex flex-1 flex-col gap-3 p-4">
-        <div className="flex items-center justify-between gap-2">
-          <span className="font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-ink-muted)]">
-            {shortCode(bounty.id)}
-          </span>
-          <span className="text-xs text-[var(--color-ink-muted)]">{STATE_LABEL[state]}</span>
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        {/* Header */}
+        <div className="flex gap-3">
+          <div
+            className="a-cut-sm grid h-10 w-10 flex-none place-items-center font-[family-name:var(--font-display)] text-sm font-bold"
+            style={{ background: "rgba(17,17,17,.04)", color: "var(--a-subtle)" }}
+            aria-hidden="true"
+          >
+            AI
+          </div>
+          <div>
+            <h3
+              className="line-clamp-1 font-[family-name:var(--font-display)] text-[14px] font-bold"
+              style={{ color: "var(--a-text)" }}
+            >
+              {bounty.brief.split(".")[0] || "Bounty"}
+            </h3>
+            <div className="mt-1 flex flex-wrap gap-1.5">
+              <AChip variant="accent">AI JUDGED</AChip>
+              {typeof bounty.rubric_count === "number" && bounty.rubric_count > 0 && (
+                <AChip>{bounty.rubric_count} CRITERIA</AChip>
+              )}
+            </div>
+          </div>
         </div>
 
-        <AmountBlock amountUsdc={bounty.amount_usdc} />
+        {/* Money Block */}
+        <AMoney amountUsdc={bounty.amount_usdc} label="BOUNTY PRIZE" dim={closed} />
 
-        {/* Two lines: enough to decide whether to open it, not enough to become a wall. */}
-        <p className="line-clamp-2 text-sm leading-relaxed text-[var(--color-ink)]">
+        {/* Brief */}
+        <p
+          className="line-clamp-2 text-[12.5px] leading-relaxed"
+          style={{ color: "var(--a-text)" }}
+        >
           {bounty.brief}
         </p>
 
-        <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-          {typeof bounty.rubric_count === "number" && bounty.rubric_count > 0 ? (
-            <span className="text-xs text-[var(--color-ink-muted)]">
-              {bounty.rubric_count} tiêu chí chấm
-            </span>
+        {/* Meta / Claim */}
+        <div className="mt-auto flex items-center justify-between pt-1">
+          <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px]" style={{ color: "var(--a-muted)" }}>
+            Deadline: {formattedDeadline.replace(",", "")} GMT+7
+          </span>
+          {action && isClaimable(state) ? (
+            action
           ) : (
-            <span />
+            <Link
+              href={`/arbiter/bounty/${bounty.id}`}
+              className="font-[family-name:var(--font-display)] text-[11px] font-bold tracking-[0.06em] uppercase transition-colors hover:opacity-70"
+              style={{ color: "var(--a-acc)" }}
+            >
+              + DETAILS ›
+            </Link>
           )}
-          <Link
-            href={`/arbiter/bounty/${bounty.id}`}
-            className="rounded-[var(--radius-pill)] border border-[var(--color-ink)]/15 px-3.5 py-1.5
-                       text-sm text-[var(--color-ink)] transition-colors
-                       hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]
-                       focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2
-                       focus-visible:outline-[var(--color-accent)]"
-          >
-            Xem chi tiết
-          </Link>
         </div>
-
-        {action && isClaimable(state) && <div className="pt-1">{action}</div>}
       </div>
 
-      {/* Status strip: a hairline above it, no second background — the divider does the work. */}
-      <div className="flex items-center gap-2 border-t border-[var(--color-border-light)] px-4 py-2">
-        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[state]}`} aria-hidden="true" />
+      {/* Strip */}
+      <div
+        className="flex items-center gap-2 border-t px-4 py-2"
+        style={{
+          borderColor: "var(--a-line-dim)",
+          background: "rgba(17,17,17,.035)",
+        }}
+      >
         <span
-          className={`tnum text-xs ${
-            urgent ? "text-[var(--color-accent)]" : "text-[var(--color-ink-muted)]"
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
+            state === "unclaimed" ? "animate-pulse" : ""
           }`}
+          style={{
+            background: state === "unclaimed" ? "var(--a-acc)" : "var(--a-subtle)",
+          }}
+          aria-hidden="true"
+        />
+        <span
+          className={`a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[10px] tracking-[0.08em]`}
+          style={{ color: urgent && !closed ? "var(--a-acc)" : "var(--a-muted)" }}
         >
+          {state === "unclaimed" ? "LIVE · " : ""}
           {stripLabel(state, bounty.status, bounty.deadline, now)}
         </span>
+        <span
+          className="ml-auto font-[family-name:var(--font-jetbrains-mono)] text-[10px] tracking-[0.08em]"
+          style={{ color: "var(--a-subtle)" }}
+        >
+          {shortCode(bounty.id)}
+        </span>
       </div>
+
+      <Serration dim={closed} />
     </article>
   );
 }
