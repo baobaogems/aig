@@ -20,7 +20,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { PosterBountyForm } from "@/components/arbiter/poster-bounty-form";
 import { WorkerSubmitForm } from "@/components/arbiter/worker-submit-form";
 import { BountyGrid } from "@/components/arbiter/bounty-grid";
-import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-stats-strip";
+import { TrackRecordBand } from "@/components/arbiter/track-record-band";
+import { ArbiterNav } from "@/components/arbiter/arbiter-nav";
+import { PageBackdrop } from "@/components/arbiter/ui/page-backdrop";
+import type { AgentStats } from "@/lib/arbiter/store";
 import { SectionHeader } from "@/components/ui/section-header";
 import { FilterBar } from "@/components/ui/filter-bar";
 import { PillButton } from "@/components/ui/pill-button";
@@ -52,6 +55,7 @@ export default function ArbiterPage() {
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState<OpenDrawer>(null);
   const [session, setSession] = useState<string | null>(null);
+  const [pending, setPending] = useState<number | null>(null);
 
   const [availability, setAvailability] = useState<Availability>("open");
   const [role, setRole] = useState<Role>("all");
@@ -63,6 +67,7 @@ export default function ArbiterPage() {
       if (!res.ok) throw new Error(j.error);
       setBounties(j.bounties);
       setStats(j.stats);
+      setPending(j.pending_decisions ?? null);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -100,23 +105,28 @@ export default function ArbiterPage() {
   const showDone = availability !== "open";
 
   return (
-    <main className="arbiter-ui bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
+    <div className="arbiter-ui">
+      <PageBackdrop />
+      <ArbiterNav
+        current="market"
+        pendingDecisions={pending}
+        walletSlot={<WalletConnectButton onSession={setSession} />}
+      />
+      <main className="bg-grain relative z-[1] min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
       <div className="mx-auto grid max-w-5xl gap-14">
-        <header className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
-              Arbiter
-            </h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
-              Người đăng khoá USDC vào escrow trên Arc testnet. Một trọng tài AI chấm bài theo
-              bộ tiêu chí đã đóng băng, và tiền tự đi khi bài đủ điểm — mọi phán quyết đều ghi
-              hash lên chain.
-            </p>
-          </div>
-          <WalletConnectButton onSession={setSession} />
-        </header>
+        <div>
+          <p className="max-w-2xl text-sm leading-relaxed" style={{ color: "var(--a-muted)" }}>
+            Người đăng khoá USDC vào escrow trên Arc testnet. Một trọng tài AI chấm bài theo
+            bộ tiêu chí đã đóng băng, và tiền tự đi khi bài đủ điểm — mọi phán quyết đều ghi
+            hash lên chain.
+          </p>
+        </div>
 
-        <AgentStatsStrip stats={stats} />
+        <TrackRecordBand
+          stats={stats}
+          escrowUsdc={Number(open.reduce((sum, b) => sum + b.amount_usdc, 0).toFixed(3))}
+          activeCount={open.length}
+        />
 
         {error && (
           <p
@@ -219,6 +229,7 @@ export default function ArbiterPage() {
       >
         <WorkerSubmitForm onChanged={refresh} />
       </Drawer>
-    </main>
+      </main>
+    </div>
   );
 }
