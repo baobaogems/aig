@@ -16,12 +16,12 @@ const T = TIER_THRESHOLDS;
 export function DecisionThresholds() {
   return (
     <div>
-      <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
+      <p className="text-[12px] leading-relaxed text-[var(--a-subtle)] m-0">
         Arbiter đề xuất điểm và mức tự tin. Việc quyết định tiền đi đâu thì do mã nguồn tất
         định làm, không phải do model — cùng một verdict luôn cho cùng một kết quả.
       </p>
 
-      <dl className="mt-3 space-y-3">
+      <dl className="mt-4 m-0 space-y-3">
         <Row
           label="Tự động trả tiền"
           value={`tự tin ≥ ${T.autoReleaseConfidence} VÀ điểm ≥ ${T.autoReleaseScore}`}
@@ -65,18 +65,18 @@ function Row({
   accent?: boolean;
 }) {
   return (
-    <div className="border-b border-[var(--color-ink)]/5 pb-3 last:border-0">
-      <dt className="flex flex-wrap items-baseline gap-2">
-        <span className="text-sm font-medium text-[var(--color-ink)]">{label}</span>
+    <div className="border-b pb-3 last:border-0" style={{ borderColor: "var(--a-line-dim)" }}>
+      <dt className="flex flex-wrap items-baseline gap-2 m-0">
+        <span className="text-[13px] font-bold text-[var(--a-text)]">{label}</span>
         <span
-          className={`tnum font-[family-name:var(--font-jetbrains-mono)] text-xs ${
-            accent ? "text-[var(--color-accent)]" : "text-[var(--color-ink-muted)]"
+          className={`a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[11px] ${
+            accent ? "text-[#00e05a]" : "text-[var(--a-subtle)]"
           }`}
         >
           {value}
         </span>
       </dt>
-      <dd className="mt-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">{note}</dd>
+      <dd className="mt-1 text-[12px] m-0 leading-relaxed text-[var(--a-subtle)]">{note}</dd>
     </div>
   );
 }
