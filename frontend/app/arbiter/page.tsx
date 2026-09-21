@@ -100,7 +100,7 @@ export default function ArbiterPage() {
   const showDone = availability !== "open";
 
   return (
-    <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
+    <main className="arbiter-ui bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
       <div className="mx-auto grid max-w-5xl gap-14">
         <header className="flex flex-wrap items-start justify-between gap-4">
           <div>
