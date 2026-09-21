@@ -3,8 +3,17 @@
 // =============================================================================
 // settlement-panel.tsx — every action that ends a bounty, with its price shown first.
 //
-// THE RULE OF THIS FILE: a button that moves money says how much, in numbers, before it is
-// pressed. A bare "Từ chối" that quietly costs 30% deters nobody and ambushes the honest.
+// TWO RULES OF THIS FILE.
+//
+// 1. A button that moves money says how much, in numbers, before it is pressed. A bare
+//    "Từ chối" that quietly costs 30% deters nobody and ambushes the honest.
+//
+// 2. Deciding whether to pay is the POSTER's, never the worker's. The old verdict card
+//    rendered "Approve — pay the worker" to whoever was looking and merely made it a no-op
+//    for anyone else; the server refused them, so no money could move, but showing a worker
+//    a button to approve their own work is its own kind of wrong. Every control below is
+//    behind `isPoster`. The worker is told what is happening and what they are owed —
+//    which is information, not authority.
 //
 // Nothing here computes a fee or a deadline of its own. The numbers come from kill-fee.ts
 // and settlement-clock.ts, the same modules the server settles with, because a rule written
@@ -37,6 +46,8 @@ interface Props {
   amountUsdc: number;
   submittedAt: string | null;
   status: string;
+  /** 2 = opened on the frozen v2 escrow, which has no clock and no kill fee. */
+  escrowVersion: number;
   verdict: SettlementVerdict | null;
   isPoster: boolean;
   isWorker: boolean;
@@ -52,7 +63,9 @@ function hoursLeft(seconds: number): string {
 }
 
 export function SettlementPanel(props: Props) {
-  const { bountyId, amountUsdc: amount, submittedAt, status, verdict, isPoster, isWorker, onChanged } = props;
+  const {
+    bountyId, amountUsdc: amount, submittedAt, status, escrowVersion, verdict, isPoster, isWorker, onChanged,
+  } = props;
   const now = useCountdown();
   const config = useConfig();
   const { writeContractAsync } = useWriteContract();
@@ -135,6 +148,71 @@ export function SettlementPanel(props: Props) {
     }
   }
 
+  // A v2 bounty never gets a settlement clock — that concept arrived with v3. Without this
+  // branch the panel returned null for them, which left the POSTER of a judged v2 bounty with
+  // no way to pay at all. One such bounty was live, holding real money, when this was found.
+  const legacyAwaitingPoster =
+    escrowVersion !== 3 && !settled && status === "JUDGED" && Boolean(verdict);
+
+  if (legacyAwaitingPoster && verdict) {
+    if (!isPoster) {
+      return (
+        <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Việc này mở từ trước khi có luật mới, nên nó kết thúc theo luật cũ: quyền quyết trả
+            tiền thuộc về người đăng. Nếu họ không xử trước hạn, tiền quay về ví họ.
+          </p>
+        </div>
+      );
+    }
+    return (
+      <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+        <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
+          Việc cũ — quyết định của bạn
+        </h3>
+        <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink)]">
+          Việc này khoá tiền trên hợp đồng đời trước, nên không chia phần được: trả đủ
+          <span className="font-semibold"> {usdc(amount)}</span>, hoặc không trả và tự đòi lại
+          tiền sau hạn.
+        </p>
+        <label className="mt-3 block text-xs text-[var(--color-ink-muted)]">
+          Lý do (bắt buộc nếu từ chối)
+          <textarea
+            className="mt-1 w-full rounded-md border border-[var(--color-border-light)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]"
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+          />
+        </label>
+        <div className="mt-3 flex flex-wrap gap-3">
+          <PillButton
+            variant="primary"
+            disabled={busy}
+            onClick={() =>
+              call("/api/escalation", {
+                bounty_id: bountyId, verdict_id: verdict.id, poster_action: "APPROVE",
+              })
+            }
+          >
+            Duyệt — trả đủ {usdc(amount)}
+          </PillButton>
+          <PillButton
+            variant="secondary"
+            disabled={busy || note.trim().length < 10}
+            onClick={() =>
+              call("/api/escalation", {
+                bounty_id: bountyId, verdict_id: verdict.id, poster_action: "REJECT", note,
+              })
+            }
+          >
+            Từ chối — không trả, đòi lại sau hạn
+          </PillButton>
+        </div>
+        {error && <p className="mt-2 text-xs text-[var(--color-accent)]">{error}</p>}
+      </div>
+    );
+  }
+
   if (!verdict || clock.phase === "closed") return null;
 
   const feeBps = tier === "T1" ? killFeeBps({ totalScore: verdict.total_score, tier: "T1" })
@@ -208,6 +286,7 @@ export function SettlementPanel(props: Props) {
         </>
       )}
 
+      {/* The worker gets the facts and no controls: whether to pay is not their call. */}
       {isWorker && (
         <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
           Người đăng có thể {tier === "T1" ? "phản đối" : "từ chối"} trong thời gian này; nếu vậy bạn

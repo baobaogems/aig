@@ -19,6 +19,7 @@
 import { NextRequest } from "next/server";
 import { getBountyDetail, insertEscalation } from "@/lib/arbiter/store";
 import { killFeeBps } from "@/lib/arbiter/kill-fee";
+import { isCurrentVersion } from "@/lib/escrow-version";
 import { settleBounty } from "@/lib/arbiter/settle-bounty";
 import { decideTier } from "@/lib/arbiter/tiers";
 import { requirePoster } from "@/lib/auth/require-role";
@@ -65,9 +66,14 @@ export async function POST(req: NextRequest) {
     // Record the human action FIRST — the override stat must survive a failed settlement.
     const escalation = await insertEscalation({ verdict_id, poster_action, note: note ?? null });
 
+    // A v2 bounty predates the kill fee and its contract cannot split, so a refusal there is
+    // the all-or-nothing it always was: nothing paid now, poster refunds after the deadline.
+    const legacy = !isCurrentVersion(detail.bounty.escrow_version);
     const bps =
       poster_action === "APPROVE"
         ? 10_000
+        : legacy
+        ? 0
         : killFeeBps({
             totalScore: detail.verdict.total_score,
             // Recomputed from the stored numbers, never taken from the request: the price of

@@ -39,6 +39,8 @@ interface Detail {
     amount_usdc: number;
     /** When the arbiter recorded the submission on-chain. Drives the settlement clock. */
     submitted_at: string | null;
+    /** 2 = opened on the frozen v2 escrow and finishing under its rules. */
+    escrow_version: number;
   };
   rubric: null | { items_json: RubricItem[] };
   // Shape mirrors GET /api/bounty?id= — kept local rather than imported from the server
@@ -194,6 +196,7 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
           amountUsdc={Number(detail.bounty.amount_usdc)}
           submittedAt={detail.bounty.submitted_at}
           status={detail.bounty.status}
+          escrowVersion={detail.bounty.escrow_version}
           verdict={detail.verdict}
           isPoster={isPoster}
           isWorker={isWorker}

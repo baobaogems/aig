@@ -129,23 +129,35 @@ describe("bounties still on the v2 contract", () => {
     expect(state.bounties.get(bounty.id)!.status).toBe("RELEASED");
   });
 
-  it("refuses a kill fee rather than rounding it to something v2 can express", async () => {
-    const { bounty, verdictId } = legacy(69); // would be 30% on v3
+  /** No kill fee existed when these were created, and v2 cannot split. A refusal there means
+   *  what it always meant: nothing paid now, poster reclaims after the deadline. */
+  it.each([69, 20])("REJECT pays nothing at score %i, whatever v3 would have charged", async (score) => {
+    const { bounty, verdictId } = legacy(score);
     const res = await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "REJECT", note: REASON });
-    expect(res.status).toBe(500);
-    expect((await res.json()).error).toMatch(/không chia tỉ lệ được/);
-    expect(settled).toHaveLength(0);
-  });
 
-  it("a zero-fee rejection leaves the money for the poster's own refund", async () => {
-    const { bounty, verdictId } = legacy(20); // below the fail line → 0 bps
-    const json = await (await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "REJECT", note: REASON })).json();
+    expect(res.status).toBe(200);
+    const json = await res.json();
     expect(json.workerBps).toBe(0);
+    expect(json.workerAmountUsdc).toBe(0);
     expect(json.note).toMatch(/hoàn tiền sau hạn/);
+    expect(settled).toHaveLength(0); // nothing moved on-chain
   });
 });
 
 describe("who and when", () => {
+  /** The point of the whole gate: deciding whether to pay is the poster's, and a worker
+   *  cannot approve their own work no matter what the interface happens to show them. */
+  it.each(["APPROVE", "REJECT"])("403s the worker attempting %s on their own bounty", async (action) => {
+    const { bounty, verdictId } = judged(65);
+    const res = await post(
+      { bounty_id: bounty.id, verdict_id: verdictId, poster_action: action, note: REASON },
+      WORKER,
+    );
+    expect(res.status).toBe(403);
+    expect(settled).toHaveLength(0);
+    expect(state.writes.some((w) => w.op === "insertEscalation")).toBe(false);
+  });
+
   it("403s the worker — they do not get to approve their own work", async () => {
     const { bounty, verdictId } = judged(65);
     const res = await post({ bounty_id: bounty.id, verdict_id: verdictId, poster_action: "APPROVE" }, WORKER);

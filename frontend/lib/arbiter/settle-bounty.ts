@@ -76,10 +76,13 @@ export async function settleBounty(
     }
   }
 
-  // A bounty opened on v2 finishes under v2's rules: pay in full or not at all, because that
-  // contract has no split. Refusing a partial here rather than rounding it to something v2
-  // can express — silently paying 100% or 0% of what a person was promised is not a fallback,
-  // it is a different decision made on their behalf.
+  // A bounty opened on v2 finishes under v2's rules, and those rules have no kill fee at all:
+  // that contract cannot split, and the bounty was created before the fee existed. So a
+  // refusal there means exactly what it always meant — nothing is paid now, and the poster
+  // reclaims the escrow themselves after the deadline. That is v2's own semantics, not a v3
+  // rule rounded down to fit. The caller is responsible for passing 0 or 10000; anything else
+  // is a bug upstream, and guessing which way to round it would be deciding on someone's
+  // behalf, so it throws.
   if (!isCurrentVersion(bounty.escrow_version)) {
     if (workerBps !== 10_000 && workerBps !== 0) {
       throw new Error(
@@ -87,7 +90,6 @@ export async function settleBounty(
       );
     }
     if (workerBps === 0) {
-      // v2's only way back to the poster is their own refund after the deadline.
       return {
         releaseTx: null, workerBps: 0, workerAmountUsdc: 0, posterAmountUsdc: 0,
         note: "escrow v2 — không trả cho người làm; người đăng tự hoàn tiền sau hạn",
