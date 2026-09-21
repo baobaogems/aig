@@ -109,8 +109,8 @@ Bốn nhánh chia tiền + chặn hoàn tiền chạy trên **cả hai** bản (
 
 | Hạng mục | Vì sao |
 |---|---|
-| Vòng đầy đủ qua giao diện (chấm bài → thanh toán) | env Vercel chưa trỏ v3, nên app vẫn nói chuyện với v2 |
-| Nối vào Production | **env Vercel chưa đổi** (thao tác bị chặn quyền), code chưa push |
+| Vòng đầy đủ qua giao diện trên **v3** | chưa ai tạo bounty nào trên v3 (v3 count = 0) |
+| Nguồn gốc 1 USDC còn kẹt trong v2 | không thuộc bounty nào trong DB; chưa truy, không đoán |
 | `timeoutRelease` trên bản chính (48h) | phải chờ đủ 48 giờ |
 
 ## Migration 010 — ĐÃ CHẠY 20/09
@@ -138,6 +138,24 @@ Chạy `frontend/scripts/escrow-v2-inventory.ts` sau khi deploy v3:
 
 Bounty `00c18910…` sẽ **kết thúc theo luật v2**: người đăng duyệt thì trả đủ, hoặc họ tự hoàn
 tiền sau 27/09. Code mới định tuyến nó qua `escrow_version = 2` và đường `releaseEscrowV2`.
+
+## v2 — đã tất toán hết 21/09
+
+Bounty cuối cùng còn giữ tiền, `00c18910…` (5 USDC), người đăng đã **duyệt trả đủ** qua giao
+diện. Giao dịch đi bằng đường legacy `releaseEscrowV2` — **code v3 gọi hợp đồng v2** — và
+đúng ngay lần đầu chạy bằng tiền thật:
+
+| | |
+|---|---|
+| tx | `0x5b98780bdd09c50f6345b6d6eaa78f4ce28c1cc06049b800dcb9e4ab3634b88e` |
+| block | 63261432, status `0x1` |
+| người làm nhận | 5 USDC, đủ 100% (`worker_bps = 10000`) |
+
+Kiểm kê lại sau đó: **0 bounty còn giữ tiền trên v2.** Không bounty nào bị kẹt bởi đợt chuyển.
+
+> Lưu ý chưa giải quyết: contract v2 vẫn còn **1 USDC** không thuộc bounty nào trong cơ sở dữ
+> liệu. Script kiểm kê chỉ soi bounty có trong DB nên khoản này nằm ngoài tầm nó. **CHƯA XÁC
+> MINH** nguồn gốc — muốn truy thì quét sự kiện `BountyCreated` trên v2 rồi đối chiếu DB.
 
 ## v2 — không đụng vào
 

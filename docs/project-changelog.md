@@ -2,6 +2,59 @@
 
 All significant changes, features, and fixes documented here.
 
+## [v5.0 — The default now favours the person who already handed something over] — 2026-09-21
+
+### The hole this closes
+
+v2's escrow knew "locked" and "released" and nothing else. It had no idea whether anyone had
+handed work in, and that single blind spot was the product's worst behaviour: a poster could
+take delivery of the deliverable, say nothing until the deadline, refund, and keep both the
+work and the money. Silence was the cheapest available strategy and it won. A submission made
+near the deadline could also lose a race to that refund, however good it was.
+
+### Added
+
+- **ArbiterEscrow v3** `0xA4BB0B0448277B433A2c01b6F828771e9C5920B1` (Arc testnet, block 63109048),
+  adding one concept — `submittedAt` — from which everything else follows.
+- **Partial settlement.** `settle(id, verdictHash, workerBps)` splits the escrow and returns the
+  remainder to the poster in the same transaction. "This is partly usable" was previously
+  unrepresentable, so a poster who found work half-good had to choose between paying everything
+  and paying nothing.
+- **A price on refusal, taken from the arbiter's own score**: nothing below the fail line, up to
+  30% across the middle band, 50% for overriding a verdict that had asked to pay in full. There
+  is no court here to tell an honest rejection from a theft, so every rejection carries a price
+  instead of some of them carrying a punishment.
+- **`timeoutRelease`, permissionless.** The worker's first on-chain right that does not depend on
+  this platform answering: after the window, anyone can complete the payment, so the money
+  arrives even if we disappear.
+- **`expireClaim`, permissionless.** A claimed-and-abandoned bounty stops blocking the board.
+- **Route-handler tests.** 83 tests were green while `POST /api/bounty` returned 400 to every
+  caller for half a day, because no test ever called a handler. Now every money branch has one.
+
+### Changed
+
+- **Judging no longer moves money.** A plausible verdict starts a clock; paying is a separate act
+  through one of three doors, all of which go through a single settlement module so there is one
+  payout rule rather than three that drift apart.
+- **Silence now pays the worker.** A poster who does nothing within the window ends up paying in
+  full, which is the exact reverse of before.
+- **The poster can no longer refund alone once work exists** — the deadline race is closed on-chain.
+- Deciding whether to pay is behind `isPoster`. The old verdict card rendered "Approve — pay the
+  worker" to whoever was looking and merely made it a no-op for everyone else.
+- The decision sits *below* the verdict, not above it. Asking someone to decide before showing
+  them the evidence, then hiding the buttons behind a scroll, teaches people the feature is missing.
+
+### Migration
+
+Bounties opened on v2 finish on v2; no money moves between contracts and no script exists that
+could. The last one holding funds was settled on 21/09 (5 USDC, tx `0x5b98780b`), leaving zero.
+
+### Limits, stated rather than hidden
+
+Without a stake there is no sanction on the platform itself — the ceiling of a court-free design
+is *auditable*, not *punishable*. And a determined poster can still buy a 70-point deliverable at
+half price. Pricing refusal discourages the abuse; it does not end it.
+
 ## [v4.2 — A board you can read] — 2026-09-20
 
 ### Added
