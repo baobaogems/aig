@@ -54,6 +54,15 @@ interface Props {
   onChanged: () => Promise<void> | void;
 }
 
+/**
+ * Anchor so a link can drop someone straight onto the decision.
+ *
+ * The browser's own #hash scroll fires before this panel exists — the page is server-rendered
+ * and the panel only appears once the bounty has been fetched — so the scroll is redone here
+ * on mount. Without that, the link looks broken in exactly the case it was made for.
+ */
+export const SETTLEMENT_ANCHOR = "quyet-dinh";
+
 const usdc = (n: number) => `${Number(n.toFixed(6))} USDC`;
 
 function hoursLeft(seconds: number): string {
@@ -121,6 +130,17 @@ export function SettlementPanel(props: Props) {
     void call("/api/settlement/finalize", { bounty_id: bountyId });
   }, [clock.phase, busy, bountyId, call]);
 
+  // Re-run the #hash scroll once this panel is actually in the DOM.
+  const scrolledToAnchor = useRef(false);
+  useEffect(() => {
+    if (scrolledToAnchor.current) return;
+    if (typeof window === "undefined" || window.location.hash !== `#${SETTLEMENT_ANCHOR}`) return;
+    const el = document.getElementById(SETTLEMENT_ANCHOR);
+    if (!el) return; // not rendered yet; a later render will bring us back
+    scrolledToAnchor.current = true;
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+  });
+
   /** Worker's way out when this platform is not answering: their own signature, no server. */
   async function selfRelease() {
     setBusy(true);
@@ -157,7 +177,7 @@ export function SettlementPanel(props: Props) {
   if (legacyAwaitingPoster && verdict) {
     if (!isPoster) {
       return (
-        <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+        <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
           <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
             Việc này mở từ trước khi có luật mới, nên nó kết thúc theo luật cũ: quyền quyết trả
             tiền thuộc về người đăng. Nếu họ không xử trước hạn, tiền quay về ví họ.
@@ -166,7 +186,7 @@ export function SettlementPanel(props: Props) {
       );
     }
     return (
-      <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+      <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
         <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
           Việc cũ — quyết định của bạn
         </h3>
@@ -221,7 +241,7 @@ export function SettlementPanel(props: Props) {
   const posterGets = posterAmountUsdc(amount, feeBps);
 
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+    <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
           {tier === "T1" ? "Máy đã quyết trả tiền" : "Đang chờ người đăng quyết"}
