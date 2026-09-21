@@ -30,7 +30,7 @@ export function TrackRecordBand({
         style={{ borderColor: "var(--a-line)", background: "var(--a-panel)" }}
       >
         <p className="text-sm" style={{ color: "var(--a-muted)" }}>
-          Đang tải hồ sơ trọng tài…
+          Loading arbitrator profile...
         </p>
       </div>
     );
@@ -51,8 +51,8 @@ export function TrackRecordBand({
           <span className="a-tnum font-[family-name:var(--font-jetbrains-mono)]">
             {r.totalVerdicts}
           </span>{" "}
-          phán quyết đã ghi lên chain.{" "}
-          <span style={{ color: "var(--a-acc)" }}>{r.overturned} bị người đăng lật.</span>
+          rulings recorded on-chain.{" "}
+          <span style={{ color: "var(--a-acc)" }}>{r.overturned} overturned by the poster.</span>
         </p>
 
         {/* Thanh tỉ lệ: tỉ trọng đọc được trước cả khi đọc số. */}

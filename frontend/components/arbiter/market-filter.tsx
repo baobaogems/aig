@@ -34,15 +34,14 @@ export function MarketFilter({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[var(--a-card)]
-                 border bg-white/50 px-4 py-3"
-      style={{ borderColor: "var(--a-line-dim)" }}
+      className="flex flex-wrap items-center gap-x-8 gap-y-4 rounded-[var(--a-card)] px-4 py-3"
+      style={{ background: "var(--a-bg-filter)", border: "none" }}
     >
       {/* STATUS GROUP */}
       <div className="flex flex-col gap-1.5">
         <span
           className="font-[family-name:var(--font-display)] text-[10px] font-bold uppercase tracking-[0.1em]"
-          style={{ color: "var(--a-subtle)" }}
+          style={{ color: "var(--a-text-light-label)" }}
         >
           STATUS
         </span>
@@ -56,18 +55,20 @@ export function MarketFilter({
                 aria-checked={active}
                 onClick={() => onStatusChange(o.value)}
                 className={
-                  "flex items-center gap-1.5 rounded-[var(--a-pill)] px-3.5 py-1 text-sm font-semibold transition-colors " +
+                  "flex items-center gap-1.5 rounded-[var(--a-pill)] px-3.5 py-1 text-sm transition-colors " +
                   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
                   "focus-visible:outline-[var(--a-acc)] " +
-                  (active
-                    ? "bg-[var(--a-ink)] text-white"
-                    : "text-[var(--a-subtle)] hover:text-[var(--a-ink)]")
+                  (active ? "font-semibold" : "font-normal hover:opacity-80")
                 }
+                style={{
+                  color: active ? "var(--a-text-light-active)" : "var(--a-text-light-tab)",
+                  background: "transparent",
+                }}
               >
                 {active && (
                   <span
                     className="block h-1.5 w-1.5 rounded-full"
-                    style={{ background: "var(--a-acc)" }}
+                    style={{ background: "var(--a-text-light-active)" }}
                   />
                 )}
                 {o.label}
@@ -77,13 +78,13 @@ export function MarketFilter({
         </div>
       </div>
 
-      <div className="hidden h-10 w-px bg-[var(--a-line-dim)] md:block" />
+      <div className="hidden h-10 w-px md:block" style={{ background: "rgba(0,0,0,0.1)" }} />
 
       {/* BOUNTY PRIZE GROUP */}
       <div className="flex flex-col gap-1.5">
         <span
           className="font-[family-name:var(--font-display)] text-[10px] font-bold uppercase tracking-[0.1em]"
-          style={{ color: "var(--a-subtle)" }}
+          style={{ color: "var(--a-text-light-label)" }}
         >
           BOUNTY PRIZE
         </span>
@@ -98,15 +99,16 @@ export function MarketFilter({
                 aria-checked={active}
                 onClick={() => onPrizeChange(o.value)}
                 className={
-                  "rounded-[var(--a-pill)] px-3.5 py-1 text-sm font-semibold transition-colors " +
+                  "rounded-[var(--a-pill)] px-3.5 py-1 text-sm transition-colors " +
                   "focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
                   "focus-visible:outline-[var(--a-acc)] " +
-                  (active
-                    ? "bg-[var(--a-ink)] text-white"
-                    : empty
-                    ? "text-[var(--a-subtle)] opacity-50 hover:opacity-100 hover:text-[var(--a-ink)]"
-                    : "text-[var(--a-subtle)] hover:text-[var(--a-ink)]")
+                  (active ? "font-semibold" : "font-normal hover:opacity-80") +
+                  (empty && !active ? " opacity-50" : "")
                 }
+                style={{
+                  color: active ? "var(--a-text-light-active)" : "var(--a-text-light-tab)",
+                  background: "transparent",
+                }}
               >
                 {o.label}
               </button>
@@ -117,7 +119,7 @@ export function MarketFilter({
 
       <span
         className="ml-auto self-end font-[family-name:var(--font-display)] text-[11px] font-bold uppercase tracking-[0.05em]"
-        style={{ color: "var(--a-subtle)" }}
+        style={{ color: "var(--a-text-light-label)" }}
       >
         {resultCount} {resultCount === 1 ? "result" : "results"}
       </span>

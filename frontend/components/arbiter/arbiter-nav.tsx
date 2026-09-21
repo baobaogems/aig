@@ -44,7 +44,7 @@ export function ArbiterNav({
       style={
         current === key
           ? { background: "var(--a-acc)", color: "var(--a-on-acc)", fontWeight: 800 }
-          : { color: "var(--a-subtle)" }
+          : { color: "var(--a-text-light-tab)" }
       }
     >
       {label}
@@ -62,7 +62,7 @@ export function ArbiterNav({
   return (
     <nav
       className="sticky top-0 z-20 border-b"
-      style={{ background: "#f4f6f6", borderColor: "var(--a-line-dim)" }}
+      style={{ background: "var(--a-bg-header)", borderColor: "var(--a-line-dim)" }}
     >
       {/* flex-wrap + order-3 trên cụm link: ở hẹp nó rơi xuống hàng riêng thay vì biến mất. */}
       <div className="mx-auto flex max-w-[1160px] flex-wrap items-center gap-4 gap-y-2.5 px-5 py-3">
@@ -74,12 +74,15 @@ export function ArbiterNav({
           A
         </div>
         <div className="mr-auto">
-          <p className="m-0 font-[family-name:var(--font-display)] text-[20px] font-black leading-none tracking-[0.2em]">
+          <p
+            className="m-0 font-[family-name:var(--font-display)] text-[20px] font-black leading-none tracking-[0.2em]"
+            style={{ color: "var(--a-text-light-brand)" }}
+          >
             ARBITER
           </p>
           <p
             className="mt-[3px] hidden font-[family-name:var(--font-jetbrains-mono)] text-[9px] uppercase tracking-[0.16em] sm:block"
-            style={{ color: "var(--a-subtle)" }}
+            style={{ color: "var(--a-text-light-label)" }}
           >
             ON-CHAIN BOUNTY ARBITRATION
           </p>
@@ -99,7 +102,7 @@ export function ArbiterNav({
             target="_blank"
             rel="noopener noreferrer"
             className={`${LINK} hidden md:flex`}
-            style={{ color: "var(--a-subtle)" }}
+            style={{ color: "var(--a-text-light-tab)" }}
           >
             Docs ↗
           </a>

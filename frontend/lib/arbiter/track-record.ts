@@ -43,10 +43,10 @@ export function deriveTrackRecord(stats: AgentStats): TrackRecord {
       decisiveReviewed: stats.decisive_reviewed,
     }),
     lanes: [
-      { key: "auto", count: stats.t1_auto_release, label: "tự trả tiền", cssVar: "--a-ok" },
-      { key: "failed", count: failed, label: "chấm xong, không đạt", cssVar: "--a-warn" },
-      { key: "human", count: stats.human_reviewed, label: "chuyển cho người", cssVar: "--a-info" },
-      { key: "refused", count: stats.refused, label: "từ chối chấm", cssVar: "--a-line-dim" },
+      { key: "auto", count: stats.t1_auto_release, label: "auto-paid", cssVar: "--a-ok" },
+      { key: "failed", count: failed, label: "graded, not passed", cssVar: "--a-warn" },
+      { key: "human", count: stats.human_reviewed, label: "released to poster", cssVar: "--a-info" },
+      { key: "refused", count: stats.refused, label: "grading declined", cssVar: "--a-line-dim" },
     ],
   };
 }

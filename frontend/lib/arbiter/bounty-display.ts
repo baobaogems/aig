@@ -40,11 +40,11 @@ export function isClaimable(state: BountyState): boolean {
 }
 
 export const STATE_LABEL: Record<BountyState, string> = {
-  unclaimed: "Chưa ai nhận",
-  "in-progress": "Đang làm",
-  submitted: "Đã nộp · chờ chấm",
-  expired: "Đã quá hạn",
-  closed: "Đã xong",
+  unclaimed: "Unclaimed",
+  "in-progress": "In progress",
+  submitted: "Submitted · waiting for grading",
+  expired: "Expired",
+  closed: "Closed",
 };
 
 /**
@@ -53,27 +53,27 @@ export const STATE_LABEL: Record<BountyState, string> = {
  */
 export function timeLeft(deadline: string, now: number): string {
   const ms = new Date(deadline).getTime() - now;
-  if (!Number.isFinite(ms)) return "không rõ hạn";
-  if (ms <= 0) return "đã quá hạn";
+  if (!Number.isFinite(ms)) return "deadline unknown";
+  if (ms <= 0) return "expired";
 
   const totalSeconds = Math.floor(ms / 1000);
-  if (totalSeconds < 60) return `còn ${totalSeconds} giây`;
+  if (totalSeconds < 60) return `${totalSeconds} seconds left`;
 
   const mins = Math.floor(totalSeconds / 60);
-  if (mins < 60) return `còn ${mins} phút`;
+  if (mins < 60) return `${mins} minutes left`;
 
   const hours = Math.floor(mins / 60);
   // Under two days, hours are still the useful unit — "còn 1 ngày" hides that it is 47 hours.
-  if (hours < 48) return `còn ${hours} giờ`;
+  if (hours < 48) return `${hours} hours left`;
 
-  return `còn ${Math.floor(hours / 24)} ngày`;
+  return `${Math.floor(hours / 24)} days left`;
 }
 
 /**
  * What the status strip should say.
  *
  * A countdown on a finished bounty produces a card that contradicts itself — the chip saying
- * "Đã xong" above a strip saying "đã quá hạn", which are both true and together say nothing.
+ * "Closed" above a strip saying "expired", which are both true and together say nothing.
  * Once a bounty is settled the useful fact is the OUTCOME, so the strip switches to it.
  */
 export function stripLabel(state: BountyState, status: string, deadline: string, now: number): string {
@@ -81,15 +81,15 @@ export function stripLabel(state: BountyState, status: string, deadline: string,
 
   switch (status) {
     case "RELEASED":
-      return "đã trả tiền cho người làm";
+      return "released to worker";
     case "REFUNDED":
-      return "đã hoàn tiền cho người đăng";
+      return "refunded to poster";
     case "REFUSED":
-      return "trọng tài từ chối chấm";
+      return "arbiter refused to grade";
     case "JUDGED":
-      return "đã chấm — chờ người đăng quyết";
+      return "judged — pending poster decision";
     default:
-      return "đã kết thúc";
+      return "ended";
   }
 }
 

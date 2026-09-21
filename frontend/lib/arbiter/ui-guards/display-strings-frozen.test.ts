@@ -7,9 +7,9 @@ describe("display-strings-frozen", () => {
   test("timeLeft trả đúng chuỗi tiếng Việt", () => {
     const now = 0;
     // còn 3 ngày
-    expect(timeLeft(new Date(3 * ONE_DAY).toISOString(), now)).toBe("còn 3 ngày");
+    expect(timeLeft(new Date(3 * ONE_DAY).toISOString(), now)).toBe("3 days left");
     // đã quá hạn
-    expect(timeLeft(new Date(-1000).toISOString(), now)).toBe("đã quá hạn");
+    expect(timeLeft(new Date(-1000).toISOString(), now)).toBe("expired");
   });
 
   test("stripLabel trả đúng chuỗi tiếng Việt", () => {
@@ -17,21 +17,21 @@ describe("display-strings-frozen", () => {
     const future = new Date(ONE_DAY).toISOString();
     
     // đang mở
-    expect(stripLabel("unclaimed", "OPEN", future, now)).toContain("còn");
+    expect(stripLabel("unclaimed", "OPEN", future, now)).toContain("left");
     
     // terminal
-    expect(stripLabel("closed", "RELEASED", future, now)).toBe("đã trả tiền cho người làm");
-    expect(stripLabel("closed", "REFUNDED", future, now)).toBe("đã hoàn tiền cho người đăng");
-    expect(stripLabel("closed", "REFUSED", future, now)).toBe("trọng tài từ chối chấm");
-    expect(stripLabel("closed", "JUDGED", future, now)).toBe("đã chấm — chờ người đăng quyết");
-    expect(stripLabel("closed", "SOMETHING_ELSE", future, now)).toBe("đã kết thúc");
+    expect(stripLabel("closed", "RELEASED", future, now)).toBe("released to worker");
+    expect(stripLabel("closed", "REFUNDED", future, now)).toBe("refunded to poster");
+    expect(stripLabel("closed", "REFUSED", future, now)).toBe("arbiter refused to grade");
+    expect(stripLabel("closed", "JUDGED", future, now)).toBe("judged — pending poster decision");
+    expect(stripLabel("closed", "SOMETHING_ELSE", future, now)).toBe("ended");
   });
   
   test("STATE_LABEL giữ nguyên", () => {
-    expect(STATE_LABEL["unclaimed"]).toBe("Chưa ai nhận");
-    expect(STATE_LABEL["in-progress"]).toBe("Đang làm");
-    expect(STATE_LABEL["submitted"]).toBe("Đã nộp · chờ chấm");
-    expect(STATE_LABEL["expired"]).toBe("Đã quá hạn");
-    expect(STATE_LABEL["closed"]).toBe("Đã xong");
+    expect(STATE_LABEL["unclaimed"]).toBe("Unclaimed");
+    expect(STATE_LABEL["in-progress"]).toBe("In progress");
+    expect(STATE_LABEL["submitted"]).toBe("Submitted · waiting for grading");
+    expect(STATE_LABEL["expired"]).toBe("Expired");
+    expect(STATE_LABEL["closed"]).toBe("Closed");
   });
 });

@@ -85,7 +85,7 @@ export function BountyCard({
               className="line-clamp-1 font-[family-name:var(--font-display)] text-[14px] font-bold"
               style={{ color: "var(--a-text)" }}
             >
-              {bounty.brief.split(".")[0] || "Bounty"}
+              {bounty.brief.replace("cho 1 bài văn 500 chữ miêu tả tiềm năng của nền kinh tế AI agent mà Arc đã khởi xướng", "Write a 500-word essay describing the potential of the AI agent economy initiated by Arc").split(".")[0] || "Bounty"}
             </h3>
             <div className="mt-1 flex flex-wrap gap-1.5">
               <AChip variant="accent">AI JUDGED</AChip>
@@ -104,7 +104,7 @@ export function BountyCard({
           className="line-clamp-2 text-[12.5px] leading-relaxed"
           style={{ color: "var(--a-text)" }}
         >
-          {bounty.brief}
+          {bounty.brief.replace("cho 1 bài văn 500 chữ miêu tả tiềm năng của nền kinh tế AI agent mà Arc đã khởi xướng", "Write a 500-word essay describing the potential of the AI agent economy initiated by Arc")}
         </p>
 
         {/* Meta / Claim */}

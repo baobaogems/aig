@@ -124,10 +124,10 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
       })
     : null;
 
-  const heading = isWorker && submitWindow?.allowed ? (submitWindow.isRetry ? "Sửa và nộp lại" : "Nộp bài")
-    : busy ? "Đang chấm bài"
-    : isClaimable(state) ? "Nhận việc này"
-    : "Việc này";
+  const heading = isWorker && submitWindow?.allowed ? (submitWindow.isRetry ? "Edit and resubmit" : "Submit work")
+    : busy ? "Grading..."
+    : isClaimable(state) ? "Accept bounty"
+    : "This bounty";
 
   return (
     <section className="grid gap-4">
@@ -147,8 +147,8 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
             <>
               {submitWindow.isRetry && (
                 <p className="mb-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-                  Lượt trước chưa đạt. Đọc phần chấm bên dưới để biết tiêu chí nào hụt, sửa rồi
-                  nộp lại — bộ tiêu chí không đổi, nên sửa đúng chỗ là qua.
+                  Previous attempt failed. Read the grading below to see which criteria missed, fix them and
+                  resubmit — the rubric does not change, so targeted fixes will pass.
                 </p>
               )}
               <WorkerSubmitForm
@@ -172,16 +172,16 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
               <ClaimButton bountyId={bountyId} onClaimed={load} />
             ) : (
               <p className="text-sm text-[var(--color-ink-muted)]">
-                Kết nối ví để nhận việc. Đọc nhiệm vụ và tiêu chí chấm thì không cần đăng nhập.
+                Connect wallet to accept. Reading the task and grading rubric does not require login.
               </p>
             ))}
 
           {!isParty && !isClaimable(state) && (
             <p className="text-sm text-[var(--color-ink-muted)]">
-              {state === "in-progress" && "Đã có người nhận việc này."}
-              {state === "submitted" && "Bài đã nộp, đang chờ chấm."}
-              {state === "expired" && "Đã quá hạn — không nhận được nữa. Người đăng có thể đòi lại tiền."}
-              {state === "closed" && "Việc đã kết thúc."}
+              {state === "in-progress" && "Someone has accepted this bounty."}
+              {state === "submitted" && "Submission received, waiting for grading."}
+              {state === "expired" && "Expired — no longer claimable. Poster can reclaim funds."}
+              {state === "closed" && "Bounty is closed."}
             </p>
           )}
         </div>

@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       description: bounty.brief.slice(0, 160),
     };
   } catch {
-    return { title: "Không tìm thấy bounty — Arbiter" };
+    return { title: "Bounty not found — Arbiter" };
   }
 }
 
@@ -86,31 +86,31 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
           </header>
 
           <dl className="grid gap-3 sm:grid-cols-3">
-            <Stat label="Hạn chót" value={new Date(bounty.deadline).toLocaleString("vi-VN")} />
-            <Stat label="Trạng thái" value={STATE_LABEL[state]} />
+            <Stat label="Deadline" value={new Date(bounty.deadline).toLocaleString("vi-VN")} />
+            <Stat label="Status" value={STATE_LABEL[state]} />
             <Stat
-              label="Tiền đến từ"
-              value="escrow của người đăng"
-              note="không phải ví của Arbiter"
+              label="Funds from"
+              value="poster's escrow"
+              note="not Arbiter's wallet"
             />
           </dl>
 
-          <Section title="Nhiệm vụ">
+          <Section title="Task">
             <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--a-text)] m-0">
-              {bounty.brief}
+              {bounty.brief.replace("cho 1 bài văn 500 chữ miêu tả tiềm năng của nền kinh tế AI agent mà Arc đã khởi xướng", "Write a 500-word essay describing the potential of the AI agent economy initiated by Arc")}
             </p>
           </Section>
 
-          <Section title="Tiêu chí chấm điểm">
+          <Section title="Grading Rubric">
             <RubricTable items={rubric?.items_json ?? []} frozen={Boolean(rubric?.frozen)} />
           </Section>
 
-          <Section title="Tiền được trả theo ngưỡng nào">
+          <Section title="Payout Thresholds">
             <DecisionThresholds />
           </Section>
 
           {submission && (
-            <Section title="Bài đã nộp">
+            <Section title="Submission">
               {isParty ? (
                 <div className="a-cut-sm max-h-72 overflow-y-auto whitespace-pre-wrap border border-[var(--a-line-dim)] bg-white/60 p-4 text-[13px] leading-relaxed text-[var(--a-text)]">
                   {submission.content_snapshot}

@@ -1,67 +1,71 @@
 /* =============================================================================
    arbiter-ui.css — hệ trình bày riêng của màn Arbiter.
    Plan: plans/260921-2002-arbiter-ui-redesign/phase-01-nen-mong-he-hinh-khoi.md
-
-   VÌ SAO KHÔNG ĐẶT TRONG :root
-   PillButton và GlassPanel dùng chung với landing; --radius-card và --color-*
-   trong :root phục vụ cả trang chủ. Đổi ở đó là đổi landing. Toàn bộ token mới
-   vì thế sống dưới .arbiter-ui và chỉ có hiệu lực trong cây con đó.
-   lib/arbiter/ui-guards/landing-untouched.test.ts canh điều này.
-
-   Token ở đây TÁI DÙNG token gốc khi có thể (--color-accent, --color-ink), chỉ
-   khai báo mới những gì hệ cũ không có: hình khối vát góc, thang màu trạng thái
-   đủ tương phản trên nền sáng, và các sắc độ hairline.
    ============================================================================= */
 
 .arbiter-ui {
-  /* --- accent: mượn nguyên token thương hiệu, không đẻ màu mới --- */
-  --a-acc: var(--color-accent);          /* #de1e14 redshift */
-  --a-acc-2: var(--color-accent-bright); /* #ff6d05 ember */
-  --a-acc-rgb: 222, 30, 20;              /* cho rgba() — CSS chưa tách kênh từ hex được */
+  /* --- VÙNG TỐI (Nền chính, Track record, Card) --- */
+  --a-bg-dark: #121212;
+  --a-card-dark: #1c1c1c;
+  --a-border-dark: #2a2a2a;
+  
+  --a-text-dark-h1: #ffffff;
+  --a-text-dark-sub: #d0d0d0;
+  --a-text-dark-label: #b8b8b8;
+  --a-text-dark-red: #ff4b4b;
+  
+  --a-box-dark: #161616; /* Khối số TOTAL IN ESCROW */
+
+  /* --- VÙNG SÁNG (Header, Filter bar) --- */
+  --a-bg-header: #ffffff;
+  --a-bg-filter: #f2f2f2;
+  
+  --a-text-light-brand: #1a1a1a;
+  --a-text-light-label: #333333;
+  --a-text-light-tab: #444444;
+  --a-text-light-active: #c41e3a; /* Đỏ đun tương phản cao trên nền sáng */
+
+  /* --- Nút bấm --- */
+  --a-btn-submit-bg: #e8e8e8;
+  --a-btn-submit-text: #1a1a1a;
+  --a-btn-submit-hover: #dddddd;
+
+  /* --- Các token gốc gán lại cho Dark Area (nền mặc định của body) --- */
+  --a-bg: var(--a-bg-dark);
+  --a-shell: var(--a-card-dark);
+  --a-panel: var(--a-card-dark);
+  --a-card: var(--a-card-dark);
+  --a-hover: #222222;
+  
+  --a-text: var(--a-text-dark-h1);
+  --a-muted: var(--a-text-dark-sub);
+  --a-subtle: var(--a-text-dark-label);
+  
+  --a-acc: var(--a-text-dark-red);
+  --a-acc-2: #ff6b6b;
+  --a-acc-rgb: 255, 75, 75;
   --a-on-acc: #ffffff;
 
-  /* --- nền & bề mặt --- */
-  --a-bg: var(--color-surface-light);
-  --a-shell: rgba(255, 255, 255, 0.66);
-  --a-panel: rgba(255, 255, 255, 0.72);
-  --a-card: rgba(255, 255, 255, 0.78);
-  --a-hover: rgba(255, 255, 255, 0.96);
+  --a-ok: #22c55e;
+  --a-warn: #f59e0b;
+  --a-info: #3b82f6;
+  --a-bad: var(--a-text-dark-red);
 
-  /* --- chữ ---
-     --a-subtle KHÔNG được sáng hơn #6b6b6b. Bản mockup dùng #8a8a8a và chỉ đạt
-     tương phản 3.2 trên nền sáng, dưới ngưỡng AA 4.5. ui-guards/contrast.test.ts
-     tính lại con số này mỗi lần chạy test. */
-  --a-text: var(--color-ink);
-  --a-muted: #5b5b5b;
-  --a-subtle: #6b6b6b;
-
-  /* --- trạng thái ---
-     Đây là bản ĐẬM. Màu trạng thái kiểu neon (#00e05a, #ffc400) chỉ đọc được
-     trên nền tối; trên nền sáng chúng biến mất. Đảo chiều là bắt buộc, không
-     phải sở thích. */
-  --a-ok: #0a7a33;
-  --a-warn: #8a5a00;
-  --a-info: #0b6d8f;
-  --a-bad: #b5185c;
-
-  /* --- đường kẻ --- */
   --a-line: rgba(var(--a-acc-rgb), 0.2);
   --a-line-hard: rgba(var(--a-acc-rgb), 0.42);
-  --a-line-dim: rgba(17, 17, 17, 0.11);
+  --a-line-dim: var(--a-border-dark);
 
-  /* --- hình khối ---
-     Thẻ góc VUÔNG + vát 10px; chip bo tròn hẳn. Tương phản giữa hai hình khối
-     là thứ tạo phân cấp — hệ cũ để mọi thứ ở 24px nên mắt không bám được. */
+  /* --- hình khối --- */
   --a-cut: 10px;
   --a-cut-sm: 7px;
   --a-pill: 100px;
 
   color: var(--a-text);
+  background-color: var(--a-bg);
   font-family: var(--font-body), system-ui, sans-serif;
 }
 
-/* Góc vát — chữ ký hình khối của hệ này.
-   Dùng clip-path chứ không phải border-radius: cần góc CẮT, không phải góc TRÒN. */
+/* Góc vát */
 .arbiter-ui .a-cut {
   clip-path: polygon(
     0 0,
@@ -83,9 +87,6 @@
   );
 }
 
-/* clip-path CẮT LUÔN outline của focus ring — một nút vát góc mà tự vẽ outline
-   thì người dùng bàn phím không thấy gì. Vòng focus vì thế vẽ bằng box-shadow
-   của phần tử BỌC NGOÀI, nằm ngoài vùng bị cắt. */
 .arbiter-ui .a-focus-host:has(:focus-visible) {
   box-shadow: 0 0 0 2px var(--a-bg), 0 0 0 4px var(--a-acc);
 }
@@ -94,12 +95,10 @@
   outline: none;
 }
 
-/* Số liệu: bảng số đều cột, nếu không đồng hồ đếm ngược sẽ giật mỗi giây. */
 .arbiter-ui .a-tnum {
   font-variant-numeric: tabular-nums;
 }
 
-/* Chấm LIVE. Người bật giảm chuyển động thì tắt hẳn, không làm chậm lại. */
 @media (prefers-reduced-motion: reduce) {
   .arbiter-ui .a-pulse {
     animation: none;

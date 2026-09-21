@@ -12,7 +12,7 @@
 
 import type { ReactNode } from "react";
 
-type Variant = "solid" | "line" | "ghost";
+type Variant = "solid" | "line" | "ghost" | "secondary";
 
 const STYLE: Record<Variant, React.CSSProperties> = {
   // Nút đặc DUY NHẤT trên mỗi màn, dành cho hành động chuyển tiền (catalog E3).
@@ -24,6 +24,7 @@ const STYLE: Record<Variant, React.CSSProperties> = {
   },
   line: { background: "rgba(255,255,255,.6)", borderColor: "var(--a-line-hard)", color: "var(--a-text)" },
   ghost: { background: "transparent", borderColor: "transparent", color: "var(--a-muted)" },
+  secondary: { background: "var(--a-btn-submit-bg)", borderColor: "transparent", color: "var(--a-btn-submit-text)" },
 };
 
 export function AButton({

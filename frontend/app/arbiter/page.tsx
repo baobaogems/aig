@@ -138,9 +138,9 @@ export default function ArbiterPage() {
         <div className="mx-auto grid max-w-[1120px] gap-14">
           <div>
             <p className="max-w-2xl text-[12.5px] leading-relaxed" style={{ color: "var(--a-muted)" }}>
-              Người đăng khoá USDC vào escrow trên Arc testnet. Một trọng tài AI chấm bài theo
-              bộ tiêu chí đã đóng băng, và tiền tự đi khi bài đủ điểm — mọi phán quyết đều ghi
-              hash lên chain.
+              Posters lock USDC into escrow on the Arc testnet. An AI arbiter grades submissions against a
+              frozen rubric, and funds flow automatically when the score passes — all verdicts are hashed
+              on-chain.
             </p>
           </div>
 
@@ -168,7 +168,7 @@ export default function ArbiterPage() {
                 </h2>
               </div>
               <div className="flex gap-2">
-                <AButton variant="secondary" onClick={() => setDrawer("submit")}>Nộp bài</AButton>
+                <AButton variant="secondary" onClick={() => setDrawer("submit")}>SUBMIT</AButton>
                 <AButton variant="solid" onClick={() => setDrawer("create")}>+ Post bounty</AButton>
               </div>
             </div>
@@ -193,12 +193,12 @@ export default function ArbiterPage() {
             
             {statusFilter === "active" && (bounties.length - activeCountForBand) > 0 && (
               <p className="text-center text-[12px] mt-6" style={{ color: "var(--a-subtle)" }}>
-                Có {(bounties.length - activeCountForBand)} việc đã xong đang được ẩn.{" "}
+                {(bounties.length - activeCountForBand)} completed bounties are hidden.{" "}
                 <button
                   className="font-bold underline hover:text-[var(--a-text)]"
                   onClick={() => setStatusFilter("ended")}
                 >
-                  Xem kết quả
+                  View results
                 </button>
               </p>
             )}
@@ -208,8 +208,8 @@ export default function ArbiterPage() {
         <Drawer
           open={drawer === "create"}
           onClose={() => setDrawer(null)}
-          title="Đăng việc mới"
-          description="Mô tả công việc bằng lời thường. Trọng tài soạn bộ tiêu chí từ đó; bạn duyệt và đóng băng trước khi khoá tiền."
+          title="Post new bounty"
+          description="Describe the task in plain text. The arbiter extracts a rubric from this; you review and freeze it before locking funds."
         >
           <PosterBountyForm onChanged={refresh} />
         </Drawer>
@@ -218,7 +218,7 @@ export default function ArbiterPage() {
           open={drawer === "submit"}
           onClose={() => setDrawer(null)}
           title="Nộp bài"
-          description="Nội dung được đóng băng ngay lúc nộp. Sửa nguồn sau đó không tính."
+          description="Content is frozen upon submission. Later edits to the source will not be considered."
         >
           <WorkerSubmitForm onChanged={refresh} />
         </Drawer>
