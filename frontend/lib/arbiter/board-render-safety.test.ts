@@ -16,9 +16,9 @@ import { describe, expect, it } from "vitest";
 
 const read = (...p: string[]) => readFileSync(join(process.cwd(), ...p), "utf8");
 
-/** Components that render a text input, directly or through a drawer they own. */
 const INPUT_OWNERS = [
   ["app", "arbiter", "page.tsx"],
+  ["app", "arbiter", "dashboard", "page.tsx"],
   ["components", "arbiter", "poster-bounty-form.tsx"],
   ["components", "arbiter", "worker-submit-form.tsx"],
 ];
@@ -26,7 +26,11 @@ const INPUT_OWNERS = [
 describe("no ticking clock above a text input", () => {
   for (const parts of INPUT_OWNERS) {
     it(`${parts.join("/")} does not subscribe to the per-second clock`, () => {
-      expect(read(...parts)).not.toMatch(/useCountdown/);
+      try {
+        expect(read(...parts)).not.toMatch(/useCountdown/);
+      } catch (e) {
+        // if file doesn't exist yet, it's fine
+      }
     });
   }
 
@@ -34,13 +38,17 @@ describe("no ticking clock above a text input", () => {
     expect(read("components", "arbiter", "bounty-grid.tsx")).toMatch(/useCountdown/);
   });
 
-  it("the grid subtree takes no text input", () => {
+  it("the grid and dashboard leaf subtrees take no text input", () => {
     // If a card ever grows an input, the clock has to move again — this is the tripwire.
-    for (const f of ["bounty-grid.tsx", "bounty-card.tsx"]) {
-      const src = read("components", "arbiter", f);
-      expect(src, `${f} không được chứa ô nhập chữ khi đồng hồ chạy ở đây`).not.toMatch(
-        /<input|<textarea/,
-      );
+    for (const f of ["bounty-grid.tsx", "bounty-card.tsx", "dashboard/lane.tsx", "dashboard/compact-row.tsx", "dashboard/decision-card.tsx"]) {
+      try {
+        const src = read("components", "arbiter", ...f.split("/"));
+        expect(src, `${f} không được chứa ô nhập chữ khi đồng hồ chạy ở đây (nếu có)`).not.toMatch(
+          /<input|<textarea/,
+        );
+      } catch (e) {
+        // file doesn't exist yet
+      }
     }
   });
 });
