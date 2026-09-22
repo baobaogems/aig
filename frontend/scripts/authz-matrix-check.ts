@@ -17,6 +17,7 @@
 // =============================================================================
 
 import { privateKeyToAccount } from "viem/accounts";
+import { buildSiweMessage } from "../lib/auth/siwe-message";
 
 const BASE = process.env.BASE ?? "http://localhost:3000";
 const STRANGER = privateKeyToAccount(
@@ -33,18 +34,13 @@ function check(label: string, actual: number, allowed: number[]) {
 
 async function signIn(): Promise<string> {
   const d = await (await fetch(`${BASE}/api/auth/nonce`)).json();
-  const message = [
-    `${d.domain} muốn bạn đăng nhập bằng ví Ethereum:`,
-    STRANGER.address,
-    "",
-    "Ký để đăng nhập Arbiter. Thao tác này miễn phí và không chuyển bất kỳ khoản tiền nào.",
-    "",
-    `URI: https://${d.domain}`,
-    "Version: 1",
-    `Chain ID: ${d.chainId}`,
-    `Nonce: ${d.nonce}`,
-    `Issued At: ${d.issuedAt}`,
-  ].join("\n");
+  const message = buildSiweMessage({
+    domain: d.domain,
+    address: STRANGER.address,
+    chainId: d.chainId,
+    nonce: d.nonce,
+    issuedAt: d.issuedAt,
+  });
   const signature = await STRANGER.signMessage({ message });
   const r = await fetch(`${BASE}/api/auth/siwe`, {
     method: "POST",

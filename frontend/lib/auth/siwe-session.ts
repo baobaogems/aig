@@ -67,32 +67,11 @@ async function consumeNonce(nonce: string, address: string): Promise<boolean> {
 
 // ---------------------------------------------------------------- message
 
-export interface SiweFields {
-  domain: string;
-  address: string;
-  chainId: number;
-  nonce: string;
-  issuedAt: string;
-}
+import type { SiweFields } from "./siwe-message";
+import { buildSiweMessage } from "./siwe-message";
 
-/**
- * Build the exact text the wallet signs. Kept here (not in the client) so the server can
- * rebuild it byte-for-byte and never has to parse attacker-supplied text.
- */
-export function buildSiweMessage(f: SiweFields): string {
-  return [
-    `${f.domain} muốn bạn đăng nhập bằng ví Ethereum:`,
-    f.address,
-    "",
-    "Ký để đăng nhập Arbiter. Thao tác này miễn phí và không chuyển bất kỳ khoản tiền nào.",
-    "",
-    `URI: https://${f.domain}`,
-    "Version: 1",
-    `Chain ID: ${f.chainId}`,
-    `Nonce: ${f.nonce}`,
-    `Issued At: ${f.issuedAt}`,
-  ].join("\n");
-}
+export type { SiweFields };
+export { buildSiweMessage };
 
 // ---------------------------------------------------------------- verify
 

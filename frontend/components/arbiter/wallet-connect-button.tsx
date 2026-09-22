@@ -16,6 +16,7 @@ import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage, useS
 import { injected } from "wagmi/connectors";
 import { PillButton } from "@/components/ui/pill-button";
 import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
+import { buildSiweMessage } from "@/lib/auth/siwe-message";
 
 export function shortAddress(a: string) {
   return `${a.slice(0, 6)}…${a.slice(-4)}`;
@@ -72,18 +73,13 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
       if (!res.ok) throw new Error("server failed to issue signing session");
       const { nonce, domain, chainId: expectedChain, issuedAt } = await res.json();
 
-      const message = [
-        `${domain} muốn bạn đăng nhập bằng ví Ethereum:`,
-        address,
-        "",
-        "Sign to log into Arbiter. This is free and will not transfer any funds.",
-        "",
-        `URI: https://${domain}`,
-        "Version: 1",
-        `Chain ID: ${expectedChain}`,
-        `Nonce: ${nonce}`,
-        `Issued At: ${issuedAt}`,
-      ].join("\n");
+      const message = buildSiweMessage({
+        domain,
+        address: address as string,
+        chainId: expectedChain,
+        nonce,
+        issuedAt,
+      });
 
       const signature = await signMessageAsync({ message });
 
