@@ -9,9 +9,11 @@
 // key and a separate worker key — so "the worker claimed it" is a fact on-chain, not a row
 // this script wrote about itself.
 //
-// Two scenarios, both settled to a terminal on-chain state so nothing is left stranded:
-//   1. bright path — good work  → RELEASE → worker paid
-//   2. dark path   — injection  → FAIL    → no release → poster refunds after the deadline
+// Three scenarios, all settled to a terminal on-chain state so nothing is left stranded:
+//   1. bright path — good work  → RELEASE  → worker paid in full
+//   2. dark path   — injection  → FAIL     → no release → poster refunds after the deadline
+//   3. grey path   — mid work   → ESCALATE → the POSTER decides, and refusing costs them the
+//                                            kill fee the rules compute (T2 band, 0–30%)
 //
 // The third scenario from the plan (a stranger may not act on someone else's bounty) is an
 // HTTP-layer question and lives in scripts/authz-matrix-check.ts, where a session cookie
@@ -48,6 +50,7 @@ import {
 } from "../lib/escrow";
 import { usdcBalance } from "../lib/escrow-poster";
 import { withRpcRetry } from "../lib/rpc-retry";
+import { killFeeBps, posterAmountUsdc, workerAmountUsdc } from "../lib/arbiter/kill-fee";
 import type { DryRunCase } from "../lib/arbiter/run";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
@@ -55,6 +58,13 @@ const ZERO = "0x0000000000000000000000000000000000000000" as const;
 function arg(name: string, fallback?: string): string | undefined {
   const i = process.argv.indexOf(`--${name}`);
   return i > -1 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+}
+
+/** Bài chấm thử KHÔNG kèm rubric — chỉ lấy đề và bài nộp; rubric mượn từ case cùng đề. */
+function loadWork(id: string): DryRunCase {
+  return JSON.parse(
+    readFileSync(join(process.cwd(), "calibration", "cases", `${id}.json`), "utf8"),
+  ) as DryRunCase;
 }
 
 function loadCase(id: string): DryRunCase {
@@ -222,6 +232,66 @@ async function scenarioDark(amountUsdc: number, deadlineMins: number) {
   return { bountyId, deadline: Number(onChain?.deadline ?? 0) };
 }
 
+/**
+ * Kịch bản 3 — vùng xám: máy KHÔNG tự quyết, người đăng quyết.
+ *
+ * Đây là nhánh khó nhất và cũng là nhánh dễ sai nhất: máy chấm ra điểm giữa băng, tier T2,
+ * quyết định ESCALATE. Tiền KHÔNG tự chạy. Người đăng có hai đường, và đường "từ chối" KHÔNG
+ * miễn phí — người làm vẫn nhận phần kill fee mà luật tính ra từ chính điểm số, chứ không
+ * phải con số người đăng tự nghĩ. Test này đo đúng chỗ đó: bps lấy từ killFeeBps(), số tiền
+ * hai bên nhận phải khớp tới từng micro-USDC.
+ *
+ * Bài dùng ở đây là ambig-01 (bài thật, viết được nhưng hụt vài tiêu chí) chấm theo rubric đã
+ * đóng băng của pass-01 — cùng một đề, nên rubric dùng chung được.
+ */
+async function scenarioGrey(amountUsdc: number) {
+  console.log("\n▶ KỊCH BẢN 3 — vùng xám: đăng mở → B nhận → chấm T2 → NGƯỜI ĐĂNG quyết → chia phần");
+  const graded = loadCase("pass-01");
+  const midWork = loadWork("ambig-01");
+  const bountyId = randomUUID();
+
+  await postOpenBounty(bountyId, amountUsdc, 60);
+  const { worker } = await claimAsWorker(bountyId);
+
+  const before = await usdcBalance(worker as `0x${string}`);
+  const result = await judgeAndSettle({
+    bountyId,
+    submissionId: randomUUID(),
+    brief: midWork.brief,
+    rubric: graded.rubric!,
+    deliverable: midWork.deliverable,
+    amountUsdc,
+    escrowVersion: 3,
+  });
+  const v = result.judge.verdict;
+  console.log(`   verdict  : ${v.decision} score=${v.total_score} conf=${v.confidence}`);
+
+  check("máy KHÔNG tự trả tiền (không phải RELEASE)", v.decision !== "RELEASE", v.decision);
+  check("đưa lên người đăng quyết (ESCALATE)", v.decision === "ESCALATE", v.decision);
+  check("đồng hồ quyết định đã mở", result.clockStarted, result.settlementNote ?? "");
+  check("chưa đồng nào rời escrow khi mới chấm xong", (await usdcBalance(worker as `0x${string}`)) === before);
+
+  // Người đăng chọn TỪ CHỐI. Phần người làm nhận do luật tính, không do người đăng đặt.
+  const bps = killFeeBps({ totalScore: v.total_score, tier: "T2" });
+  const expectWorker = workerAmountUsdc(amountUsdc, bps);
+  const expectPoster = posterAmountUsdc(amountUsdc, bps);
+  console.log(`   kill fee : ${bps / 100}% → người làm ${expectWorker} / người đăng ${expectPoster} USDC`);
+
+  const { settleEscrow } = await import("../lib/escrow");
+  const settled = await settleEscrow(bountyId, result.judge.hash, bps);
+  console.log(`   settle   : ${settled.txHash}`);
+
+  const after = await usdcBalance(worker as `0x${string}`);
+  check(`người làm nhận đúng phần luật tính (${expectWorker} USDC)`,
+    unitsToUsdc(after - before) === expectWorker, `+${unitsToUsdc(after - before)}`);
+  check("hai phần cộng lại bằng đúng tiền đã khoá", expectWorker + expectPoster === amountUsdc,
+    `${expectWorker} + ${expectPoster}`);
+
+  const onChain = await getBounty(bountyId);
+  check("escrow đánh dấu đã thanh toán", onChain?.settled === true);
+  return bountyId;
+}
+
 async function refundAfterDeadline(bountyId: string, deadlineUnix: number) {
   const waitMs = Math.max(0, (deadlineUnix + 5) * 1000 - Date.now());
   console.log(`\n▶ chờ ${Math.ceil(waitMs / 1000)}s tới hạn rồi hoàn tiền…`);
@@ -254,8 +324,9 @@ async function main() {
   await scenarioBright(amount);
   const dark = await scenarioDark(amount, deadlineMins);
   await refundAfterDeadline(dark.bountyId, dark.deadline);
+  await scenarioGrey(amount);
 
-  console.log(`\n${failures === 0 ? "ĐẠT — cả hai kịch bản đúng như thiết kế" : `HỎNG — ${failures} điểm sai`}\n`);
+  console.log(`\n${failures === 0 ? "ĐẠT — cả ba kịch bản đúng như thiết kế" : `HỎNG — ${failures} điểm sai`}\n`);
   process.exit(failures === 0 ? 0 : 1);
 }
 
