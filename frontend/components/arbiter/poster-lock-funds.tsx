@@ -100,7 +100,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
         body: JSON.stringify({ txHash: tx2 }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error ?? "máy chủ không xác nhận được");
+      if (!res.ok) throw new Error(j.error ?? "Server failed to confirm.");
 
       setStep("done");
       onDone();
@@ -108,7 +108,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
       const raw = err instanceof Error ? err.message : String(err);
       setError(
         /user rejected|denied/i.test(raw)
-          ? "Bạn đã từ chối ký. Bounty vẫn ở trạng thái nháp, ký lại lúc nào cũng được."
+          ? "You rejected the signature. The bounty remains a draft; you can sign again at any time."
           : raw,
       );
       setStep("idle");
@@ -116,11 +116,11 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
   }
 
   const label: Record<Step, string> = {
-    idle: `Khoá ${lock.amountUsdc} USDC`,
-    approving: "Chữ ký 1/2 — cho phép escrow…",
-    creating: "Chữ ký 2/2 — khoá tiền…",
-    confirming: "Đang đối chiếu với chain…",
-    done: "Đã khoá",
+    idle: `Lock ${lock.amountUsdc} USDC`,
+    approving: "Signature 1 of 2 — approve escrow…",
+    creating: "Signature 2 of 2 — lock funds…",
+    confirming: "Confirming with chain…",
+    done: "Locked",
   };
 
   return (
@@ -129,29 +129,26 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
           most surprising consequence of the rules, and a poster who learns it only once a
           deliverable has arrived will reasonably feel tricked. */}
       {step === "idle" && (
-        <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-          Trước khi khoá: nếu chưa ai nộp bài, hết hạn bạn lấy lại đủ tiền. Một khi đã có bài
-          nộp được chấm là hợp lệ, bạn không rút lại toàn bộ được nữa — duyệt thì trả đủ, từ
-          chối thì người làm vẫn nhận một phần theo điểm máy chấm, phần còn lại về ví bạn.
+        <p className="text-xs leading-relaxed text-[#444444]">
+          Before you lock: if nobody submits, you can reclaim all funds after the deadline. Once a valid submission arrives, you cannot withdraw the full amount — approving pays the worker in full; rejecting pays them partially based on the AI's score, and the rest returns to you.
         </p>
       )}
-      <PillButton onClick={run} disabled={step !== "idle"}>
+      <PillButton onClick={run} disabled={step !== "idle"} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
         {label[step]}
       </PillButton>
 
-      {approveTx && <TxLine label="Cho phép" hash={approveTx} />}
-      {createTx && <TxLine label="Khoá tiền" hash={createTx} />}
+      {approveTx && <TxLine label="Approve" hash={approveTx} />}
+      {createTx && <TxLine label="Lock funds" hash={createTx} />}
 
       {step === "confirming" && (
-        <p className="text-xs text-[var(--color-ink-muted)]">
-          Máy chủ đang đọc escrow trực tiếp từ chain. Rubric chỉ đóng băng khi số tiền, hạn chót
-          và địa chỉ người đăng đều khớp.
+        <p className="text-xs text-[#444444]">
+          The server is reading the escrow directly from the chain. The rubric is frozen only if the amount, deadline, and poster address all match.
         </p>
       )}
-      {error && <p className="text-xs text-[var(--color-accent)]">{error}</p>}
+      {error && <p className="text-xs text-[#C41E3A]">{error}</p>}
       {error && createTx && (
-        <PillButton variant="secondary" onClick={run}>
-          Tôi đã ký rồi — kiểm tra lại
+        <PillButton variant="secondary" onClick={run} className="!text-[#1A1A1A] !border-[#E2E2E2] hover:!bg-[#F4F4F4]">
+          I already signed — check again
         </PillButton>
       )}
     </div>
@@ -160,7 +157,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
 
 function TxLine({ label, hash }: { label: string; hash: string }) {
   return (
-    <p className="font-mono text-xs text-[var(--color-ink-muted)]">
+    <p className="font-mono text-xs text-[#444444]">
       {label}: {hash.slice(0, 10)}…{hash.slice(-6)}
     </p>
   );

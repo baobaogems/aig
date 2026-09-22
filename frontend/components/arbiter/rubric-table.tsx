@@ -17,9 +17,18 @@ export interface RubricItem {
   weight: number;
 }
 
+const translateCriteria: Record<string, string> = {
+  "Bài viết dài ít nhất 500 chữ (tiếng Việt).": "The essay must be at least 500 words (Vietnamese).",
+  "Giới thiệu cụ thể về dự án Arc network / Arbiter tại https://myarbiter.xyz/arbiter, có nêu tên và chức năng dự án.": "Give a concrete introduction to Arc Network / Arbiter at https://myarbiter.xyz/arbiter, including the project name and what it does.",
+  "Có ít nhất một ví dụ minh họa cụ thể, dễ hiểu về cách dự án hoạt động hoặc được sử dụng.": "Include at least one clear, concrete example of how the project works or is used.",
+  "Sử dụng giọng văn gần gũi, thân thiện với người dùng (xưng hô/ngôn ngữ đời thường, không hàn lâm).": "Use a friendly, everyday tone. No academic jargon.",
+  "Nội dung sống động: có yếu tố tạo hình ảnh/cảm xúc như so sánh, ẩn dụ hoặc câu hỏi tương tác.": "Make it vivid: use a comparison, metaphor, or a direct question.",
+  "Bài viết bằng tiếng Việt và không sao chép nguyên văn hoàn toàn từ trang web nguồn.": "Write in Vietnamese. Do not copy the source page verbatim.",
+};
+
 export function RubricTable({ items, frozen }: { items: RubricItem[]; frozen: boolean }) {
   if (items.length === 0) {
-    return <p className="text-[13px] text-[var(--a-subtle)]">Chưa có tiêu chí nào.</p>;
+    return <p className="text-[13px] text-[#444444]">No criteria yet.</p>;
   }
 
   // Weights are meant to sum to 100. Showing the real total rather than assuming it means a
@@ -28,10 +37,10 @@ export function RubricTable({ items, frozen }: { items: RubricItem[]; frozen: bo
 
   return (
     <div>
-      <p className="text-[12px] leading-relaxed m-0" style={{ color: "var(--a-text-dark-sub)" }}>
+      <p className="text-[12px] leading-relaxed m-0" style={{ color: "#444444" }}>
         {frozen
-          ? "Những tiêu chí này đã được đóng băng khi tiền vào escrow. Không ai sửa được nữa — kể cả người đăng. Đây là thứ bảo đảm rằng khi bạn làm xong, thước đo vẫn là thước đo lúc bạn bắt đầu."
-          : "Duyệt là đóng băng bộ tiêu chí này. Sau đó không sửa được — đó là thứ ngăn việc đổi thước đo khi người ta đã bắt tay vào làm."}
+          ? "These criteria were frozen when funds entered escrow. Nobody can change them — not even the poster. This guarantees that the yardstick you start with is the yardstick you finish with."
+          : "Approving freezes this rubric. It cannot be edited after that — so the scoring rules cannot change once work has started."}
       </p>
 
       <ul className="mt-4 m-0 p-0 list-none space-y-3">
@@ -39,20 +48,20 @@ export function RubricTable({ items, frozen }: { items: RubricItem[]; frozen: bo
           <li
             key={r.item_id}
             className="flex items-baseline justify-between gap-4 border-b pb-3 last:border-0"
-            style={{ borderColor: "var(--a-border-dark)" }}
+            style={{ borderColor: "#E2E2E2" }}
           >
-            <span className="text-[13px] leading-relaxed" style={{ color: "var(--a-text-dark-h1)" }}>{r.criterion}</span>
-            <span className="a-tnum shrink-0 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-bold" style={{ color: "var(--a-text-dark-h1)" }}>
+            <span className="text-[13px] leading-relaxed" style={{ color: "#1A1A1A" }}>{translateCriteria[r.criterion] || r.criterion}</span>
+            <span className="a-tnum shrink-0 font-[family-name:var(--font-jetbrains-mono)] text-[12px] font-bold" style={{ color: "#C41E3A" }}>
               {r.weight}%
             </span>
           </li>
         ))}
       </ul>
 
-      <p className="mt-4 m-0 text-[11px]" style={{ color: "var(--a-text-dark-sub)" }}>
-        Tổng trọng số: <span className="a-tnum font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>{total}%</span>
+      <p className="mt-4 m-0 text-[11px]" style={{ color: "#444444" }}>
+        Total weight: <span className="a-tnum font-semibold" style={{ color: "#1A1A1A" }}>{total}%</span>
         {total !== 100 && (
-          <span className="text-[#ff2d6f]"> — đáng ngờ, lẽ ra phải bằng 100%</span>
+          <span className="text-[#C41E3A]"> — suspicious, should equal 100%</span>
         )}
       </p>
     </div>

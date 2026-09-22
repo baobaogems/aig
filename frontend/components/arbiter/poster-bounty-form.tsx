@@ -56,12 +56,12 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
   function validate(): Errors {
     const e: Errors = {};
     if (brief.trim().length < 20)
-      e.brief = `Cần ít nhất 20 ký tự — hiện mới ${brief.trim().length}. Mô tả càng rõ thì bộ tiêu chí chấm càng đúng ý bạn.`;
+      e.brief = `At least 20 characters — currently ${brief.trim().length}. The clearer the brief, the better the rubric will match your intent.`;
     const n = Number(amount);
-    if (!Number.isFinite(n) || n <= 0) e.amount = "Phải lớn hơn 0.";
+    if (!Number.isFinite(n) || n <= 0) e.amount = "Must be greater than 0.";
     const dl = new Date(deadline);
-    if (Number.isNaN(dl.getTime())) e.deadline = "Chọn ngày giờ.";
-    else if (dl.getTime() <= Date.now()) e.deadline = "Hạn chót phải ở tương lai.";
+    if (Number.isNaN(dl.getTime())) e.deadline = "Choose a date and time.";
+    else if (dl.getTime() <= Date.now()) e.deadline = "Deadline must be in the future.";
     return e;
   }
 
@@ -70,7 +70,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
     setErrors(e);
     if (Object.keys(e).length > 0) { setMsg(""); return; }
 
-    setBusy(true); setMsg("Reading the brief and drafting a rubric — about 15 seconds.");
+    setBusy(true); setMsg("Drafting rubric...");
     try {
       const res = await fetch("/api/bounty", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -85,13 +85,13 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       setDraft({ id: j.bounty.id, rubric: j.rubric.items_json });
       setMsg("");
       onChanged();
-    } catch (err) { setMsg(`Không tạo được: ${err instanceof Error ? err.message : err}`); }
+    } catch (err) { setMsg(`Failed to create: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 
   async function approveRubric() {
     if (!draft) return;
-    setBusy(true); setMsg("Đang đóng băng bộ tiêu chí…");
+    setBusy(true); setMsg("Freezing rubric...");
     try {
       const res = await fetch(`/api/bounty/${draft.id}/approve-rubric`, { method: "POST" });
       const j = await res.json();
@@ -101,11 +101,11 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
         setLock(j.lock as LockParams);
         setMsg(j.note ?? "");
       } else {
-        setMsg(j.note ?? "Rubric đã đóng băng. Việc đã mở trên chợ.");
+        setMsg(j.note ?? "Rubric frozen. Task is now open on the market.");
         setDraft(null);
       }
       onChanged();
-    } catch (err) { setMsg(`Không đóng băng được: ${err instanceof Error ? err.message : err}`); }
+    } catch (err) { setMsg(`Failed to freeze: ${err instanceof Error ? err.message : err}`); }
     finally { setBusy(false); }
   }
 
@@ -116,33 +116,33 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
       <div className="grid gap-4">
         <FormField
           id="brief"
-          label="Cần làm gì"
-          hint="Viết bằng lời thường. Trọng tài biến đúng đoạn này thành bộ tiêu chí chấm — thứ gì bạn không nói ra thì không chấm được."
+          label="What needs to be done"
+          hint="Write in plain language. The arbiter will turn this exactly into a scoring rubric — anything unsaid cannot be graded."
           error={errors.brief}
         >
           <textarea id="brief" rows={5} className={inp("brief")} value={brief} onChange={(e) => edit(setBrief, "brief")(e.target.value)} />
         </FormField>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <FormField id="amount" label="Tiền treo" hint="Tính bằng USDC, khoá trong escrow trên Arc testnet." error={errors.amount}>
+          <FormField id="amount" label="Bounty prize" hint="Amount in USDC. Locked in escrow on Arc testnet." error={errors.amount}>
             <input id="amount" type="number" min="0.1" step="0.1" className={inp("amount")} value={amount} onChange={(e) => edit(setAmount, "amount")(e.target.value)} />
           </FormField>
-          <FormField id="deadline" label="Hạn chót" hint="Quá hạn mà chưa ai nộp thì bạn đòi lại được tiền." error={errors.deadline}>
+          <FormField id="deadline" label="Deadline" hint="If nobody submits before the deadline, you can reclaim the funds." error={errors.deadline}>
             <input id="deadline" type="datetime-local" className={inp("deadline")} value={deadline} onChange={(e) => edit(setDeadline, "deadline")(e.target.value)} />
           </FormField>
         </div>
 
         <div>
-          <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty}>
-            {busy && !draft ? "Đang soạn tiêu chí…" : "Tạo việc và soạn tiêu chí"}
+          <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
+            {busy && !draft ? "Drafting rubric..." : "CREATE TASK AND DRAFT RUBRIC"}
           </PillButton>
         </div>
       </div>
 
       {draft && (
-        <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-5">
-          <h3 className="text-sm font-semibold text-[var(--color-ink)]">
-            Trọng tài đề xuất chấm theo bộ tiêu chí này
+        <div className="mt-5 border-t border-[#E2E2E2] pt-5">
+          <h3 className="text-sm font-semibold text-[#1A1A1A]">
+            The arbiter will grade against this rubric
           </h3>
           <div className="mt-1">
             <RubricTable items={draft.rubric} frozen={false} />
@@ -152,22 +152,22 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
               <PosterLockFunds
                 lock={lock}
                 onDone={() => {
-                  setMsg("USDC đã vào escrow. Việc đã lên chợ, chờ người nhận.");
+                  setMsg("USDC locked in escrow. Task is on the market, waiting for a worker.");
                   setDraft(null);
                   setLock(null);
                   onChanged();
                 }}
               />
             ) : (
-              <PillButton variant="primary" disabled={busy} onClick={approveRubric}>
-                Duyệt rubric và khoá tiền
+              <PillButton variant="primary" disabled={busy} onClick={approveRubric} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
+                APPROVE RUBRIC AND LOCK FUNDS
               </PillButton>
             )}
           </div>
         </div>
       )}
 
-      {msg && <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">{msg}</p>}
+      {msg && <p className="mt-4 text-sm leading-relaxed text-[#444444]">{msg}</p>}
     </div>
   );
 }
