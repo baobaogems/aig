@@ -64,13 +64,13 @@ export async function POST(req: NextRequest) {
       }
     } else {
       return Response.json(
-        { error: "cần nội dung: dán thẳng bài, hoặc đưa link công khai để Arbiter tự đọc" },
+        { error: "content required: paste the work, or give a public link for Arbiter to read" },
         { status: 400 },
       );
     }
 
     if (snapshot.length < 10)
-      return Response.json({ error: "nội dung quá ngắn để chấm (dưới 10 ký tự)" }, { status: 400 });
+      return Response.json({ error: "content too short to grade (under 10 characters)" }, { status: 400 });
 
     const submission = await insertSubmission({
       bounty_id,

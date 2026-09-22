@@ -150,7 +150,7 @@ describe("POST /api/submission — what gets frozen", () => {
     const b = seedBounty({ status: "OPEN" });
     const res = await post({ bounty_id: b.id, content: "   " });
     expect(res.status).toBe(400);
-    expect((await res.json()).error).toMatch(/cần nội dung/);
+    expect((await res.json()).error).toMatch(/content required/);
   });
 
   it("400s content too short to grade", async () => {

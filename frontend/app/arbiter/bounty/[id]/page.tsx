@@ -17,6 +17,7 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { RubricTable } from "@/components/arbiter/rubric-table";
+import { displayBrief } from "@/lib/arbiter/legacy-vietnamese-copy";
 import { DecisionThresholds } from "@/components/arbiter/decision-thresholds";
 import { BountyActionPanel } from "@/components/arbiter/bounty-action-panel";
 import { getBountyDetail } from "@/lib/arbiter/store";
@@ -103,7 +104,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
 
           <Section title="Task">
             <p className="whitespace-pre-wrap text-[14px] leading-relaxed m-0" style={{ color: "var(--a-text)" }}>
-              {bounty.brief.replace("cho 1 bài văn 500 chữ miêu tả tiềm năng của nền kinh tế AI agent mà Arc đã khởi xướng", "Write a 500-word essay describing the potential of the AI agent economy initiated by Arc")}
+              {displayBrief(bounty.brief)}
             </p>
           </Section>
 

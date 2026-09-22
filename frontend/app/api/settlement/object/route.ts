@@ -37,16 +37,16 @@ export async function POST(req: NextRequest) {
 
     const detail = await getBountyDetail(bounty_id);
     const { bounty, verdict } = detail;
-    if (!verdict) return Response.json({ error: "chưa có kết quả chấm để phản đối" }, { status: 409 });
+    if (!verdict) return Response.json({ error: "no grading result to object to yet" }, { status: 409 });
     if (verdict.release_tx)
-      return Response.json({ error: `đã thanh toán: ${verdict.release_tx}` }, { status: 409 });
+      return Response.json({ error: `already paid out: ${verdict.release_tx}` }, { status: 409 });
     if (detail.escalation)
-      return Response.json({ error: `đã xử lý: ${detail.escalation.poster_action}` }, { status: 409 });
+      return Response.json({ error: `already handled: ${detail.escalation.poster_action}` }, { status: 409 });
 
     // An objection must say what was wrong, against the rubric frozen before anyone claimed
     // the job. Unanswerable rejections are what the whole mechanism exists to discourage.
     if (typeof note !== "string" || note.trim().length < 10)
-      return Response.json({ error: "cần nêu lý do phản đối (ít nhất 10 ký tự)" }, { status: 400 });
+      return Response.json({ error: "an objection needs a reason (at least 10 characters)" }, { status: 400 });
 
     const tier = decideTier({
       totalScore: verdict.total_score,
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     }).tier;
     if (tier !== "T1")
       return Response.json(
-        { error: "chỉ phản đối được kết quả tự động (T1); trường hợp này dùng /api/escalation" },
+        { error: "only an automatic (T1) result can be objected to; use /api/escalation for this case" },
         { status: 409 },
       );
 
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     });
     if (clock.phase !== "objection")
       return Response.json(
-        { error: "hết hạn phản đối — kết quả tự động đã có hiệu lực" },
+        { error: "the objection window has closed — the automatic result now stands" },
         { status: 409 },
       );
 

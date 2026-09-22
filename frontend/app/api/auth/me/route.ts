@@ -12,6 +12,6 @@ export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   const address = openSession(req.cookies.get(SESSION_COOKIE)?.value);
-  if (!address) return Response.json({ error: "chưa đăng nhập" }, { status: 401 });
+  if (!address) return Response.json({ error: "not signed in" }, { status: 401 });
   return Response.json({ address });
 }

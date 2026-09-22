@@ -25,7 +25,7 @@ export function RoleSwitch({
             role === "posted"
               ? "bg-[rgba(255,255,255,.25)] text-white"
               : postedActionCount > 0
-              ? "bg-[#ff2d6f] text-white"
+              ? "bg-[var(--a-bad)] text-white"
               : "bg-[rgba(17,17,17,.08)] text-[var(--a-muted)]"
           }`}
         >
@@ -45,7 +45,7 @@ export function RoleSwitch({
             role === "claimed"
               ? "bg-[rgba(255,255,255,.25)] text-white"
               : claimedActionCount > 0
-              ? "bg-[#ff2d6f] text-white"
+              ? "bg-[var(--a-bad)] text-white"
               : "bg-[rgba(17,17,17,.08)] text-[var(--a-muted)]"
           }`}
         >

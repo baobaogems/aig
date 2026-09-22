@@ -133,7 +133,7 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
 
         {session && (
           <>
-            <span className="font-mono text-xs text-[var(--color-ink-muted)]">{shortAddress(session)}</span>
+            <span className="font-mono text-xs text-[var(--a-muted)]">{shortAddress(session)}</span>
             <PillButton variant="secondary" onClick={signOut}>
               Log out
             </PillButton>
@@ -142,11 +142,11 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
       </div>
 
       {wrongChain && (
-        <p className="text-xs text-[var(--color-ink-muted)]">
+        <p className="text-xs text-[var(--a-muted)]">
           Ví đang ở mạng khác. Arbiter chỉ chạy trên Arc testnet.
         </p>
       )}
-      {error && <p className="text-xs text-[var(--color-accent)]">{error}</p>}
+      {error && <p className="text-xs text-[var(--a-bad)]">{error}</p>}
     </div>
   );
 }

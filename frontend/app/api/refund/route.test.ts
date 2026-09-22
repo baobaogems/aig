@@ -36,7 +36,7 @@ describe("the v2 hole, closed", () => {
     const res = await post({ bounty_id: b.id });
 
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/đã có bài nộp/);
+    expect((await res.json()).error).toMatch(/a submission exists/);
     expect(refundEscrow).not.toHaveBeenCalled();
   });
 

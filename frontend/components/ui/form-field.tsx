@@ -7,14 +7,14 @@
 // than in one shared line at the bottom of the form.
 
 export const FIELD_INPUT_CLASS =
-  "w-full rounded-xl border bg-white px-3 py-2 text-sm text-[#1A1A1A] " +
-  "placeholder:text-[#888888] outline-none transition-colors";
+  "w-full rounded-xl border bg-white px-3 py-2 text-sm text-[var(--a-text)] " +
+  "placeholder:text-[var(--a-subtle)] outline-none transition-colors";
 
 /** Border colour is the only thing an error changes, so the layout never shifts. */
 export function fieldBorder(hasError: boolean): string {
   return hasError
     ? "border-[var(--color-ink-danger)] focus:border-[var(--color-ink-danger)]"
-    : "border-[#E2E2E2] focus:border-[#C41E3A]";
+    : "border-[var(--a-line-dim)] focus:border-[var(--a-acc)]";
 }
 
 export function FormField({
@@ -28,10 +28,10 @@ export function FormField({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="block text-sm font-semibold text-[#1A1A1A]">
+      <label htmlFor={id} className="block text-sm font-semibold text-[var(--a-text)]">
         {label}
       </label>
-      {hint && <p className="mt-0.5 text-xs leading-relaxed text-[#444444]">{hint}</p>}
+      {hint && <p className="mt-0.5 text-xs leading-relaxed text-[var(--a-muted)]">{hint}</p>}
       <div className="mt-1.5">{children}</div>
       {error && (
         <p id={`${id}-error`} role="alert" className="mt-1 text-xs" style={{ color: "var(--color-ink-danger)" }}>

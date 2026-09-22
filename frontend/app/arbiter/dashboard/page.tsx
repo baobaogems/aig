@@ -112,21 +112,21 @@ export default function DashboardPage() {
             <p className="a-eyebrow">MY WORKSPACE</p>
             <h2 className="font-[family-name:var(--font-display)] text-2xl font-black tracking-[0.02em] m-0 uppercase">MY DASHBOARD</h2>
             <p className="max-w-2xl text-[12.5px] leading-relaxed mt-2" style={{ color: "var(--a-muted)" }}>
-              Việc bạn đăng và việc bạn nhận, xếp theo <b style={{ color: "var(--a-text)" }}>ai đang cầm bóng</b> — không xếp theo trạng thái kỹ thuật.
+              What you posted and what you claimed, sorted by <b style={{ color: "var(--a-text)" }}>whose move it is</b> — not by technical status.
             </p>
             {isDryRun && (
               <p className="mt-2 text-[12.5px] font-bold text-[var(--a-acc)] border border-[var(--a-acc)] p-2 bg-[rgba(var(--a-acc-rgb),0.1)]">
-                LƯU Ý: ĐANG Ở CHẾ ĐỘ DRY-RUN. Tiền không đi thật trên chuỗi.
+                NOTE: DRY-RUN MODE IS ON. No funds actually move on chain.
               </p>
             )}
           </div>
 
           {!session ? (
             <div className="mt-8 text-center text-sm text-[var(--a-subtle)]">
-              Vui lòng kết nối ví để xem bảng điều khiển.
+              Connect your wallet to see the dashboard.
             </div>
           ) : loading ? (
-            <div className="mt-8 text-sm text-[var(--a-subtle)]">Đang tải...</div>
+            <div className="mt-8 text-sm text-[var(--a-subtle)]">Loading…</div>
           ) : (
             <>
               <RoleSwitch
@@ -136,17 +136,17 @@ export default function DashboardPage() {
                 claimedActionCount={claimedActionCount}
               />
 
-              {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
+              {error && <p className="text-sm text-[var(--a-bad)] mb-4">{error}</p>}
 
               {role === "posted" ? (
                 <div>
-                  <Lane title="Needs your decision" count={posterLanes.needs_decision.length} hint="Trọng tài đã chấm xong. Tiền vẫn nằm trong escrow tới khi bạn bấm." active={true}>
+                  <Lane title="Needs your decision" count={posterLanes.needs_decision.length} hint="Arbiter has finished grading. The funds stay in escrow until you act." active={true}>
                     {posterLanes.needs_decision.map((b) => (
                       verdicts[b.id] ? <DecisionCard key={b.id} bounty={b} verdict={verdicts[b.id]} onChanged={refresh} /> : <CompactRow key={b.id} bounty={b} role="poster" />
                     ))}
                   </Lane>
                   
-                  <Lane title="In progress" count={posterLanes.in_progress.length} hint="Chưa cần bạn làm gì.">
+                  <Lane title="In progress" count={posterLanes.in_progress.length} hint="Nothing for you to do yet.">
                     {posterLanes.in_progress.map((b) => <CompactRow key={b.id} bounty={b} role="poster" />)}
                   </Lane>
                   
@@ -156,11 +156,11 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div>
-                  <Lane title="Needs your submission" count={workerLanes.needs_submission.length} hint="Đang làm, quá hạn là mất suất." active={true}>
+                  <Lane title="Needs your submission" count={workerLanes.needs_submission.length} hint="In progress — miss the deadline and you lose the slot." active={true}>
                     {workerLanes.needs_submission.map((b) => <CompactRow key={b.id} bounty={b} role="worker" />)}
                   </Lane>
                   
-                  <Lane title="Waiting on others" count={workerLanes.waiting.length} hint="Chờ trọng tài hoặc người đăng quyết định.">
+                  <Lane title="Waiting on others" count={workerLanes.waiting.length} hint="Waiting on Arbiter or on the poster to decide.">
                     {workerLanes.waiting.map((b) => <CompactRow key={b.id} bounty={b} role="worker" />)}
                   </Lane>
                   

@@ -44,10 +44,10 @@ export function WorkerSubmitForm({
 
   async function submit() {
     const e: Errors = {};
-    if (!fixedBountyId && !bountyId.trim()) e.bountyId = "Dán id của bounty bạn đang trả lời.";
-    if (mode === "paste" && !content.trim()) e.content = "Chưa có gì để chấm.";
+    if (!fixedBountyId && !bountyId.trim()) e.bountyId = "Paste the id of the bounty you are answering.";
+    if (mode === "paste" && !content.trim()) e.content = "Nothing to grade yet.";
     if (mode === "link" && !/^https?:\/\//i.test(sourceUrl.trim()))
-      e.content = "Cần một link http hoặc https công khai.";
+      e.content = "A public http or https link is required.";
     setErrors(e);
     if (Object.keys(e).length > 0) { setMsg(""); return; }
 
@@ -66,8 +66,8 @@ export function WorkerSubmitForm({
       if (!res.ok) throw new Error(j.error);
       setMsg(
         mode === "link"
-          ? "Đã nộp. Arbiter đã đọc link và đóng băng nội dung đọc được — sửa nguồn sau này không đổi kết quả."
-          : "Đã nộp. Đúng đoạn văn bản này bị đóng băng — sửa nguồn sau này không tính.",
+          ? "Submitted. Arbiter read the link and froze what it read — editing the source afterwards changes nothing."
+          : "Submitted. Exactly this text is frozen — editing the source afterwards does not count.",
       );
       setContent("");
       onChanged();
@@ -83,8 +83,8 @@ export function WorkerSubmitForm({
         {!fixedBountyId && (
           <FormField
             id="bounty-id"
-            label="Việc nào"
-            hint={'Dùng nút "copy id" ở dòng bạn đang trả lời.'}
+            label="Which bounty"
+            hint={'Use the "copy id" button on the row you are answering.'}
             error={errors.bountyId}
           >
             <input
@@ -98,15 +98,15 @@ export function WorkerSubmitForm({
         )}
 
         <div className="flex gap-1.5">
-          {([["paste", "Dán nội dung"], ["link", "Gửi link"]] as const).map(([k, label]) => (
+          {([["paste", "Paste content"], ["link", "Send a link"]] as const).map(([k, label]) => (
             <button
               key={k}
               onClick={() => setMode(k)}
               className={
                 "rounded-[var(--radius-pill)] px-3.5 py-1.5 text-sm transition-colors " +
                 (mode === k
-                  ? "bg-[var(--color-ink)] text-white"
-                  : "text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]")
+                  ? "bg-[var(--a-text)] text-white"
+                  : "text-[var(--a-muted)] hover:text-[var(--a-text)]")
               }
             >
               {label}
@@ -117,8 +117,8 @@ export function WorkerSubmitForm({
         {mode === "paste" ? (
           <FormField
             id="content"
-            label="Bài của bạn"
-            hint="Dán bài đã hoàn thành. Chính đoạn này bị đóng băng và được chấm, từng chữ một."
+            label="Your submission"
+            hint="Paste the finished work. Exactly this text is frozen and graded, word for word."
             error={errors.content}
           >
             <textarea id="content" rows={8} className={inp("content")} value={content} onChange={(e) => edit(setContent, "content")(e.target.value)} />
@@ -126,8 +126,8 @@ export function WorkerSubmitForm({
         ) : (
           <FormField
             id="source-url"
-            label="Link công khai tới bài"
-            hint="Arbiter sẽ tự tải và đọc nội dung ở link này, rồi đóng băng đúng những gì đọc được. Trang cần JavaScript mới hiện chữ thì sẽ không đọc được — khi đó hãy dán thẳng nội dung."
+            label="Public link to the work"
+            hint="Arbiter fetches this link, reads the content, and freezes exactly what it read. A page that needs JavaScript to show its text cannot be read — paste the content directly in that case."
             error={errors.content}
           >
             <input
@@ -142,12 +142,12 @@ export function WorkerSubmitForm({
 
         <div>
           <PillButton variant="primary" disabled={busy} onClick={submit}>
-            {busy ? "Đang nộp…" : mode === "link" ? "Đọc link và nộp" : "Nộp để chấm"}
+            {busy ? "Submitting…" : mode === "link" ? "Read link and submit" : "Submit for grading"}
           </PillButton>
         </div>
       </div>
 
-      {msg && <p className="mt-4 text-sm leading-relaxed text-[var(--color-ink-muted)]">{msg}</p>}
+      {msg && <p className="mt-4 text-sm leading-relaxed text-[var(--a-muted)]">{msg}</p>}
     </div>
   );
 }

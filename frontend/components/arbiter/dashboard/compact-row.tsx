@@ -4,6 +4,7 @@ import Link from "next/link";
 import { type BountyState, bountyState, isUrgent, stripLabel } from "@/lib/arbiter/bounty-display";
 import type { BountyCardData } from "@/components/arbiter/bounty-card";
 import { useCountdown } from "@/components/arbiter/use-countdown";
+import { displayBrief } from "@/lib/arbiter/legacy-vietnamese-copy";
 
 export function CompactRow({
   bounty,
@@ -29,7 +30,7 @@ export function CompactRow({
       </span>
       <div className="flex-1">
         <p className="m-0 text-[13px] font-semibold leading-[1.4] text-[var(--a-text)]">
-          {bounty.brief}
+          {displayBrief(bounty.brief)}
         </p>
         <p className="m-0 mt-1 font-[family-name:var(--font-jetbrains-mono)] text-[10px] uppercase tracking-[0.06em]" style={{ color: urgent && !closed ? "var(--a-acc)" : "var(--a-subtle)" }}>
           {label} · {bounty.worker_id ? `${bounty.worker_id.slice(0, 6)}…${bounty.worker_id.slice(-4)}` : "UNCLAIMED"}

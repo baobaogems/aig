@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     // rather than an opinion formed after seeing the work.
     if (poster_action === "REJECT" && (typeof note !== "string" || note.trim().length < 10)) {
       return Response.json(
-        { error: "cần nêu lý do từ chối (ít nhất 10 ký tự), đối chiếu tiêu chí đã đóng băng" },
+        { error: "a refusal needs a reason (at least 10 characters) against the frozen criteria" },
         { status: 400 },
       );
     }

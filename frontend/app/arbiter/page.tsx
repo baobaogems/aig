@@ -153,7 +153,7 @@ export default function ArbiterPage() {
           {error && (
             <p
               className="rounded-xl px-4 py-3 text-sm"
-              style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}
+              style={{ color: "var(--a-bad)", backgroundColor: "var(--a-bad-soft)" }}
             >
               {error}
             </p>
@@ -217,7 +217,7 @@ export default function ArbiterPage() {
         <Drawer
           open={drawer === "submit"}
           onClose={() => setDrawer(null)}
-          title="Nộp bài"
+          title="Submit work"
           description="Content is frozen upon submission. Later edits to the source will not be considered."
         >
           <WorkerSubmitForm onChanged={refresh} />

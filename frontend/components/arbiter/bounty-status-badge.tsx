@@ -23,11 +23,11 @@ interface Look {
 }
 
 const LOOK: Record<string, Look> = {
-  DRAFT: { label: "Draft", glyph: "○", color: "var(--color-ink-muted)", filled: false },
-  OPEN: { label: "Open for work", glyph: "○", color: "var(--color-ink-muted)", filled: false },
+  DRAFT: { label: "Draft", glyph: "○", color: "var(--a-muted)", filled: false },
+  OPEN: { label: "Open for work", glyph: "○", color: "var(--a-muted)", filled: false },
   SUBMITTED: { label: "Awaiting judgment", glyph: "◔", color: "var(--color-tier-t1)", ink: "var(--color-tier-t1-ink)", filled: false },
   JUDGED: { label: "Needs your call", glyph: "⚖", color: "var(--color-tier-t2)", ink: "var(--color-tier-t2-ink)", filled: false },
-  RELEASED: { label: "Paid out", glyph: "↑", color: "var(--color-ink-success)", filled: true },
+  RELEASED: { label: "Paid out", glyph: "↑", color: "var(--a-ok)", filled: true },
   REFUNDED: { label: "Refunded", glyph: "↩", color: "var(--color-tier-t3)", filled: true },
 };
 
@@ -35,7 +35,7 @@ export function BountyStatusBadge({ status }: { status: string }) {
   const look = LOOK[status] ?? {
     label: status.toLowerCase(),
     glyph: "•",
-    color: "var(--color-ink-muted)",
+    color: "var(--a-muted)",
     filled: false,
   };
 

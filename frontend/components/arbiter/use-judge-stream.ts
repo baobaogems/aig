@@ -70,7 +70,7 @@ export function useJudgeStream(onSettled: () => void | Promise<void>) {
         setStage({
           kind: "error",
           afterVerdict: verdict !== null,
-          message: "Kết nối đóng trước khi lượt chấm báo hoàn tất.",
+          message: "The connection closed before the grading run reported completion.",
         });
       }
 

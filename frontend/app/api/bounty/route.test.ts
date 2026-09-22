@@ -86,7 +86,7 @@ describe("POST /api/bounty — input the handler must refuse", () => {
     ["a deadline that is not a date", { deadline: "thứ ba tuần sau" }, 400, /deadline/],
     // Shorter than CLAIM_WINDOW: someone could claim it, go quiet, and by the time
     // expireClaim could free it there would be no time left to claim it again.
-    ["a deadline inside the claim window", { deadline: new Date(Date.now() + 3_600_000).toISOString() }, 400, /hạn chót/],
+    ["a deadline inside the claim window", { deadline: new Date(Date.now() + 3_600_000).toISOString() }, 400, /deadline must be at least/],
   ];
 
   it.each(cases)("rejects %s", async (_label, over, status, message) => {

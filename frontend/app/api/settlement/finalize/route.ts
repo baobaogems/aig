@@ -33,9 +33,9 @@ export async function POST(req: NextRequest) {
 
     const detail = await getBountyDetail(bounty_id);
     const { bounty, verdict } = detail;
-    if (!verdict) return Response.json({ error: "chưa có kết quả chấm" }, { status: 409 });
+    if (!verdict) return Response.json({ error: "no grading result yet" }, { status: 409 });
     if (verdict.release_tx)
-      return Response.json({ error: `đã thanh toán: ${verdict.release_tx}` }, { status: 409 });
+      return Response.json({ error: `already paid out: ${verdict.release_tx}` }, { status: 409 });
     if (bounty.status === "RELEASED" || bounty.status === "REFUNDED")
       return Response.json({ error: `bounty is ${bounty.status}` }, { status: 409 });
 
@@ -56,8 +56,8 @@ export async function POST(req: NextRequest) {
         {
           error:
             clock.phase === "closed"
-              ? "việc này không có đồng hồ thanh toán đang chạy"
-              : `chưa tới hạn — còn ${clock.secondsLeft}s để người đăng quyết`,
+              ? "this bounty has no settlement clock running"
+              : `not due yet — ${clock.secondsLeft}s left for the poster to decide`,
         },
         { status: 409 },
       );

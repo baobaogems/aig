@@ -37,18 +37,18 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       // exactly as the rest of the dry-run path does.
       const won = await setBountyWorker(id, caller, txHash || "dry-run");
       return won
-        ? Response.json({ ok: true, worker: caller, note: "DRY_RUN — đã nhận việc, không có giao dịch on-chain" })
-        : Response.json({ error: "việc này đã có người nhận" }, { status: 409 });
+        ? Response.json({ ok: true, worker: caller, note: "DRY_RUN — claimed, with no on-chain transaction" })
+        : Response.json({ error: "this bounty is already claimed" }, { status: 409 });
     }
 
     const onChain = await getBounty(id);
-    if (!onChain) return Response.json({ error: "không đọc được escrow trên chain" }, { status: 409 });
+    if (!onChain) return Response.json({ error: "could not read the escrow on chain" }, { status: 409 });
     if (onChain.worker === "0x0000000000000000000000000000000000000000")
-      return Response.json({ error: "chain chưa ghi nhận ai nhận việc — giao dịch chưa vào block?" }, { status: 409 });
+      return Response.json({ error: "the chain has no claim recorded yet — has the transaction been mined?" }, { status: 409 });
 
     if (!sameAddress(onChain.worker, caller))
       return Response.json(
-        { error: `ví ${onChain.worker} đã nhận việc này trước bạn` },
+        { error: `wallet ${onChain.worker} claimed this before you` },
         { status: 409 },
       );
 
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
       // Someone else's confirm-claim wrote first. Not an error if the chain agrees it is them.
       const fresh = await getBountyDetail(id);
       if (sameAddress(fresh.bounty.worker_id, caller)) return Response.json({ ok: true, worker: caller });
-      return Response.json({ error: "việc này đã có người nhận" }, { status: 409 });
+      return Response.json({ error: "this bounty is already claimed" }, { status: 409 });
     }
     return Response.json({ ok: true, worker: onChain.worker });
   } catch (err) {

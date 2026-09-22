@@ -72,7 +72,7 @@ describe("object — the poster's answer to a T1 verdict", () => {
     const b = t1(OBJECTION_WINDOW_MS + 1000);
     const res = await object_({ bounty_id: b.id, note: REASON });
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/hết hạn/);
+    expect((await res.json()).error).toMatch(/objection window has closed/);
     expect(settled).toHaveLength(0);
   });
 
@@ -120,7 +120,7 @@ describe("finalize — silence pays the worker", () => {
   it("409s while the poster still has time", async () => {
     const res = await finalize({ bounty_id: t2(1000).id });
     expect(res.status).toBe(409);
-    expect((await res.json()).error).toMatch(/chưa tới hạn/);
+    expect((await res.json()).error).toMatch(/not due yet/);
     expect(settled).toHaveLength(0);
   });
 

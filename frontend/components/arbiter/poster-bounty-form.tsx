@@ -19,6 +19,7 @@ import { PillButton } from "@/components/ui/pill-button";
 import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-field";
 import { PosterLockFunds, type LockParams } from "@/components/arbiter/poster-lock-funds";
 import { RubricTable } from "@/components/arbiter/rubric-table";
+import { ARBITER_PRIMARY_BUTTON } from "./ui/arbiter-button-classes";
 
 interface RubricItem { item_id: string; criterion: string; weight: number }
 
@@ -133,15 +134,15 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
         </div>
 
         <div>
-          <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
+          <PillButton variant="primary" disabled={busy || !!draft} onClick={createBounty} className={ARBITER_PRIMARY_BUTTON}>
             {busy && !draft ? "Drafting rubric..." : "CREATE TASK AND DRAFT RUBRIC"}
           </PillButton>
         </div>
       </div>
 
       {draft && (
-        <div className="mt-5 border-t border-[#E2E2E2] pt-5">
-          <h3 className="text-sm font-semibold text-[#1A1A1A]">
+        <div className="mt-5 border-t border-[var(--a-line-dim)] pt-5">
+          <h3 className="text-sm font-semibold text-[var(--a-text)]">
             The arbiter will grade against this rubric
           </h3>
           <div className="mt-1">
@@ -159,7 +160,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
                 }}
               />
             ) : (
-              <PillButton variant="primary" disabled={busy} onClick={approveRubric} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
+              <PillButton variant="primary" disabled={busy} onClick={approveRubric} className={ARBITER_PRIMARY_BUTTON}>
                 APPROVE RUBRIC AND LOCK FUNDS
               </PillButton>
             )}
@@ -167,7 +168,7 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
         </div>
       )}
 
-      {msg && <p className="mt-4 text-sm leading-relaxed text-[#444444]">{msg}</p>}
+      {msg && <p className="mt-4 text-sm leading-relaxed text-[var(--a-muted)]">{msg}</p>}
     </div>
   );
 }

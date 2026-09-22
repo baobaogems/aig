@@ -47,7 +47,7 @@ function Elapsed({ startedAt }: { startedAt: number }) {
     <>
       <span className="tnum font-[family-name:var(--font-jetbrains-mono)]">{s}s</span>
       {s >= SLOW_AFTER_SECONDS && (
-        <span className="ml-2" style={{ color: "var(--color-ink-warn)" }}>
+        <span className="ml-2" style={{ color: "var(--a-warn)" }}>
           — longer than usual. It has not failed; the request runs up to 60 seconds.
         </span>
       )}
@@ -76,24 +76,24 @@ function VerdictGates({ verdict }: { verdict: JudgeVerdict }) {
 export function JudgingProgress({ stage }: { stage: JudgeStage }) {
   if (stage.kind === "grading") {
     return (
-      <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/70 p-5">
+      <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--a-text)]/10 bg-[var(--a-card)] p-5">
         <div className="flex items-baseline justify-between gap-3">
-          <p className="text-sm font-medium text-[var(--color-ink)]">
+          <p className="text-sm font-medium text-[var(--a-text)]">
             <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full align-middle"
               style={{ backgroundColor: "var(--color-tier-t1)" }} aria-hidden="true" />
             Reading the deliverable
           </p>
-          <p className="text-xs text-[var(--color-ink-muted)]"><Elapsed startedAt={stage.startedAt} /></p>
+          <p className="text-xs text-[var(--a-muted)]"><Elapsed startedAt={stage.startedAt} /></p>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+        <p className="mt-2 text-sm leading-relaxed text-[var(--a-muted)]">
           It is scoring the submission against {stage.criteria.length} frozen criteria and citing the
           words behind each score. This normally takes 15–25 seconds, and the criteria are graded in
           one pass — so there is no per-criterion progress to show, only the result.
         </p>
         <ul className="mt-3 space-y-1.5" aria-busy="true">
           {stage.criteria.map((c, i) => (
-            <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--color-ink)]">
-              <span aria-hidden="true" className="text-[var(--color-ink-muted)]">·</span>
+            <li key={i} className="flex gap-2 text-sm leading-relaxed text-[var(--a-text)]">
+              <span aria-hidden="true" className="text-[var(--a-muted)]">·</span>
               {c}
             </li>
           ))}
@@ -105,12 +105,12 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
   if (stage.kind === "error") {
     return (
       <div className="mt-4 rounded-[var(--radius-card)] p-4"
-        style={{ backgroundColor: "var(--color-chip-danger)", border: "1px solid var(--color-ink-danger)" }}>
-        <p className="text-sm font-medium" style={{ color: "var(--color-ink-danger)" }}>
+        style={{ backgroundColor: "var(--a-bad-soft)", border: "1px solid var(--a-bad)" }}>
+        <p className="text-sm font-medium" style={{ color: "var(--a-bad)" }}>
           {stage.afterVerdict ? "The verdict was reached, but the connection dropped" : "Judging stopped"}
         </p>
-        <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink)]">{stage.message}</p>
-        <p className="mt-2 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+        <p className="mt-1 text-sm leading-relaxed text-[var(--a-text)]">{stage.message}</p>
+        <p className="mt-2 text-xs leading-relaxed text-[var(--a-muted)]">
           {stage.afterVerdict
             ? "The verdict is written to the record before anything is streamed back, so nothing was lost. Close and reopen this row to read it."
             : "Nothing was charged and no money moved. Close and reopen this row to check the current state before trying again."}
@@ -122,10 +122,10 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
   const { verdict } = stage;
   const settled = stage.kind === "done";
   return (
-    <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/70 p-5">
+    <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--a-text)]/10 bg-[var(--a-card)] p-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         {verdict ? <TierPill decision={verdict.decision} /> : <span />}
-        <p className="text-xs text-[var(--color-ink-muted)]">
+        <p className="text-xs text-[var(--a-muted)]">
           {settled ? "Recorded" : "Verdict in — settling"}
         </p>
       </div>
@@ -133,11 +133,11 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
       {verdict && <VerdictGates verdict={verdict} />}
 
       {verdict?.settlement_note && (
-        <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">{verdict.settlement_note}</p>
+        <p className="mt-3 text-sm leading-relaxed text-[var(--a-muted)]">{verdict.settlement_note}</p>
       )}
 
       {settled && (
-        <p className="mt-3 text-sm leading-relaxed text-[var(--color-ink)]">
+        <p className="mt-3 text-sm leading-relaxed text-[var(--a-text)]">
           {stage.status === "RELEASED"
             ? "Both gates cleared. The USDC has been released to the worker."
             : stage.status === "REFUSED"
@@ -151,10 +151,10 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
       {/* release_tx is a real transaction; verdict_hash stays plain text — it is a digest
           inside the Released event, and a link there would 404. */}
       {verdict?.release_tx && (
-        <p className="mt-3 break-all rounded-lg bg-[var(--color-surface-dark)] px-3 py-2 font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-on-dark-muted)]">
+        <p className="mt-3 break-all rounded-lg bg-[var(--a-box)] px-3 py-2 font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--a-muted)]">
           release{" "}
           <a href={`${EXPLORER_TX}${verdict.release_tx}`} target="_blank" rel="noopener noreferrer"
-            className="text-[var(--color-accent-bright)] underline decoration-[var(--color-accent-bright)]/30 underline-offset-4 hover:decoration-[var(--color-accent-bright)]">
+            className="text-[var(--a-acc)] underline decoration-[var(--a-acc)]/30 underline-offset-4 hover:decoration-[var(--a-acc)]">
             {verdict.release_tx}
           </a>
         </p>

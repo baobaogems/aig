@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const detail = await getBountyDetail(bounty_id);
     const onChain = await getBounty(bounty_id);
-    if (!onChain) return Response.json({ changed: false, status: detail.bounty.status, note: "chưa có trên chain" });
+    if (!onChain) return Response.json({ changed: false, status: detail.bounty.status, note: "not on chain yet" });
 
     let changed = false;
     let status = detail.bounty.status;

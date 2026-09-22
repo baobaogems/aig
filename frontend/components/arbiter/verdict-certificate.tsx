@@ -44,7 +44,7 @@ export function VerdictCertificate({
   const criterionText = new Map((rubric ?? []).map((r) => [r.item_id, r.criterion]));
 
   return (
-    <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--color-ink)]/10 bg-white/70 p-5">
+    <div className="mt-4 rounded-[var(--radius-card)] border border-[var(--a-text)]/10 bg-[var(--a-card)] p-5">
       <TierPill decision={verdict.decision} />
 
       {/* The two numbers that decide whether money moves, each against its own gate. */}
@@ -62,22 +62,22 @@ export function VerdictCertificate({
       {/* Two voices, kept apart. The first sentence is ours and always the same; the second
           is the model's own words about this one case, often in the language of the brief.
           Run together they read as a single confused paragraph. */}
-      <p className="mt-3 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+      <p className="mt-3 text-xs leading-relaxed text-[var(--a-muted)]">
         Both gates must be cleared for the arbiter to release on its own.
       </p>
       {confidence_reasoning && (
-        <figure className="mt-2 border-l-2 border-[var(--color-ink)]/15 pl-3">
-          <figcaption className="text-[11px] uppercase tracking-wide text-[var(--color-ink-muted)]">
+        <figure className="mt-2 border-l-2 border-[var(--a-text)]/15 pl-3">
+          <figcaption className="text-[11px] uppercase tracking-wide text-[var(--a-muted)]">
             The arbiter, on its own confidence
           </figcaption>
-          <p className="mt-1 text-sm italic leading-relaxed text-[var(--color-ink)]">{confidence_reasoning}</p>
+          <p className="mt-1 text-sm italic leading-relaxed text-[var(--a-text)]">{confidence_reasoning}</p>
         </figure>
       )}
 
       {refusal_reason && (
         <p
           className="mt-3 rounded-lg px-3 py-2 text-sm"
-          style={{ color: "var(--color-ink-warn)", backgroundColor: "var(--color-chip-warn)" }}
+          style={{ color: "var(--a-warn)", backgroundColor: "var(--a-warn-soft)" }}
         >
           Refused: {refusal_reason}
         </p>
@@ -86,25 +86,25 @@ export function VerdictCertificate({
       {/* Per-criterion scoring, against the criterion text from the frozen rubric. Falls
           back to a number only when the rubric row is missing. */}
       <div className="mt-5 space-y-4">
-        <h4 className="text-xs uppercase tracking-wide text-[var(--color-ink-muted)]">
+        <h4 className="text-xs uppercase tracking-wide text-[var(--a-muted)]">
           How it scored, criterion by criterion
         </h4>
         {rubric_scores.map((s, i) => (
           <div key={s.item_id} className="border-l-2 pl-3" style={{ borderColor: `color-mix(in srgb, ${color} 45%, transparent)` }}>
             <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <p className="max-w-[38ch] text-sm font-medium text-[var(--color-ink)]">
+              <p className="max-w-[38ch] text-sm font-medium text-[var(--a-text)]">
                 {criterionText.get(s.item_id) ?? `Criterion ${i + 1}`}
-                <span className="ml-2 whitespace-nowrap text-xs font-normal text-[var(--color-ink-muted)]">
+                <span className="ml-2 whitespace-nowrap text-xs font-normal text-[var(--a-muted)]">
                   counts for {s.weight}%
                 </span>
               </p>
-              <p className="tnum font-[family-name:var(--font-jetbrains-mono)] text-sm text-[var(--color-ink)]">
-                {s.score}<span className="text-[var(--color-ink-muted)]">/100</span>
+              <p className="tnum font-[family-name:var(--font-jetbrains-mono)] text-sm text-[var(--a-text)]">
+                {s.score}<span className="text-[var(--a-muted)]">/100</span>
               </p>
             </div>
-            <p className="mt-1 text-sm leading-relaxed text-[var(--color-ink-muted)]">{s.reasoning}</p>
+            <p className="mt-1 text-sm leading-relaxed text-[var(--a-muted)]">{s.reasoning}</p>
             {s.evidence.filter(Boolean).length > 0 && (
-              <p className="mt-2 text-[11px] uppercase tracking-wide text-[var(--color-ink-muted)]">
+              <p className="mt-2 text-[11px] uppercase tracking-wide text-[var(--a-muted)]">
                 Quoting the deliverable
               </p>
             )}
@@ -113,7 +113,7 @@ export function VerdictCertificate({
             {s.evidence.filter(Boolean).map((quote, qi) => (
               <blockquote
                 key={qi}
-                className="mt-1.5 rounded border-l-2 border-[var(--color-ink)]/15 bg-[var(--color-surface-light)] px-3 py-1.5 text-xs italic leading-relaxed text-[var(--color-ink-muted)]"
+                className="mt-1.5 rounded border-l-2 border-[var(--a-text)]/15 bg-[var(--a-bg)] px-3 py-1.5 text-xs italic leading-relaxed text-[var(--a-muted)]"
               >
                 &ldquo;{quote}&rdquo;
               </blockquote>
@@ -125,18 +125,18 @@ export function VerdictCertificate({
       {/* Proof. release_tx is a real transaction and gets a link; verdict_hash is a digest
           written into the Released event, not a transaction of its own — linking it to the
           explorer would 404, so it stays plain text. */}
-      <div className="mt-5 rounded-lg bg-[var(--color-surface-dark)] px-3 py-2.5">
-        <p className="break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-on-dark-muted)]">
-          verdict hash <span className="text-[var(--color-on-dark)]">{verdict.verdict_hash}</span>
+      <div className="mt-5 rounded-lg bg-[var(--a-box)] px-3 py-2.5">
+        <p className="break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--a-muted)]">
+          verdict hash <span className="text-[var(--a-text)]">{verdict.verdict_hash}</span>
         </p>
         {verdict.release_tx && (
-          <p className="mt-1.5 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-on-dark-muted)]">
+          <p className="mt-1.5 break-all font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--a-muted)]">
             release{" "}
             <a
               href={`${EXPLORER_TX}${verdict.release_tx}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[var(--color-accent-bright)] underline decoration-[var(--color-accent-bright)]/30 underline-offset-4 hover:decoration-[var(--color-accent-bright)]"
+              className="text-[var(--a-acc)] underline decoration-[var(--a-acc)]/30 underline-offset-4 hover:decoration-[var(--a-acc)]"
             >
               {verdict.release_tx}
             </a>
@@ -148,10 +148,10 @@ export function VerdictCertificate({
           shows what each one costs before it is pressed — this component stays a record of
           what the arbiter concluded, and records do not ask you to decide anything. */}
       {escalation && (
-        <div className="mt-5 border-t border-[var(--color-ink)]/10 pt-4">
+        <div className="mt-5 border-t border-[var(--a-text)]/10 pt-4">
           {/* "Overruling" only applies where the arbiter took a side. On an ESCALATE it
               asked; answering a question is not overruling anyone. */}
-          <p className="text-sm leading-relaxed text-[var(--color-ink)]">
+          <p className="text-sm leading-relaxed text-[var(--a-text)]">
             You{" "}
             <span className="font-semibold">
               {escalation.poster_action === "APPROVE" ? "approved" : escalation.poster_action === "OBJECT" ? "objected to" : "rejected"}
@@ -163,7 +163,7 @@ export function VerdictCertificate({
           {/* Since v3 a refusal settles immediately at the kill fee rather than leaving the
               escrow to sit until the deadline. The old copy here promised the opposite. */}
           {escalation.poster_action !== "APPROVE" && (
-            <p className="mt-1.5 text-xs leading-relaxed text-[var(--color-ink-muted)]">
+            <p className="mt-1.5 text-xs leading-relaxed text-[var(--a-muted)]">
               The escrow was split at once: the worker kept the kill fee for the score the arbiter
               gave, and the remainder went back to you. Nothing is left waiting on a deadline.
             </p>

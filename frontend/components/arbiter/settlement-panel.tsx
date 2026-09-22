@@ -67,9 +67,9 @@ export const SETTLEMENT_ANCHOR = "quyet-dinh";
 const usdc = (n: number) => `${Number(n.toFixed(6))} USDC`;
 
 function hoursLeft(seconds: number): string {
-  if (seconds >= 3600) return `${Math.floor(seconds / 3600)} giờ ${Math.floor((seconds % 3600) / 60)} phút`;
-  if (seconds >= 60) return `${Math.floor(seconds / 60)} phút`;
-  return `${seconds} giây`;
+  if (seconds >= 3600) return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
+  if (seconds >= 60) return `${Math.floor(seconds / 60)}m`;
+  return `${seconds}s`;
 }
 
 export function SettlementPanel(props: Props) {
@@ -146,28 +146,29 @@ export function SettlementPanel(props: Props) {
   if (legacyAwaitingPoster && verdict) {
     if (!isPoster) {
       return (
-        <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
-          <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">
-            Việc này mở từ trước khi có luật mới, nên nó kết thúc theo luật cũ: quyền quyết trả
-            tiền thuộc về người đăng. Nếu họ không xử trước hạn, tiền quay về ví họ.
+        <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--a-line-dim)] bg-[var(--a-card)] px-5 py-4">
+          <p className="text-sm leading-relaxed text-[var(--a-muted)]">
+            This bounty opened before the new rules, so it ends under the old ones: the payout
+            decision belongs to the poster. If they do nothing before the deadline, the funds go
+            back to their wallet.
           </p>
         </div>
       );
     }
     return (
-      <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
-        <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
-          Việc cũ — quyết định của bạn
+      <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--a-line-dim)] bg-[var(--a-card)] px-5 py-4">
+        <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--a-text)]">
+          Legacy bounty — your decision
         </h3>
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink)]">
-          Việc này khoá tiền trên hợp đồng đời trước, nên không chia phần được: trả đủ
-          <span className="font-semibold"> {usdc(amount)}</span>, hoặc không trả và tự đòi lại
-          tiền sau hạn.
+        <p className="mt-2 text-sm leading-relaxed text-[var(--a-text)]">
+          This bounty locked its funds on the previous contract, so the amount cannot be split:
+          pay the full <span className="font-semibold">{usdc(amount)}</span>, or pay nothing and
+          reclaim the funds after the deadline.
         </p>
-        <label className="mt-3 block text-xs text-[var(--color-ink-muted)]">
-          Lý do (bắt buộc nếu từ chối)
+        <label className="mt-3 block text-xs text-[var(--a-muted)]">
+          Reason (required if you refuse)
           <textarea
-            className="mt-1 w-full rounded-md border border-[var(--color-border-light)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]"
+            className="mt-1 w-full rounded-md border border-[var(--a-line-dim)] bg-white px-3 py-2 text-sm text-[var(--a-text)]"
             rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
@@ -179,17 +180,17 @@ export function SettlementPanel(props: Props) {
             disabled={busy}
             onClick={() => approve(verdict.id)}
           >
-            Duyệt — trả đủ {usdc(amount)}
+            Approve — pay the full {usdc(amount)}
           </PillButton>
           <PillButton
             variant="secondary"
             disabled={busy || note.trim().length < 10}
             onClick={() => reject(verdict.id)}
           >
-            Từ chối — không trả, đòi lại sau hạn
+            Refuse — pay nothing, reclaim after the deadline
           </PillButton>
         </div>
-        {error && <p className="mt-2 text-xs text-[var(--color-accent)]">{error}</p>}
+        {error && <p className="mt-2 text-xs text-[var(--a-bad)]">{error}</p>}
       </div>
     );
   }
@@ -202,31 +203,31 @@ export function SettlementPanel(props: Props) {
   const posterGets = posterAmountUsdc(amount, feeBps);
 
   return (
-    <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+    <div id={SETTLEMENT_ANCHOR} className="rounded-[var(--radius-card)] border border-[var(--a-line-dim)] bg-[var(--a-card)] px-5 py-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
-          {tier === "T1" ? "Máy đã quyết trả tiền" : "Đang chờ người đăng quyết"}
+        <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--a-text)]">
+          {tier === "T1" ? "The machine ruled: pay out" : "Waiting on the poster's decision"}
         </h3>
-        <span className="text-xs text-[var(--color-ink-muted)]">
-          Còn {hoursLeft(clock.secondsLeft)}
+        <span className="text-xs text-[var(--a-muted)]">
+          {hoursLeft(clock.secondsLeft)} left
         </span>
       </div>
 
       {/* The default, stated plainly. This sentence is the mechanism. */}
-      <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink)]">
-        Không làm gì thì hết giờ người làm nhận đủ <span className="font-semibold">{usdc(amount)}</span>.
+      <p className="mt-2 text-sm leading-relaxed text-[var(--a-text)]">
+        Do nothing and, once the clock runs out, the worker receives the full <span className="font-semibold">{usdc(amount)}</span>.
       </p>
 
       {isPoster && (
         <>
-          <label className="mt-3 block text-xs text-[var(--color-ink-muted)]">
-            {tier === "T1" ? "Lý do phản đối" : "Lý do từ chối"} — nêu rõ tiêu chí nào hụt
+          <label className="mt-3 block text-xs text-[var(--a-muted)]">
+            {tier === "T1" ? "Reason for the objection" : "Reason for refusing"} — name the criterion that fell short
             <textarea
-              className="mt-1 w-full rounded-md border border-[var(--color-border-light)] bg-white px-3 py-2 text-sm text-[var(--color-ink)]"
+              className="mt-1 w-full rounded-md border border-[var(--a-line-dim)] bg-white px-3 py-2 text-sm text-[var(--a-text)]"
               rows={3}
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Ví dụ: tiêu chí 2 yêu cầu so sánh giá, bài không có phần này."
+              placeholder="For example: criterion 2 asks for a price comparison; the submission has none."
             />
           </label>
 
@@ -237,7 +238,7 @@ export function SettlementPanel(props: Props) {
                 disabled={busy}
                 onClick={() => approve(verdict.id)}
               >
-                Duyệt — trả đủ {usdc(amount)}
+                Approve — pay the full {usdc(amount)}
               </PillButton>
             )}
             <PillButton
@@ -249,13 +250,13 @@ export function SettlementPanel(props: Props) {
                   : reject(verdict.id)
               }
             >
-              {tier === "T1" ? "Phản đối" : "Từ chối"} — người làm nhận {usdc(workerGets)}, bạn nhận lại {usdc(posterGets)}
+              {tier === "T1" ? "Object" : "Refuse"} — the worker gets {usdc(workerGets)}, you get back {usdc(posterGets)}
             </PillButton>
           </div>
           {note.trim().length < 10 && (
-            <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
-              Cần viết lý do (ít nhất 10 ký tự) thì mới bấm được — bài đã nằm trong tay bạn rồi,
-              nên một lời từ chối không giải thích được là thứ cơ chế này không nhận.
+            <p className="mt-1.5 text-xs text-[var(--a-muted)]">
+              A reason (at least 10 characters) is required before this button works — the work is
+              already in your hands, and an unexplained refusal is not something this mechanism accepts.
             </p>
           )}
         </>
@@ -263,24 +264,24 @@ export function SettlementPanel(props: Props) {
 
       {/* The worker gets the facts and no controls: whether to pay is not their call. */}
       {isWorker && (
-        <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-          Người đăng có thể {tier === "T1" ? "phản đối" : "từ chối"} trong thời gian này; nếu vậy bạn
-          vẫn nhận {usdc(workerGets)}. Hết giờ mà họ không làm gì, bạn nhận đủ.
+        <p className="mt-2 text-sm leading-relaxed text-[var(--a-muted)]">
+          The poster may {tier === "T1" ? "object" : "refuse" } during this window; if they do, you
+          still receive {usdc(workerGets)}. If the clock runs out with no action, you receive the full amount.
         </p>
       )}
 
       {isWorker && clock.phase === "auto-release-due" && (
         <div className="mt-3">
           <PillButton variant="primary" disabled={busy} onClick={selfRelease}>
-            Tự nhận tiền bằng ví của bạn
+            Claim the funds with your own wallet
           </PillButton>
-          <p className="mt-1.5 text-xs text-[var(--color-ink-muted)]">
-            Ký thẳng lên hợp đồng, không cần máy chủ này còn sống.
+          <p className="mt-1.5 text-xs text-[var(--a-muted)]">
+            Signs straight to the contract — this server does not need to be alive.
           </p>
         </div>
       )}
 
-      {error && <p className="mt-2 text-xs text-[var(--color-danger,#b00)]">{error}</p>}
+      {error && <p className="mt-2 text-xs text-[var(--a-bad)]">{error}</p>}
     </div>
   );
 }

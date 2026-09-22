@@ -23,7 +23,7 @@ export function useSettlement(bountyId: string, onChanged: () => Promise<void> |
           body: JSON.stringify(body),
         });
         const j = await res.json();
-        if (!res.ok) throw new Error(j.error ?? "không thực hiện được");
+        if (!res.ok) throw new Error(j.error ?? "the action could not be completed");
         await onChanged();
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));

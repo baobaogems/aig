@@ -4,18 +4,6 @@
    ============================================================================= */
 
 .arbiter-ui {
-  /* --- VÙNG TỐI (Nền chính, Track record, Card) --- */
-  --a-bg-dark: #121212;
-  --a-card-dark: #1c1c1c;
-  --a-border-dark: #2a2a2a;
-  
-  --a-text-dark-h1: #ffffff;
-  --a-text-dark-sub: #d0d0d0;
-  --a-text-dark-label: #b8b8b8;
-  --a-text-dark-red: #ff4b4b;
-  
-  --a-box-dark: #161616; /* Khối số TOTAL IN ESCROW */
-
   /* --- VÙNG SÁNG (Header, Filter bar) --- */
   --a-bg-header: #ffffff;
   --a-bg-filter: #f2f2f2;
@@ -51,10 +39,19 @@
   --a-acc-rgb: 196, 30, 58;
   --a-on-acc: #ffffff;
 
-  --a-ok: #15803d;
-  --a-warn: #a16207;
-  --a-info: #1d4ed8;
-  --a-bad: #c41e3a;
+  /* Màu trạng thái dùng CHUNG giá trị với bảng mực của globals.css
+     (--color-ink-success/warn/info/danger), để một trạng thái không có hai màu
+     giữa màn Arbiter và landing. Ghi thẳng hex chứ không var() vì contrast.test.ts
+     đo giá trị thật; var() thì nó không nhìn xuyên được. */
+  --a-ok: #004d1a;
+  --a-warn: #804200;
+  --a-info: #1a237e;
+  --a-bad: #b71c1c;
+
+  /* Nền mờ đi kèm, khớp --color-chip-* của globals.css. */
+  --a-ok-soft: #dfe6e1;
+  --a-warn-soft: #fff3e0;
+  --a-bad-soft: #fce4ec;
 
   --a-line: rgba(var(--a-acc-rgb), 0.2);
   --a-line-hard: rgba(var(--a-acc-rgb), 0.42);

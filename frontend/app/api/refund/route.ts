@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     // The contract refuses it too; this is the readable version of that revert.
     if (bounty.submitted_at)
       return Response.json(
-        { error: "đã có bài nộp — không hoàn tiền đơn phương được nữa. Hãy duyệt, hoặc từ chối kèm lý do." },
+        { error: "a submission exists — a unilateral refund is no longer possible. Approve it, or refuse it with a reason." },
         { status: 409 },
       );
     if (new Date(bounty.deadline).getTime() > Date.now())

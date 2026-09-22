@@ -16,9 +16,9 @@ export async function POST(req: NextRequest) {
     const { address, nonce, issuedAt, signature } = await req.json();
 
     if (typeof address !== "string" || typeof nonce !== "string" || typeof issuedAt !== "string")
-      return Response.json({ error: "thiếu thông tin đăng nhập" }, { status: 400 });
+      return Response.json({ error: "missing sign-in details" }, { status: 400 });
     if (typeof signature !== "string" || !signature.startsWith("0x"))
-      return Response.json({ error: "thiếu chữ ký" }, { status: 400 });
+      return Response.json({ error: "missing signature" }, { status: 400 });
 
     const verified = await verifySiwe({
       address,
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
     );
     return res;
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "đăng nhập thất bại";
+    const msg = err instanceof Error ? err.message : "sign-in failed";
     console.warn("[API /auth/siwe] rejected:", msg);
     return Response.json({ error: msg }, { status: 401 });
   }

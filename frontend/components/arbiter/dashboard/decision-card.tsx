@@ -6,6 +6,7 @@ import { decideTier } from "@/lib/arbiter/tiers";
 import { shortCode } from "@/lib/arbiter/bounty-display";
 import type { BountyCardData } from "@/components/arbiter/bounty-card";
 import type { SettlementVerdict } from "@/components/arbiter/settlement-panel";
+import { displayBrief } from "@/lib/arbiter/legacy-vietnamese-copy";
 
 export function DecisionCard({
   bounty,
@@ -30,9 +31,9 @@ export function DecisionCard({
   const posterGets = posterAmountUsdc(bounty.amount_usdc, feeBps);
 
   const scoreClass =
-    tier === "T1" ? "text-[var(--color-ink-success)] border-green-500/30" :
-    tier === "T2" ? "text-[var(--color-ink-warning)] border-yellow-500/30" :
-    "text-[var(--color-ink-danger)] border-red-500/30";
+    tier === "T1" ? "text-[var(--a-ok)] border-[var(--a-ok)]" :
+    tier === "T2" ? "text-[var(--a-warn)] border-[var(--a-warn)]" :
+    "text-[var(--a-bad)] border-[var(--a-bad)]";
 
   const colorClass =
     tier === "T1" ? "ok" :
@@ -44,12 +45,12 @@ export function DecisionCard({
         
         {/* Score box */}
         <div className={`a-cut-sm flex items-center gap-3 border bg-[rgba(17,17,17,.035)] p-[10px_12px] sm:col-auto col-span-full ${scoreClass}`}>
-          <span className={`a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[27px] font-extrabold leading-none ${colorClass === 'ok' ? 'text-[#00e05a]' : colorClass === 'warn' ? 'text-[#ff9d00]' : 'text-[#ff2d6f]'}`}>
+          <span className={`a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[27px] font-extrabold leading-none ${colorClass === 'ok' ? 'text-[var(--a-ok)]' : colorClass === 'warn' ? 'text-[var(--a-warn)]' : 'text-[var(--a-bad)]'}`}>
             {verdict.total_score}
           </span>
           <div>
             <div className="font-[family-name:var(--font-jetbrains-mono)] text-[8.5px] uppercase tracking-[0.14em]" style={{ color: "var(--a-muted)" }}>SCORE</div>
-            <div className={`mt-1 text-xs font-semibold ${colorClass === 'ok' ? 'text-[#00e05a]' : colorClass === 'warn' ? 'text-[#ff9d00]' : 'text-[#ff2d6f]'}`}>
+            <div className={`mt-1 text-xs font-semibold ${colorClass === 'ok' ? 'text-[var(--a-ok)]' : colorClass === 'warn' ? 'text-[var(--a-warn)]' : 'text-[var(--a-bad)]'}`}>
               {verdict.total_score >= 100 ? "Pass" : "Failed"}
             </div>
           </div>
@@ -58,11 +59,11 @@ export function DecisionCard({
         {/* Main brief */}
         <div className="sm:col-auto col-span-full">
           <p className="m-0 mb-[7px] text-[14px] font-bold leading-[1.35] text-[var(--a-text)]">
-            {bounty.brief}
+            {displayBrief(bounty.brief)}
           </p>
           <p className="m-0 text-[12.5px] leading-[1.55] text-[var(--a-muted)]">
-            Trọng tài cho <b className="text-[var(--a-text)] font-bold">{tier === "T1" ? "đạt" : "trượt/kém tự tin"}</b> — cần bạn xác nhận.
-            Người làm nộp bài với mã {shortCode(bounty.id)}.
+            Arbiter graded it <b className="text-[var(--a-text)] font-bold">{tier === "T1" ? "a pass" : "a fail / low confidence"}</b> — your confirmation is needed.
+            The worker submitted under code {shortCode(bounty.id)}.
           </p>
         </div>
 
@@ -80,12 +81,12 @@ export function DecisionCard({
         </span>
         
         {tier !== "T1" && (
-          <label className="sr-only">Lý do từ chối (ít nhất 10 ký tự)</label>
+          <label className="sr-only">Reason for refusing (at least 10 characters)</label>
         )}
         {(tier === "T1" || tier === "T2") && (
           <input 
             type="text" 
-            placeholder={isT1 ? "Lý do phản đối..." : "Lý do từ chối (>= 10 ký tự)..."}
+            placeholder={isT1 ? "Reason for the objection…" : "Reason for refusing (10+ characters)…"}
             value={note}
             onChange={(e) => setNote(e.target.value)}
             className="a-cut-sm flex-1 sm:flex-none border border-[var(--a-line-dim)] bg-white px-3 py-[6px] text-[12px] text-[var(--a-text)] outline-none focus:border-[var(--a-acc)]"
@@ -112,7 +113,7 @@ export function DecisionCard({
           </button>
         )}
       </div>
-      {error && <p className="px-[18px] pb-3 m-0 text-xs text-red-500">{error}</p>}
+      {error && <p className="px-[18px] pb-3 m-0 text-xs text-[var(--a-bad)]">{error}</p>}
     </article>
   );
 }

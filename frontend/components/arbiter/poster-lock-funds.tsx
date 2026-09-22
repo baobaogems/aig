@@ -21,6 +21,7 @@ import { keccak256, toBytes } from "viem";
 import { PillButton } from "@/components/ui/pill-button";
 import { arbiterEscrowAbi, erc20ApproveAbi } from "@/lib/escrow-abi";
 import { escrowAddressClient, usdcAddressClient, usdcUnits } from "@/lib/arc-addresses-client";
+import { ARBITER_PRIMARY_BUTTON, ARBITER_SECONDARY_BUTTON } from "./ui/arbiter-button-classes";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
@@ -129,11 +130,11 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
           most surprising consequence of the rules, and a poster who learns it only once a
           deliverable has arrived will reasonably feel tricked. */}
       {step === "idle" && (
-        <p className="text-xs leading-relaxed text-[#444444]">
+        <p className="text-xs leading-relaxed text-[var(--a-muted)]">
           Before you lock: if nobody submits, you can reclaim all funds after the deadline. Once a valid submission arrives, you cannot withdraw the full amount — approving pays the worker in full; rejecting pays them partially based on the AI&rsquo;s score, and the rest returns to you.
         </p>
       )}
-      <PillButton onClick={run} disabled={step !== "idle"} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">
+      <PillButton onClick={run} disabled={step !== "idle"} className={ARBITER_PRIMARY_BUTTON}>
         {label[step]}
       </PillButton>
 
@@ -141,13 +142,13 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
       {createTx && <TxLine label="Lock funds" hash={createTx} />}
 
       {step === "confirming" && (
-        <p className="text-xs text-[#444444]">
+        <p className="text-xs text-[var(--a-muted)]">
           The server is reading the escrow directly from the chain. The rubric is frozen only if the amount, deadline, and poster address all match.
         </p>
       )}
-      {error && <p className="text-xs text-[#C41E3A]">{error}</p>}
+      {error && <p className="text-xs text-[var(--a-bad)]">{error}</p>}
       {error && createTx && (
-        <PillButton variant="secondary" onClick={run} className="!text-[#1A1A1A] !border-[#E2E2E2] hover:!bg-[#F4F4F4]">
+        <PillButton variant="secondary" onClick={run} className={ARBITER_SECONDARY_BUTTON}>
           I already signed — check again
         </PillButton>
       )}
@@ -157,7 +158,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
 
 function TxLine({ label, hash }: { label: string; hash: string }) {
   return (
-    <p className="font-mono text-xs text-[#444444]">
+    <p className="font-mono text-xs text-[var(--a-muted)]">
       {label}: {hash.slice(0, 10)}…{hash.slice(-6)}
     </p>
   );

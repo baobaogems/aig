@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
     // at all. Refusing here is cheaper than shipping a bounty nobody can rescue.
     if (dl.getTime() < minimumDeadlineMs(Date.now()))
       return Response.json(
-        { error: `hạn chót phải cách ít nhất ${CLAIM_WINDOW_MS / 3_600_000} giờ, để việc bị nhận rồi bỏ còn cứu được` },
+        { error: `the deadline must be at least ${CLAIM_WINDOW_MS / 3_600_000} hours out, so a claimed-then-abandoned bounty can still be rescued` },
         { status: 400 },
       );
 

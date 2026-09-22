@@ -37,7 +37,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
 
     if (isDryRun()) {
       await freezeRubric(id);
-      return Response.json({ ok: true, note: "DRY_RUN — rubric đã đóng băng, bounty mở, không khoá USDC" });
+      return Response.json({ ok: true, note: "DRY_RUN — rubric frozen, bounty open, no USDC locked" });
     }
 
     // Live: nothing is committed until the poster's own transaction lands. Returning the
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest, ctx: { params: Promise<{ id: string
     // the ones the rubric was approved against.
     return Response.json({
       ok: true,
-      note: "Ký hai giao dịch để khoá USDC. Rubric chỉ đóng băng sau khi tiền đã vào escrow.",
+      note: "Sign two transactions to lock the USDC. The rubric freezes only after the funds reach escrow.",
       lock: {
         bountyId: id,
         worker: detail.bounty.worker_id, // null = open bounty, anyone may claim

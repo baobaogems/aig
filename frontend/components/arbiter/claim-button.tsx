@@ -46,23 +46,23 @@ export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaim
         body: JSON.stringify({ txHash: tx }),
       });
       const j = await res.json();
-      if (!res.ok) throw new Error(j.error ?? "không xác nhận được");
+      if (!res.ok) throw new Error(j.error ?? "could not confirm");
 
       setState("taken");
       onClaimed();
     } catch (err) {
       const raw = err instanceof Error ? err.message : String(err);
-      if (/AlreadyClaimed|đã nhận việc/i.test(raw)) {
+      if (/AlreadyClaimed|already claimed/i.test(raw)) {
         // Somebody signed first. Say so, and stop offering the button.
         setState("taken");
-        setNote("Có người nhận việc này trước bạn.");
+        setNote("Someone claimed this before you.");
         onClaimed();
       } else if (/user rejected|denied/i.test(raw)) {
         setState("idle");
-        setNote("Bạn đã từ chối ký.");
+        setNote("You rejected the signature.");
       } else if (/DeadlinePassed/i.test(raw)) {
         setState("taken");
-        setNote("Việc này đã quá hạn — không nhận được nữa.");
+        setNote("This bounty has expired — it can no longer be claimed.");
       } else {
         setState("idle");
         setNote(raw);
@@ -71,10 +71,10 @@ export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaim
   }
 
   const label: Record<State, string> = {
-    idle: "Nhận việc này",
-    signing: "Chờ chữ ký…",
-    confirming: "Đang đối chiếu chain…",
-    taken: "Đã có người nhận",
+    idle: "Claim this bounty",
+    signing: "Waiting for signature…",
+    confirming: "Checking the chain…",
+    taken: "Already claimed",
   };
 
   return (
@@ -82,7 +82,7 @@ export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaim
       <PillButton onClick={claim} disabled={state !== "idle"}>
         {label[state]}
       </PillButton>
-      {note && <p className="text-xs text-[var(--color-ink-muted)]">{note}</p>}
+      {note && <p className="text-xs text-[var(--a-muted)]">{note}</p>}
     </div>
   );
 }

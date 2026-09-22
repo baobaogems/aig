@@ -36,7 +36,7 @@ export function BountyGrid({
   const now = useCountdown();
 
   if (loading) {
-    return <p className="text-sm text-[var(--color-ink-muted)]">Đang tải…</p>;
+    return <p className="text-sm text-[var(--a-muted)]">Loading…</p>;
   }
 
   return (
@@ -76,7 +76,7 @@ export function BountyGrid({
                 SLOT OPEN
               </div>
               <p className="m-0 text-[12.5px] leading-relaxed" style={{ color: "var(--a-subtle)" }}>
-                Việc của bạn hiện ở đây ngay khi USDC được khoá vào escrow.
+                Your bounty shows up here the moment the USDC is locked in escrow.
               </p>
               <button
                 className="a-cut-sm mt-1 px-4 py-2 font-[family-name:var(--font-display)] text-[11px] font-bold tracking-[0.06em] uppercase"
@@ -105,7 +105,7 @@ export function BountyGrid({
                 WANT TO WORK?
               </div>
               <p className="m-0 text-[12.5px] leading-relaxed" style={{ color: "var(--a-subtle)" }}>
-                Không cần đăng nhập để đọc tiêu chí chấm. Chỉ cần ví khi nộp bài.
+                No login needed to read the grading criteria. A wallet is only needed to submit.
               </p>
             </article>
           </li>

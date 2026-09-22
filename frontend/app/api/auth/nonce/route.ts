@@ -22,6 +22,6 @@ export async function GET(req: NextRequest) {
     });
   } catch (err) {
     console.error("[API /auth/nonce]:", err);
-    return Response.json({ error: "không tạo được phiên ký" }, { status: 500 });
+    return Response.json({ error: "could not create a signing session" }, { status: 500 });
   }
 }
