@@ -39,18 +39,6 @@ export function BountyGrid({
     return <p className="text-sm text-[var(--color-ink-muted)]">Đang tải…</p>;
   }
 
-  if (bounties.length === 0) {
-    return (
-      <div
-        className="rounded-[var(--radius-card)] border border-dashed border-[var(--color-border-light)]
-                   bg-white/40 px-5 py-10 text-center"
-      >
-        <p className="text-sm text-[var(--color-ink)]">{emptyTitle}</p>
-        <p className="mt-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">{emptyHint}</p>
-      </div>
-    );
-  }
-
   return (
     <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {bounties.map((b) => {
@@ -70,6 +58,59 @@ export function BountyGrid({
           </li>
         );
       })}
+      
+      {bounties.length === 0 && (
+        <>
+          <li>
+            <article
+              className="a-card flex h-full flex-col place-items-center justify-center gap-2.5 p-6 text-center"
+              style={{
+                border: "1px dashed var(--a-line)",
+                background: "transparent",
+              }}
+            >
+              <div
+                className="font-[family-name:var(--font-display)] text-[13px] font-extrabold tracking-[0.06em]"
+                style={{ color: "var(--a-muted)" }}
+              >
+                SLOT OPEN
+              </div>
+              <p className="m-0 text-[12.5px] leading-relaxed" style={{ color: "var(--a-subtle)" }}>
+                Việc của bạn hiện ở đây ngay khi USDC được khoá vào escrow.
+              </p>
+              <button
+                className="a-cut-sm mt-1 px-4 py-2 font-[family-name:var(--font-display)] text-[11px] font-bold tracking-[0.06em] uppercase"
+                style={{ background: "rgba(17,17,17,.04)", color: "var(--a-subtle)" }}
+                onClick={() => {
+                  const event = new CustomEvent("arbiter:drawer", { detail: "create" });
+                  window.dispatchEvent(event);
+                }}
+              >
+                + Post bounty
+              </button>
+            </article>
+          </li>
+          <li>
+            <article
+              className="a-card flex h-full flex-col place-items-center justify-center gap-2.5 p-6 text-center"
+              style={{
+                border: "1px dashed var(--a-line)",
+                background: "transparent",
+              }}
+            >
+              <div
+                className="font-[family-name:var(--font-display)] text-[13px] font-extrabold tracking-[0.06em]"
+                style={{ color: "var(--a-muted)" }}
+              >
+                WANT TO WORK?
+              </div>
+              <p className="m-0 text-[12.5px] leading-relaxed" style={{ color: "var(--a-subtle)" }}>
+                Không cần đăng nhập để đọc tiêu chí chấm. Chỉ cần ví khi nộp bài.
+              </p>
+            </article>
+          </li>
+        </>
+      )}
     </ul>
   );
 }

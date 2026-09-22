@@ -1,0 +1,118 @@
+/* =============================================================================
+   arbiter-ui.css — hệ trình bày riêng của màn Arbiter.
+   Plan: plans/260921-2002-arbiter-ui-redesign/phase-01-nen-mong-he-hinh-khoi.md
+   ============================================================================= */
+
+.arbiter-ui {
+  /* --- VÙNG TỐI (Nền chính, Track record, Card) --- */
+  --a-bg-dark: #121212;
+  --a-card-dark: #1c1c1c;
+  --a-border-dark: #2a2a2a;
+  
+  --a-text-dark-h1: #ffffff;
+  --a-text-dark-sub: #d0d0d0;
+  --a-text-dark-label: #b8b8b8;
+  --a-text-dark-red: #ff4b4b;
+  
+  --a-box-dark: #161616; /* Khối số TOTAL IN ESCROW */
+
+  /* --- VÙNG SÁNG (Header, Filter bar) --- */
+  --a-bg-header: #ffffff;
+  --a-bg-filter: #f2f2f2;
+  
+  --a-text-light-brand: #1a1a1a;
+  --a-text-light-label: #333333;
+  --a-text-light-tab: #444444;
+  --a-text-light-active: #c41e3a; /* Đỏ đun tương phản cao trên nền sáng */
+
+  /* --- Nút bấm --- */
+  --a-btn-submit-bg: #e8e8e8;
+  --a-btn-submit-text: #1a1a1a;
+  --a-btn-submit-hover: #dddddd;
+
+  /* --- Các token gốc gán lại cho Dark Area (nền mặc định của body) --- */
+  --a-bg: var(--a-bg-dark);
+  --a-shell: var(--a-card-dark);
+  --a-panel: var(--a-card-dark);
+  --a-card: var(--a-card-dark);
+  --a-hover: #222222;
+  
+  --a-text: var(--a-text-dark-h1);
+  --a-muted: var(--a-text-dark-sub);
+  --a-subtle: var(--a-text-dark-label);
+  
+  --a-acc: var(--a-text-dark-red);
+  --a-acc-2: #ff6b6b;
+  --a-acc-rgb: 255, 75, 75;
+  --a-on-acc: #ffffff;
+
+  --a-ok: #22c55e;
+  --a-warn: #f59e0b;
+  --a-info: #3b82f6;
+  --a-bad: var(--a-text-dark-red);
+
+  --a-line: rgba(var(--a-acc-rgb), 0.2);
+  --a-line-hard: rgba(var(--a-acc-rgb), 0.42);
+  --a-line-dim: var(--a-border-dark);
+
+  /* --- hình khối --- */
+  --a-cut: 10px;
+  --a-cut-sm: 7px;
+  --a-pill: 100px;
+
+  color: var(--a-text);
+  background-color: var(--a-bg);
+  font-family: var(--font-body), system-ui, sans-serif;
+}
+
+/* Góc vát */
+.arbiter-ui .a-cut {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--a-cut)) 0,
+    100% var(--a-cut),
+    100% 100%,
+    var(--a-cut) 100%,
+    0 calc(100% - var(--a-cut))
+  );
+}
+.arbiter-ui .a-cut-sm {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--a-cut-sm)) 0,
+    100% var(--a-cut-sm),
+    100% 100%,
+    var(--a-cut-sm) 100%,
+    0 calc(100% - var(--a-cut-sm))
+  );
+}
+
+.arbiter-ui .a-focus-host:has(:focus-visible) {
+  box-shadow: 0 0 0 2px var(--a-bg), 0 0 0 4px var(--a-acc);
+}
+.arbiter-ui .a-cut:focus-visible,
+.arbiter-ui .a-cut-sm:focus-visible {
+  outline: none;
+}
+
+.arbiter-ui .a-tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arbiter-ui .a-pulse {
+    animation: none;
+  }
+}
+@keyframes a-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+.arbiter-ui .a-pulse {
+  animation: a-pulse 1.9s infinite;
+}

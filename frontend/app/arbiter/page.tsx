@@ -20,28 +20,25 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { PosterBountyForm } from "@/components/arbiter/poster-bounty-form";
 import { WorkerSubmitForm } from "@/components/arbiter/worker-submit-form";
 import { BountyGrid } from "@/components/arbiter/bounty-grid";
-import { AgentStatsStrip, type AgentStats } from "@/components/arbiter/agent-stats-strip";
+import { TrackRecordBand } from "@/components/arbiter/track-record-band";
+import { ArbiterNav } from "@/components/arbiter/arbiter-nav";
+import { PageBackdrop } from "@/components/arbiter/ui/page-backdrop";
+import type { AgentStats } from "@/lib/arbiter/store";
 import { SectionHeader } from "@/components/ui/section-header";
-import { FilterBar } from "@/components/ui/filter-bar";
+import { MarketFilter } from "@/components/arbiter/market-filter";
 import { PillButton } from "@/components/ui/pill-button";
 import { Drawer } from "@/components/ui/drawer";
 import { WalletConnectButton } from "@/components/arbiter/wallet-connect-button";
 import type { BountyCardData } from "@/components/arbiter/bounty-card";
+import { type PrizeBand, inPrizeBand } from "@/lib/arbiter/prize-band";
+import { AButton } from "@/components/arbiter/ui/a-button";
 
 interface BountyRow extends BountyCardData {
   created_at: string;
 }
 
 type OpenDrawer = null | "create" | "submit";
-type Availability = "open" | "done" | "all";
-type Role = "all" | "posted" | "claimed";
-
-/** Which server view answers a given role filter. Availability is applied client-side. */
-const ROLE_VIEW: Record<Role, string> = {
-  all: "all",
-  posted: "mine-posted",
-  claimed: "mine-claimed",
-};
+type StatusFilter = "active" | "ended" | "all";
 
 const OPEN_STATUSES = new Set(["OPEN", "SUBMITTED"]);
 
@@ -52,173 +49,180 @@ export default function ArbiterPage() {
   const [loading, setLoading] = useState(true);
   const [drawer, setDrawer] = useState<OpenDrawer>(null);
   const [session, setSession] = useState<string | null>(null);
+  const [pending, setPending] = useState<number | null>(null);
 
-  const [availability, setAvailability] = useState<Availability>("open");
-  const [role, setRole] = useState<Role>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("active");
+  const [prizeFilter, setPrizeFilter] = useState<PrizeBand>("all");
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`/api/bounty?view=${ROLE_VIEW[role]}`);
+      const res = await fetch(`/api/bounty?view=all`);
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       setBounties(j.bounties);
       setStats(j.stats);
+      setPending(j.pending_decisions ?? null);
       setError("");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
       setLoading(false);
     }
-  }, [role]);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
     refresh();
   }, [refresh]);
 
-  // Split once, render twice. A bounty is "open" while it is still workable; everything that
-  // has been judged, paid, refunded or run out of time belongs to the record below.
-  //
-  // Deliberately NOT recomputed on a per-second clock. This page owns the drawers, and the
-  // drawers own text inputs: re-rendering it every second interrupted IME composition, so
-  // typing "đá" in Vietnamese produced "dá" — the second keystroke of the đ was wiped by a
-  // re-render before it could combine. The ticking clock now lives inside BountyGrid, which
-  // contains no inputs. Section membership therefore updates on data refresh rather than the
-  // instant a deadline passes, which is also the calmer behaviour: a card should not jump to
-  // another section while someone is reading it.
-  const { open, done } = useMemo(() => {
-    const at = Date.now();
-    const isOpen = (b: BountyRow) =>
-      OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > at;
-    return {
-      open: bounties.filter(isOpen),
-      done: bounties.filter((b) => !isOpen(b)),
+  useEffect(() => {
+    const onDrawer = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail === "create") setDrawer("create");
+      else if (customEvent.detail === "submit") setDrawer("submit");
     };
-  }, [bounties]);
+    window.addEventListener("arbiter:drawer", onDrawer);
+    return () => window.removeEventListener("arbiter:drawer", onDrawer);
+  }, []);
 
-  const showOpen = availability !== "done";
-  const showDone = availability !== "open";
+  // Use a constant "now" for filtering to avoid UI jumping on tick.
+  const filterAt = useMemo(() => Date.now(), [bounties]);
+
+  const filteredBounties = useMemo(() => {
+    let result = bounties;
+
+    // Filter by status
+    if (statusFilter !== "all") {
+      result = result.filter((b) => {
+        const isOpen = OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > filterAt;
+        return statusFilter === "active" ? isOpen : !isOpen;
+      });
+    }
+
+    // Filter by prize
+    if (prizeFilter !== "all") {
+      result = result.filter((b) => inPrizeBand(b.amount_usdc, prizeFilter));
+    }
+
+    return result;
+  }, [bounties, statusFilter, prizeFilter, filterAt]);
+
+  const activeCountForBand = useMemo(() => {
+    const countOpen = bounties.filter((b) => OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > filterAt);
+    return countOpen.length;
+  }, [bounties, filterAt]);
+
+  const prizeCounts = useMemo(() => {
+    const list = bounties.filter((b) => {
+      const isOpen = OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > filterAt;
+      return statusFilter === "all" ? true : statusFilter === "active" ? isOpen : !isOpen;
+    });
+    
+    return {
+      all: list.length,
+      under_1: list.filter((b) => inPrizeBand(b.amount_usdc, "under_1")).length,
+      "1_to_5": list.filter((b) => inPrizeBand(b.amount_usdc, "1_to_5")).length,
+      over_5: list.filter((b) => inPrizeBand(b.amount_usdc, "over_5")).length,
+    };
+  }, [bounties, statusFilter, filterAt]);
 
   return (
-    <main className="bg-grain min-h-screen bg-gradient-to-b from-[var(--color-surface-light)] via-[var(--color-surface-light-2)] to-[var(--color-surface-light)] px-4 pb-20 pt-12">
-      <div className="mx-auto grid max-w-5xl gap-14">
-        <header className="flex flex-wrap items-start justify-between gap-4">
+    <div className="arbiter-ui">
+      <PageBackdrop />
+      <ArbiterNav
+        current="market"
+        pendingDecisions={pending}
+        walletSlot={<WalletConnectButton onSession={setSession} />}
+      />
+      <main className="bg-grain relative z-[1] min-h-screen px-4 pb-20 pt-12">
+        <div className="mx-auto grid max-w-[1120px] gap-14">
           <div>
-            <h1 className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)]">
-              Arbiter
-            </h1>
-            <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
-              Người đăng khoá USDC vào escrow trên Arc testnet. Một trọng tài AI chấm bài theo
-              bộ tiêu chí đã đóng băng, và tiền tự đi khi bài đủ điểm — mọi phán quyết đều ghi
-              hash lên chain.
+            <p className="max-w-2xl text-[12.5px] leading-relaxed" style={{ color: "var(--a-muted)" }}>
+              Posters lock USDC into escrow on the Arc testnet. An AI arbiter grades submissions against a
+              frozen rubric, and funds flow automatically when the score passes — all verdicts are hashed
+              on-chain.
             </p>
           </div>
-          <WalletConnectButton onSession={setSession} />
-        </header>
 
-        <AgentStatsStrip stats={stats} />
-
-        {error && (
-          <p
-            className="rounded-xl px-4 py-3 text-sm"
-            style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}
-          >
-            {error}
-          </p>
-        )}
-
-        <section className="grid gap-5">
-          <SectionHeader
-            eyebrow="đang mở"
-            title="Chợ việc"
-            description="Việc đã khoá tiền và còn hạn. Đọc tiêu chí chấm trước khi nhận — không cần đăng nhập."
-            action={
-              session ? (
-                <div className="flex flex-wrap gap-2">
-                  {/* The only filled accent button on the page: it is the one that moves money. */}
-                  <PillButton onClick={() => setDrawer("create")}>Đăng việc</PillButton>
-                  <PillButton variant="secondary" onClick={() => setDrawer("submit")}>
-                    Nộp bài
-                  </PillButton>
-                </div>
-              ) : (
-                <p className="text-sm text-[var(--color-ink-muted)]">Kết nối ví để đăng hoặc nhận việc.</p>
-              )
-            }
+          <TrackRecordBand
+            stats={stats}
+            escrowUsdc={Number(bounties.filter(b => OPEN_STATUSES.has(b.status) && new Date(b.deadline).getTime() > filterAt).reduce((sum, b) => sum + b.amount_usdc, 0).toFixed(3))}
+            activeCount={activeCountForBand}
           />
 
-          <FilterBar
-            resultCount={showOpen && showDone ? bounties.length : showOpen ? open.length : done.length}
-            groups={[
-              {
-                label: "Trạng thái",
-                value: availability,
-                onChange: (v) => setAvailability(v as Availability),
-                options: [
-                  { value: "open", label: "Đang mở" },
-                  { value: "done", label: "Đã xong" },
-                  { value: "all", label: "Tất cả" },
-                ],
-              },
-              {
-                label: "Vai trò",
-                value: role,
-                onChange: (v) => setRole(v as Role),
-                options: [
-                  { value: "all", label: "Tất cả" },
-                  { value: "posted", label: "Tôi đăng" },
-                  { value: "claimed", label: "Tôi nhận" },
-                ],
-              },
-            ]}
-          />
+          {error && (
+            <p
+              className="rounded-xl px-4 py-3 text-sm"
+              style={{ color: "var(--color-ink-danger)", backgroundColor: "var(--color-chip-danger)" }}
+            >
+              {error}
+            </p>
+          )}
 
-          {showOpen && (
+          <section className="grid gap-5">
+            <div className="flex items-end justify-between flex-wrap gap-4 mb-2">
+              <div>
+                <p className="a-eyebrow m-0">ON-CHAIN ESCROW</p>
+                <h2 className="font-[family-name:var(--font-display)] text-2xl font-black tracking-[0.02em] m-0">
+                  MARKET
+                </h2>
+              </div>
+              <div className="flex gap-2">
+                <AButton variant="secondary" onClick={() => setDrawer("submit")}>SUBMIT</AButton>
+                <AButton variant="solid" onClick={() => setDrawer("create")}>+ Post bounty</AButton>
+              </div>
+            </div>
+
+            <MarketFilter
+              status={statusFilter}
+              onStatusChange={setStatusFilter}
+              prize={prizeFilter}
+              onPrizeChange={setPrizeFilter}
+              prizeCounts={prizeCounts}
+              resultCount={filteredBounties.length}
+            />
+
             <BountyGrid
-              bounties={open}
+              bounties={filteredBounties}
               loading={loading}
               signedIn={Boolean(session)}
               onChanged={refresh}
-              emptyTitle="Chưa có việc nào đang mở."
-              emptyHint="Việc chỉ hiện ở đây sau khi người đăng đã khoá USDC vào escrow."
+              emptyTitle=""
+              emptyHint=""
             />
-          )}
-        </section>
-
-        {showDone && (
-          <section className="grid gap-5">
-            <SectionHeader
-              eyebrow="kết quả"
-              title="Việc đã xong"
-              description="Những việc đã chấm xong hoặc hết hạn — trả tiền, hoàn tiền, hay người đăng tự quyết. Đây là hồ sơ công khai của trọng tài."
-            />
-            <BountyGrid
-              bounties={done}
-              loading={loading}
-              emptyTitle="Chưa có việc nào kết thúc."
-              emptyHint="Việc sẽ chuyển xuống đây sau khi được chấm, hoàn tiền, hoặc quá hạn."
-            />
+            
+            {statusFilter === "active" && (bounties.length - activeCountForBand) > 0 && (
+              <p className="text-center text-[12px] mt-6" style={{ color: "var(--a-subtle)" }}>
+                {(bounties.length - activeCountForBand)} completed bounties are hidden.{" "}
+                <button
+                  className="font-bold underline hover:text-[var(--a-text)]"
+                  onClick={() => setStatusFilter("ended")}
+                >
+                  View results
+                </button>
+              </p>
+            )}
           </section>
-        )}
-      </div>
+        </div>
 
-      <Drawer
-        open={drawer === "create"}
-        onClose={() => setDrawer(null)}
-        title="Đăng việc mới"
-        description="Mô tả công việc bằng lời thường. Trọng tài soạn bộ tiêu chí từ đó; bạn duyệt và đóng băng trước khi khoá tiền."
-      >
-        <PosterBountyForm onChanged={refresh} />
-      </Drawer>
+        <Drawer
+          open={drawer === "create"}
+          onClose={() => setDrawer(null)}
+          title="Post new bounty"
+          description="Describe the task in plain text. The arbiter extracts a rubric from this; you review and freeze it before locking funds."
+        >
+          <PosterBountyForm onChanged={refresh} />
+        </Drawer>
 
-      <Drawer
-        open={drawer === "submit"}
-        onClose={() => setDrawer(null)}
-        title="Nộp bài"
-        description="Nội dung được đóng băng ngay lúc nộp. Sửa nguồn sau đó không tính."
-      >
-        <WorkerSubmitForm onChanged={refresh} />
-      </Drawer>
-    </main>
+        <Drawer
+          open={drawer === "submit"}
+          onClose={() => setDrawer(null)}
+          title="Nộp bài"
+          description="Content is frozen upon submission. Later edits to the source will not be considered."
+        >
+          <WorkerSubmitForm onChanged={refresh} />
+        </Drawer>
+      </main>
+    </div>
   );
 }

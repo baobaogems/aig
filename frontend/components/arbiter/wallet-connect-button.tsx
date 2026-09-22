@@ -69,14 +69,14 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
     setBusy(true);
     try {
       const res = await fetch("/api/auth/nonce");
-      if (!res.ok) throw new Error("máy chủ không cấp được phiên ký");
+      if (!res.ok) throw new Error("server failed to issue signing session");
       const { nonce, domain, chainId: expectedChain, issuedAt } = await res.json();
 
       const message = [
         `${domain} muốn bạn đăng nhập bằng ví Ethereum:`,
         address,
         "",
-        "Ký để đăng nhập Arbiter. Thao tác này miễn phí và không chuyển bất kỳ khoản tiền nào.",
+        "Sign to log into Arbiter. This is free and will not transfer any funds.",
         "",
         `URI: https://${domain}`,
         "Version: 1",
@@ -93,12 +93,12 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
         body: JSON.stringify({ address, nonce, issuedAt, signature }),
       });
       const j = await verify.json();
-      if (!verify.ok) throw new Error(j.error ?? "đăng nhập thất bại");
+      if (!verify.ok) throw new Error(j.error ?? "login failed");
       publish(j.address);
     } catch (err) {
       // A user clicking "reject" in their wallet is not an error worth shouting about.
-      const msg = err instanceof Error ? err.message : "đăng nhập thất bại";
-      setError(/user rejected|denied/i.test(msg) ? "Bạn đã từ chối ký." : msg);
+      const msg = err instanceof Error ? err.message : "login failed";
+      setError(/user rejected|denied/i.test(msg) ? "You rejected the signature." : msg);
     } finally {
       setBusy(false);
     }
@@ -115,7 +115,7 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
       <div className="flex items-center gap-2">
         {!isConnected && (
           <PillButton onClick={() => connect({ connector: injected() })} disabled={connecting}>
-            {connecting ? "Đang kết nối…" : "Kết nối ví"}
+            {connecting ? "Connecting..." : "Connect wallet"}
           </PillButton>
         )}
 
@@ -125,13 +125,13 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
             onClick={() => switchChain({ chainId: ARC_CHAIN_ID })}
             disabled={switching}
           >
-            {switching ? "Đang đổi mạng…" : "Chuyển sang Arc testnet"}
+            {switching ? "Switching network..." : "Switch to Arc testnet"}
           </PillButton>
         )}
 
         {isConnected && !wrongChain && !session && (
           <PillButton onClick={signIn} disabled={busy}>
-            {busy ? "Chờ chữ ký…" : "Đăng nhập bằng ví"}
+            {busy ? "Waiting for signature..." : "Sign in with wallet"}
           </PillButton>
         )}
 
@@ -139,7 +139,7 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
           <>
             <span className="font-mono text-xs text-[var(--color-ink-muted)]">{shortAddress(session)}</span>
             <PillButton variant="secondary" onClick={signOut}>
-              Thoát
+              Log out
             </PillButton>
           </>
         )}

@@ -4,7 +4,7 @@
 // Providers live in a separate client component to avoid hydration issues
 // =============================================================================
 
-import { JetBrains_Mono, Manrope, Inter } from "next/font/google";
+import { JetBrains_Mono, Manrope, Inter, Orbitron } from "next/font/google";
 import { Providers } from "@/components/providers";
 import "./globals.css";
 
@@ -28,9 +28,21 @@ const inter = Inter({
   display: "swap",
 });
 
+// Orbitron — chữ display của màn Arbiter (nav, tiêu đề mục, nhãn nút).
+// CHỈ có subset "latin": Orbitron KHÔNG hỗ trợ dấu tiếng Việt. Vì thế nó chỉ
+// được dùng cho nhãn tiếng Anh viết hoa (MARKET, DASHBOARD, PAY FULL). Mọi câu
+// tiếng Việt vẫn dùng --font-body (Inter, có subset vietnamese).
+// ui-guards/orbitron-no-vietnamese.test.ts canh ranh giới này ở phase 05.
+const orbitron = Orbitron({
+  subsets: ["latin"],
+  weight: ["600", "800", "900"],
+  variable: "--font-display",
+  display: "swap",
+});
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${jetbrainsMono.variable} ${manrope.variable} ${inter.variable}`}>
+    <html lang="en" className={`${jetbrainsMono.variable} ${manrope.variable} ${inter.variable} ${orbitron.variable}`}>
       <body className="antialiased">
         <Providers>{children}</Providers>
       </body>

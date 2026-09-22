@@ -11,6 +11,7 @@ import { generateRubric } from "@/lib/arbiter/rubric";
 import { createBountyWithRubric, getAgentStats, getBountyDetail, listBounties, type BountyView } from "@/lib/arbiter/store";
 import { requireSession } from "@/lib/auth/require-role";
 import { scopeDetailToViewer } from "@/lib/arbiter/bounty-view";
+import { countPendingDecisions } from "@/lib/arbiter/track-record";
 import { SESSION_COOKIE, openSession } from "@/lib/auth/siwe-session";
 import { LIMIT_CREATE_BOUNTY, enforceRateLimit } from "@/lib/auth/rate-limit";
 import { CLAIM_WINDOW_MS, minimumDeadlineMs } from "@/lib/arbiter/settlement-clock";
@@ -83,8 +84,20 @@ export async function GET(req: NextRequest) {
     // Which slice of the board: the public marketplace, or one of the caller's own lists.
     const view = (req.nextUrl.searchParams.get("view") ?? "all") as BountyView;
     const viewer = openSession(req.cookies.get(SESSION_COOKIE)?.value);
-    const [bounties, stats] = await Promise.all([listBounties(view, viewer), getAgentStats()]);
-    return Response.json({ bounties, stats, viewer });
+    // pending_decisions không tính từ `bounties`: khi view là "mine-claimed" danh sách
+    // đó không chứa bounty mình ĐĂNG, nên đếm trên nó sẽ ra 0 và huy hiệu nav biến mất
+    // đúng lúc người dùng cần nó nhất. Hỏi riêng một truy vấn, độc lập với view.
+    const [bounties, stats, posted] = await Promise.all([
+      listBounties(view, viewer),
+      getAgentStats(),
+      viewer ? listBounties("mine-posted", viewer) : Promise.resolve([]),
+    ]);
+    return Response.json({
+      bounties,
+      stats,
+      viewer,
+      pending_decisions: countPendingDecisions(posted, viewer),
+    });
   } catch (err) {
     console.error("[API /bounty] GET:", err);
     return Response.json({ error: err instanceof Error ? err.message : "unknown error" }, { status: 500 });

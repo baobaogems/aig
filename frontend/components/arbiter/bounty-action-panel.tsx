@@ -124,16 +124,19 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
       })
     : null;
 
-  const heading = isWorker && submitWindow?.allowed ? (submitWindow.isRetry ? "Sửa và nộp lại" : "Nộp bài")
-    : busy ? "Đang chấm bài"
-    : isClaimable(state) ? "Nhận việc này"
-    : "Việc này";
+  const heading = isWorker && submitWindow?.allowed ? (submitWindow.isRetry ? "Edit and resubmit" : "Submit work")
+    : busy ? "Grading..."
+    : isClaimable(state) ? "Accept bounty"
+    : "This bounty";
 
   return (
     <section className="grid gap-4">
-      <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+      <div 
+        className="rounded-[var(--radius-card)] border px-5 py-4"
+        style={{ background: "var(--a-card-dark)", borderColor: "var(--a-border-dark)" }}
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <h2 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
+          <h2 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--a-text-dark-h1)]">
             {heading}
           </h2>
           <WalletConnectButton onSession={setSession} />
@@ -146,9 +149,9 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
           {isWorker && submitWindow?.allowed && (
             <>
               {submitWindow.isRetry && (
-                <p className="mb-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
-                  Lượt trước chưa đạt. Đọc phần chấm bên dưới để biết tiêu chí nào hụt, sửa rồi
-                  nộp lại — bộ tiêu chí không đổi, nên sửa đúng chỗ là qua.
+                <p className="mb-3 text-sm leading-relaxed text-[var(--a-text-dark-sub)]">
+                  Previous attempt failed. Read the grading below to see which criteria missed, fix them and
+                  resubmit — the rubric does not change, so targeted fixes will pass.
                 </p>
               )}
               <WorkerSubmitForm
@@ -164,24 +167,24 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
           {/* Grading in flight, or waiting on someone. The reason comes from the same rule. */}
           {isWorker && submitWindow && !submitWindow.allowed && (
-            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">{submitWindow.reason}</p>
+            <p className="text-sm leading-relaxed text-[var(--a-text-dark-sub)]">{submitWindow.reason}</p>
           )}
 
           {!isWorker && isClaimable(state) &&
             (session ? (
               <ClaimButton bountyId={bountyId} onClaimed={load} />
             ) : (
-              <p className="text-sm text-[var(--color-ink-muted)]">
-                Kết nối ví để nhận việc. Đọc nhiệm vụ và tiêu chí chấm thì không cần đăng nhập.
+              <p className="text-sm text-[var(--a-text-dark-sub)]">
+                Connect wallet to accept. Reading the task and grading rubric does not require login.
               </p>
             ))}
 
           {!isParty && !isClaimable(state) && (
-            <p className="text-sm text-[var(--color-ink-muted)]">
-              {state === "in-progress" && "Đã có người nhận việc này."}
-              {state === "submitted" && "Bài đã nộp, đang chờ chấm."}
-              {state === "expired" && "Đã quá hạn — không nhận được nữa. Người đăng có thể đòi lại tiền."}
-              {state === "closed" && "Việc đã kết thúc."}
+            <p className="text-sm text-[var(--a-text-dark-sub)]">
+              {state === "in-progress" && "Someone has accepted this bounty."}
+              {state === "submitted" && "Submission received, waiting for grading."}
+              {state === "expired" && "Expired — no longer claimable. Poster can reclaim funds."}
+              {state === "closed" && "Bounty is closed."}
             </p>
           )}
         </div>

@@ -1,4 +1,7 @@
 @import "tailwindcss";
+/* Hệ trình bày riêng của màn Arbiter. Mọi token sống dưới .arbiter-ui,
+   không chạm :root — xem đầu file arbiter-ui.css. */
+@import "./arbiter-ui.css";
 
 :root {
   --background: #ffffff;

@@ -16,37 +16,37 @@ const T = TIER_THRESHOLDS;
 export function DecisionThresholds() {
   return (
     <div>
-      <p className="text-xs leading-relaxed text-[var(--color-ink-muted)]">
-        Arbiter đề xuất điểm và mức tự tin. Việc quyết định tiền đi đâu thì do mã nguồn tất
-        định làm, không phải do model — cùng một verdict luôn cho cùng một kết quả.
+      <p className="text-[12px] leading-relaxed m-0" style={{ color: "var(--a-text-dark-sub)" }}>
+        The Arbiter proposes a score and confidence level. The decision of where funds go is fully
+        deterministic by code, not the model — the same verdict always yields the same result.
       </p>
 
-      <dl className="mt-3 space-y-3">
+      <dl className="mt-4 m-0 space-y-3">
         <Row
-          label="Tự động trả tiền"
-          value={`tự tin ≥ ${T.autoReleaseConfidence} VÀ điểm ≥ ${T.autoReleaseScore}`}
-          note="Cả hai điều kiện, không phải một. Điểm cao mà không chắc chắn thì vẫn không tự trả."
+          label="Auto-release funds"
+          value={`confidence ≥ ${T.autoReleaseConfidence} AND score ≥ ${T.autoReleaseScore}`}
+          note="Both conditions must be met. High score with low confidence will not trigger auto-release."
           accent
         />
         <Row
-          label="Chuyển cho người đăng quyết"
-          value="mọi trường hợp ở giữa"
-          note="Arbiter nói rõ nó nghiêng về bên nào, nhưng không tự quyết. Người đăng bấm duyệt hoặc từ chối, và lựa chọn đó được ghi lại công khai."
+          label="Escalate to poster"
+          value="everything in between"
+          note="The Arbiter states its inclination but does not decide. The poster approves or rejects, and the choice is publicly recorded."
         />
         <Row
-          label="Trượt"
-          value={`điểm < ${T.failScore}`}
-          note="Có giải thích từng tiêu chí kèm trích dẫn nguyên văn từ bài nộp."
+          label="Fail"
+          value={`score < ${T.failScore}`}
+          note="Includes criterion-by-criterion explanation with verbatim quotes from the submission."
         />
         <Row
-          label="Từ chối chấm"
-          value={`tự tin < ${T.refuseConfidence}, hoặc bài không đọc được / lạc đề`}
-          note="Arbiter nói thẳng là nó không chấm được, thay vì đoán bừa."
+          label="Refuse to grade"
+          value={`confidence < ${T.refuseConfidence}, or submission is unreadable/off-topic`}
+          note="The Arbiter explicitly states it cannot grade, rather than guessing."
         />
         <Row
-          label="Một tiêu chí hỏng hẳn"
-          value={`có mục ≤ ${T.splitUnmetAtOrBelow} trong khi mục khác ≥ ${T.splitStrongAtOrAbove} → chặn tự động trả`}
-          note={`Mức tự tin bị ép xuống tối đa ${T.splitConfidenceCeiling}, nên việc luôn về tay người đăng. Một yêu cầu bị bỏ hẳn là chuyện của người trả tiền, không phải của máy.`}
+          label="Critical failure on one criterion"
+          value={`criterion ≤ ${T.splitUnmetAtOrBelow} while another ≥ ${T.splitStrongAtOrAbove} → blocks auto-release`}
+          note={`Confidence is capped at ${T.splitConfidenceCeiling}, ensuring the poster makes the decision. An entirely ignored requirement is a matter for the payer, not the machine.`}
         />
       </dl>
     </div>
@@ -65,18 +65,17 @@ function Row({
   accent?: boolean;
 }) {
   return (
-    <div className="border-b border-[var(--color-ink)]/5 pb-3 last:border-0">
-      <dt className="flex flex-wrap items-baseline gap-2">
-        <span className="text-sm font-medium text-[var(--color-ink)]">{label}</span>
+    <div className="border-b pb-3 last:border-0" style={{ borderColor: "var(--a-border-dark)" }}>
+      <dt className="flex flex-wrap items-baseline gap-2 m-0">
+        <span className="text-[13px] font-bold" style={{ color: "var(--a-text-dark-h1)" }}>{label}</span>
         <span
-          className={`tnum font-[family-name:var(--font-jetbrains-mono)] text-xs ${
-            accent ? "text-[var(--color-accent)]" : "text-[var(--color-ink-muted)]"
-          }`}
+          className="a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[11px]"
+          style={{ color: accent ? "var(--a-ok)" : "var(--a-text-dark-label)" }}
         >
           {value}
         </span>
       </dt>
-      <dd className="mt-1 text-xs leading-relaxed text-[var(--color-ink-muted)]">{note}</dd>
+      <dd className="mt-1 text-[12px] m-0 leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>{note}</dd>
     </div>
   );
 }

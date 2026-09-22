@@ -32,6 +32,7 @@ import { killFeeBps, posterAmountUsdc, workerAmountUsdc } from "@/lib/arbiter/ki
 import { settlementState } from "@/lib/arbiter/settlement-clock";
 import { decideTier } from "@/lib/arbiter/tiers";
 import { useCountdown } from "@/components/arbiter/use-countdown";
+import { useSettlement } from "@/components/arbiter/use-settlement";
 
 export interface SettlementVerdict {
   id: string;
@@ -76,33 +77,8 @@ export function SettlementPanel(props: Props) {
     bountyId, amountUsdc: amount, submittedAt, status, escrowVersion, verdict, isPoster, isWorker, onChanged,
   } = props;
   const now = useCountdown();
-  const config = useConfig();
-  const { writeContractAsync } = useWriteContract();
-  const [busy, setBusy] = useState(false);
-  const [note, setNote] = useState("");
-  const [error, setError] = useState("");
-
-  const call = useCallback(
-    async (path: string, body: object) => {
-      setBusy(true);
-      setError("");
-      try {
-        const res = await fetch(path, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(body),
-        });
-        const j = await res.json();
-        if (!res.ok) throw new Error(j.error ?? "không thực hiện được");
-        await onChanged();
-      } catch (e) {
-        setError(e instanceof Error ? e.message : String(e));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [onChanged],
-  );
+  const { busy, note, setNote, error, call, finalize, approve, reject, objectT1, selfRelease } =
+    useSettlement(bountyId, onChanged);
 
   const settled = status === "RELEASED" || status === "REFUNDED" || Boolean(verdict?.release_tx);
   const tier = verdict
@@ -127,8 +103,8 @@ export function SettlementPanel(props: Props) {
   useEffect(() => {
     if (finalized.current || busy || clock.phase !== "auto-release-due") return;
     finalized.current = true;
-    void call("/api/settlement/finalize", { bounty_id: bountyId });
-  }, [clock.phase, busy, bountyId, call]);
+    void finalize();
+  }, [clock.phase, busy, finalize]);
 
   // Re-run the #hash scroll once this panel is actually in the DOM.
   //
@@ -160,33 +136,6 @@ export function SettlementPanel(props: Props) {
     }, 150);
     return () => window.clearInterval(id);
   }, []);
-
-  /** Worker's way out when this platform is not answering: their own signature, no server. */
-  async function selfRelease() {
-    setBusy(true);
-    setError("");
-    try {
-      const tx = await writeContractAsync({
-        address: escrowAddressClient(),
-        abi: arbiterEscrowAbi,
-        functionName: "timeoutRelease",
-        args: [keccak256(toBytes(bountyId))],
-      });
-      await waitForTransactionReceipt(config, { hash: tx });
-      // The chain is the truth; the database catches up by reading it, never by being told.
-      await fetch("/api/settlement/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bounty_id: bountyId }),
-      });
-      await onChanged();
-    } catch (e) {
-      const raw = e instanceof Error ? e.message : String(e);
-      setError(/user rejected|denied/i.test(raw) ? "Bạn đã từ chối ký." : raw);
-    } finally {
-      setBusy(false);
-    }
-  }
 
   // A v2 bounty never gets a settlement clock — that concept arrived with v3. Without this
   // branch the panel returned null for them, which left the POSTER of a judged v2 bounty with
@@ -228,22 +177,14 @@ export function SettlementPanel(props: Props) {
           <PillButton
             variant="primary"
             disabled={busy}
-            onClick={() =>
-              call("/api/escalation", {
-                bounty_id: bountyId, verdict_id: verdict.id, poster_action: "APPROVE",
-              })
-            }
+            onClick={() => approve(verdict.id)}
           >
             Duyệt — trả đủ {usdc(amount)}
           </PillButton>
           <PillButton
             variant="secondary"
             disabled={busy || note.trim().length < 10}
-            onClick={() =>
-              call("/api/escalation", {
-                bounty_id: bountyId, verdict_id: verdict.id, poster_action: "REJECT", note,
-              })
-            }
+            onClick={() => reject(verdict.id)}
           >
             Từ chối — không trả, đòi lại sau hạn
           </PillButton>
@@ -294,11 +235,7 @@ export function SettlementPanel(props: Props) {
               <PillButton
                 variant="primary"
                 disabled={busy}
-                onClick={() =>
-                  call("/api/escalation", {
-                    bounty_id: bountyId, verdict_id: verdict.id, poster_action: "APPROVE",
-                  })
-                }
+                onClick={() => approve(verdict.id)}
               >
                 Duyệt — trả đủ {usdc(amount)}
               </PillButton>
@@ -308,10 +245,8 @@ export function SettlementPanel(props: Props) {
               disabled={busy || note.trim().length < 10}
               onClick={() =>
                 tier === "T1"
-                  ? call("/api/settlement/object", { bounty_id: bountyId, note })
-                  : call("/api/escalation", {
-                      bounty_id: bountyId, verdict_id: verdict.id, poster_action: "REJECT", note,
-                    })
+                  ? objectT1()
+                  : reject(verdict.id)
               }
             >
               {tier === "T1" ? "Phản đối" : "Từ chối"} — người làm nhận {usdc(workerGets)}, bạn nhận lại {usdc(posterGets)}
