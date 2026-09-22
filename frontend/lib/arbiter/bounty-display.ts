@@ -51,22 +51,27 @@ export const STATE_LABEL: Record<BountyState, string> = {
  * Time remaining, at a precision that matches how much is left. Days when there are days;
  * seconds when the last minute is running out and the seconds are the only thing that matters.
  */
+/** "1 hour left" / "47 hours left" — a stray "1 hours left" reads like a bug in the clock. */
+function plural(n: number, unit: string): string {
+  return `${n} ${unit}${n === 1 ? "" : "s"} left`;
+}
+
 export function timeLeft(deadline: string, now: number): string {
   const ms = new Date(deadline).getTime() - now;
   if (!Number.isFinite(ms)) return "deadline unknown";
   if (ms <= 0) return "expired";
 
   const totalSeconds = Math.floor(ms / 1000);
-  if (totalSeconds < 60) return `${totalSeconds} seconds left`;
+  if (totalSeconds < 60) return plural(totalSeconds, "second");
 
   const mins = Math.floor(totalSeconds / 60);
-  if (mins < 60) return `${mins} minutes left`;
+  if (mins < 60) return plural(mins, "minute");
 
   const hours = Math.floor(mins / 60);
-  // Under two days, hours are still the useful unit — "còn 1 ngày" hides that it is 47 hours.
-  if (hours < 48) return `${hours} hours left`;
+  // Under two days, hours are still the useful unit — "1 day left" hides that it is 47 hours.
+  if (hours < 48) return plural(hours, "hour");
 
-  return `${Math.floor(hours / 24)} days left`;
+  return plural(Math.floor(hours / 24), "day");
 }
 
 /**

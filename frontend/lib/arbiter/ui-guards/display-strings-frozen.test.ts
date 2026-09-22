@@ -4,7 +4,7 @@ import { timeLeft, stripLabel, STATE_LABEL } from "../bounty-display";
 describe("display-strings-frozen", () => {
   const ONE_DAY = 24 * 60 * 60 * 1000;
   
-  test("timeLeft trả đúng chuỗi tiếng Việt", () => {
+  test("timeLeft giữ nguyên chuỗi hiển thị (tiếng Anh)", () => {
     const now = 0;
     // còn 3 ngày
     expect(timeLeft(new Date(3 * ONE_DAY).toISOString(), now)).toBe("3 days left");
@@ -12,7 +12,7 @@ describe("display-strings-frozen", () => {
     expect(timeLeft(new Date(-1000).toISOString(), now)).toBe("expired");
   });
 
-  test("stripLabel trả đúng chuỗi tiếng Việt", () => {
+  test("stripLabel giữ nguyên chuỗi hiển thị (tiếng Anh)", () => {
     const now = 0;
     const future = new Date(ONE_DAY).toISOString();
     

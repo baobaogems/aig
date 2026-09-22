@@ -27,7 +27,7 @@ export function AChip({ tone, variant, children }: { tone?: ChipTone; variant?: 
   const t = tone || (variant === "accent" ? "acc" : "neutral");
   const style =
     t === "neutral"
-      ? { borderColor: "var(--a-border-dark)", background: "var(--a-card-dark)", color: "var(--a-text-dark-label)" }
+      ? { borderColor: "var(--a-line-dim)", background: "var(--a-card)", color: "var(--a-subtle)" }
       : t === "acc"
         ? {
             borderColor: "rgba(var(--a-acc-rgb),.34)",

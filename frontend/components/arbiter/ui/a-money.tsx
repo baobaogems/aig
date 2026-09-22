@@ -23,8 +23,8 @@ export function AMoney({
     <div
       className="a-cut-sm flex items-center gap-2.5 border px-3 py-2.5"
       style={{
-        borderColor: dim ? "var(--a-border-dark)" : "rgba(var(--a-acc-rgb),.28)",
-        background: "var(--a-box-dark)",
+        borderColor: dim ? "var(--a-line-dim)" : "rgba(var(--a-acc-rgb),.28)",
+        background: "var(--a-box)",
       }}
     >
       <span

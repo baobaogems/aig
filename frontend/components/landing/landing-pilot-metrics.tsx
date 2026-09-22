@@ -49,23 +49,19 @@ const METRICS: [string, string][] = [
   ["Override rate", "none yet"],
 ];
 
-const TIER_TO_COLOR = {
-  T1: "var(--a-ok)",
-  T2: "var(--a-warn)",
-  T3: "var(--a-bad)",
-};
-
 export function LandingPilotMetrics() {
   return (
+    // Cùng nền obsidian với khối safety ngay trên nó. Một đường kẻ mảnh đánh dấu chỗ
+    // chuyển từ lời tuyên bố sang bằng chứng — giữ mảng tối liền mạch, không cắt rời
+    // bằng khoảng trống hay màu nền khác.
     <section
       id="evidence"
-      className="border-t py-24"
-      style={{ background: "var(--a-bg-dark)", borderColor: "var(--a-border-dark)" }}
+      className="border-t border-white/10 bg-[var(--color-surface-dark)] py-24"
     >
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <EyebrowLabel>calibration + pilot</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight sm:text-4xl" style={{ color: "var(--a-text-dark-h1)" }}>
+          <EyebrowLabel onDark>calibration + pilot</EyebrowLabel>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
             Two real bounties. Both halves of the safety story, on real transactions.
           </h2>
         </Reveal>
@@ -73,32 +69,29 @@ export function LandingPilotMetrics() {
         <div className="mt-12 grid gap-5 lg:grid-cols-2">
           {CASES.map((c) => (
             <Reveal key={c.label}>
-              <GlassPanel className="h-full p-6">
-                <TierPill decision={c.decision} />
-                <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>{c.label}</h3>
-                <p className="tnum mt-1 text-sm" style={{ color: "var(--a-text-dark-sub)" }}>{c.amount}</p>
+              <GlassPanel tone="dark-raised" interactive className="h-full p-6">
+                <TierPill decision={c.decision} tone="dark" />
+                <h3 className="mt-3 font-[family-name:var(--font-heading)] text-lg font-semibold text-[var(--color-on-dark)]">{c.label}</h3>
+                <p className="tnum mt-1 text-sm text-[var(--color-on-dark-muted)]">{c.amount}</p>
                 <div className="mt-4 space-y-3">
                   <ThresholdBar
                     label="score"
                     value={c.score}
                     threshold={TIER_THRESHOLDS.autoReleaseScore}
-                    color={TIER_TO_COLOR[c.tier]}
-                    tone="dark"
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
                   />
                   <ThresholdBar
                     label="confidence"
                     value={c.confidence}
                     threshold={TIER_THRESHOLDS.autoReleaseConfidence}
-                    color={TIER_TO_COLOR[c.tier]}
-                    tone="dark"
+                    color={`var(--color-tier-${c.tier.toLowerCase()})`}
                   />
                 </div>
                 <a
                   href={c.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-3 inline-block font-[family-name:var(--font-jetbrains-mono)] text-xs underline underline-offset-4 hover:opacity-80"
-                  style={{ color: "var(--a-acc)", textDecorationColor: "color-mix(in srgb, var(--a-acc) 30%, transparent)" }}
+                  className="mt-3 inline-block font-[family-name:var(--font-jetbrains-mono)] text-xs text-[var(--color-accent-bright)] underline decoration-[var(--color-accent-bright)]/30 underline-offset-4 hover:decoration-[var(--color-accent-bright)]"
                 >
                   {c.tx}
                 </a>
@@ -108,12 +101,12 @@ export function LandingPilotMetrics() {
         </div>
 
         <Reveal className="mt-8">
-          <GlassPanel className="p-6">
+          <GlassPanel tone="dark-raised" className="p-6">
             <div className="grid grid-cols-2 gap-x-8 gap-y-3 sm:grid-cols-3">
               {METRICS.map(([k, v]) => (
                 <div key={k}>
-                  <p className="text-xs uppercase tracking-wide" style={{ color: "var(--a-text-dark-label)" }}>{k}</p>
-                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>{v}</p>
+                  <p className="text-xs uppercase tracking-wide text-[var(--color-on-dark-muted)]">{k}</p>
+                  <p className="tnum mt-1 font-[family-name:var(--font-jetbrains-mono)] text-lg font-semibold text-[var(--color-on-dark)]">{v}</p>
                 </div>
               ))}
             </div>

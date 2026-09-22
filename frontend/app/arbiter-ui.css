@@ -30,30 +30,35 @@
   --a-btn-submit-text: #1a1a1a;
   --a-btn-submit-hover: #dddddd;
 
-  /* --- Các token gốc gán lại cho Dark Area (nền mặc định của body) --- */
-  --a-bg: var(--a-bg-dark);
-  --a-shell: var(--a-card-dark);
-  --a-panel: var(--a-card-dark);
-  --a-card: var(--a-card-dark);
-  --a-hover: #222222;
-  
-  --a-text: var(--a-text-dark-h1);
-  --a-muted: var(--a-text-dark-sub);
-  --a-subtle: var(--a-text-dark-label);
-  
-  --a-acc: var(--a-text-dark-red);
-  --a-acc-2: #ff6b6b;
-  --a-acc-rgb: 255, 75, 75;
+  /* --- Token ngữ nghĩa: THEME SÁNG (chốt 22/09/2026) ---
+     Màn Arbiter chạy nền sáng. Mọi component chỉ được dùng nhóm token này,
+     không trỏ thẳng vào các biến *-dark ở trên (chúng chỉ còn là bảng màu thô).
+     Màu trạng thái là bản ĐẬM: bản neon/500 không đạt AA 4.5 trên nền sáng —
+     xem lib/arbiter/ui-guards/contrast.test.ts đo lại mỗi lần chạy. */
+  --a-bg: #f4f6f6;
+  --a-shell: #ffffff;
+  --a-panel: #ffffff;
+  --a-card: #ffffff;
+  --a-box: #f4f4f4;
+  --a-hover: #eceeee;
+
+  --a-text: #1a1a1a;
+  --a-muted: #444444;
+  --a-subtle: #5f5f5f;
+
+  --a-acc: #c41e3a;
+  --a-acc-2: #a31830;
+  --a-acc-rgb: 196, 30, 58;
   --a-on-acc: #ffffff;
 
-  --a-ok: #22c55e;
-  --a-warn: #f59e0b;
-  --a-info: #3b82f6;
-  --a-bad: var(--a-text-dark-red);
+  --a-ok: #15803d;
+  --a-warn: #a16207;
+  --a-info: #1d4ed8;
+  --a-bad: #c41e3a;
 
   --a-line: rgba(var(--a-acc-rgb), 0.2);
   --a-line-hard: rgba(var(--a-acc-rgb), 0.42);
-  --a-line-dim: var(--a-border-dark);
+  --a-line-dim: #e2e2e2;
 
   /* --- hình khối --- */
   --a-cut: 10px;

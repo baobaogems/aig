@@ -130,7 +130,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
           deliverable has arrived will reasonably feel tricked. */}
       {step === "idle" && (
         <p className="text-xs leading-relaxed text-[#444444]">
-          Before you lock: if nobody submits, you can reclaim all funds after the deadline. Once a valid submission arrives, you cannot withdraw the full amount — approving pays the worker in full; rejecting pays them partially based on the AI's score, and the rest returns to you.
+          Before you lock: if nobody submits, you can reclaim all funds after the deadline. Once a valid submission arrives, you cannot withdraw the full amount — approving pays the worker in full; rejecting pays them partially based on the AI&rsquo;s score, and the rest returns to you.
         </p>
       )}
       <PillButton onClick={run} disabled={step !== "idle"} className="!bg-[#C41E3A] !text-white hover:!bg-[#A31830] !border-[#C41E3A]">

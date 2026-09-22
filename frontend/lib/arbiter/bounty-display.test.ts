@@ -65,39 +65,39 @@ describe("isClaimable", () => {
 
 describe("timeLeft", () => {
   it("counts days when there are days", () => {
-    expect(timeLeft(at(3 * DAY), T0)).toBe("còn 3 ngày");
+    expect(timeLeft(at(3 * DAY), T0)).toBe("3 days left");
   });
 
-  it("stays in hours below two days — '1 ngày' would hide 47 hours", () => {
-    expect(timeLeft(at(47 * HOUR), T0)).toBe("còn 47 giờ");
-    expect(timeLeft(at(48 * HOUR), T0)).toBe("còn 2 ngày");
+  it("stays in hours below two days — '1 day' would hide 47 hours", () => {
+    expect(timeLeft(at(47 * HOUR), T0)).toBe("47 hours left");
+    expect(timeLeft(at(48 * HOUR), T0)).toBe("2 days left");
   });
 
   it("switches to minutes under an hour", () => {
-    expect(timeLeft(at(59 * MIN), T0)).toBe("còn 59 phút");
-    expect(timeLeft(at(60 * MIN), T0)).toBe("còn 1 giờ");
+    expect(timeLeft(at(59 * MIN), T0)).toBe("59 minutes left");
+    expect(timeLeft(at(60 * MIN), T0)).toBe("1 hour left");
   });
 
   it("switches to seconds in the last minute", () => {
-    expect(timeLeft(at(59_000), T0)).toBe("còn 59 giây");
-    expect(timeLeft(at(60_000), T0)).toBe("còn 1 phút");
+    expect(timeLeft(at(59_000), T0)).toBe("59 seconds left");
+    expect(timeLeft(at(60_000), T0)).toBe("1 minute left");
   });
 
   it("says so once the deadline has passed, including the exact instant", () => {
-    expect(timeLeft(at(0), T0)).toBe("đã quá hạn");
-    expect(timeLeft(at(-1), T0)).toBe("đã quá hạn");
+    expect(timeLeft(at(0), T0)).toBe("expired");
+    expect(timeLeft(at(-1), T0)).toBe("expired");
   });
 
   it("does not render NaN for a malformed deadline", () => {
     const out = timeLeft("not a date", T0);
     expect(out).not.toMatch(/NaN/);
-    expect(out).toBe("không rõ hạn");
+    expect(out).toBe("deadline unknown");
   });
 
   it("advances as the clock does — the board ticks by moving `now`", () => {
     const deadline = at(2 * MIN);
-    expect(timeLeft(deadline, T0)).toBe("còn 2 phút");
-    expect(timeLeft(deadline, T0 + 61_000)).toBe("còn 59 giây");
+    expect(timeLeft(deadline, T0)).toBe("2 minutes left");
+    expect(timeLeft(deadline, T0 + 61_000)).toBe("59 seconds left");
   });
 });
 
@@ -127,30 +127,30 @@ describe("shortCode", () => {
 
 describe("stripLabel", () => {
   it("counts down while the bounty is still live", () => {
-    expect(stripLabel("unclaimed", "OPEN", at(3 * DAY), T0)).toBe("còn 3 ngày");
-    expect(stripLabel("in-progress", "OPEN", at(2 * HOUR), T0)).toBe("còn 2 giờ");
+    expect(stripLabel("unclaimed", "OPEN", at(3 * DAY), T0)).toBe("3 days left");
+    expect(stripLabel("in-progress", "OPEN", at(2 * HOUR), T0)).toBe("2 hours left");
   });
 
   it("reports the outcome once settled, never a countdown", () => {
-    // A finished card showing "đã quá hạn" contradicts its own "Đã xong" chip: both true,
+    // A finished card showing "expired" contradicts its own "Closed" chip: both true,
     // together meaningless.
     for (const [status, expected] of [
-      ["RELEASED", "đã trả tiền cho người làm"],
-      ["REFUNDED", "đã hoàn tiền cho người đăng"],
-      ["REFUSED", "trọng tài từ chối chấm"],
-      ["JUDGED", "đã chấm — chờ người đăng quyết"],
+      ["RELEASED", "released to worker"],
+      ["REFUNDED", "refunded to poster"],
+      ["REFUSED", "arbiter refused to grade"],
+      ["JUDGED", "judged — pending poster decision"],
     ] as const) {
       expect(stripLabel("closed", status, at(-DAY), T0)).toBe(expected);
     }
   });
 
-  it("never says 'quá hạn' on a closed bounty, however long ago it ended", () => {
+  it("never says 'expired' on a closed bounty, however long ago it ended", () => {
     for (const status of ["RELEASED", "REFUNDED", "REFUSED", "JUDGED"]) {
-      expect(stripLabel("closed", status, at(-99 * DAY), T0)).not.toMatch(/quá hạn/);
+      expect(stripLabel("closed", status, at(-99 * DAY), T0)).not.toMatch(/expired/);
     }
   });
 
   it("still says so for work that merely ran out of time", () => {
-    expect(stripLabel("expired", "OPEN", at(-1), T0)).toBe("đã quá hạn");
+    expect(stripLabel("expired", "OPEN", at(-1), T0)).toBe("expired");
   });
 });

@@ -16,26 +16,28 @@ const STEPS = [
 
 export function LandingFlow() {
   return (
-    <section id="flow" className="border-t py-24" style={{ background: "var(--a-bg-dark)", borderColor: "var(--a-border-dark)" }}>
+    // Cùng nền với khối problem ngay trên nó, nên ranh giới hai khối là một đường kẻ
+    // mảnh chứ không phải một màu nền khác.
+    <section id="flow" className="border-t border-[var(--color-ink)]/10 bg-[var(--color-surface-light)] py-24">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <EyebrowLabel>how a bounty flows</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight sm:text-4xl" style={{ color: "var(--a-text-dark-h1)" }}>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-ink)] sm:text-4xl">
             Six steps from a brief to an on-chain verdict.
           </h2>
         </Reveal>
 
         <div className="relative mt-14 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          <div className="pointer-events-none absolute inset-x-0 top-6 hidden h-px lg:block" style={{ background: "var(--a-line-dim)" }} />
+          <div className="pointer-events-none absolute inset-x-0 top-6 hidden h-px bg-[var(--color-accent)]/20 lg:block" />
           {STEPS.map((s) => (
             <Reveal key={s.n}>
               <div className="flex gap-4">
-                <span className="tnum flex h-12 w-12 shrink-0 items-center justify-center rounded-full border font-[family-name:var(--font-jetbrains-mono)] text-sm font-semibold" style={{ background: "var(--a-bg-dark)", borderColor: "var(--a-acc)", color: "var(--a-acc)" }}>
+                <span className="tnum flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[var(--color-accent)]/30 bg-white font-[family-name:var(--font-jetbrains-mono)] text-sm font-semibold text-[var(--color-accent)]">
                   {s.n}
                 </span>
                 <div>
-                  <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>{s.title}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>{s.body}</p>
+                  <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">{s.title}</h3>
+                  <p className="mt-1.5 text-sm leading-relaxed text-[var(--color-ink-muted)]">{s.body}</p>
                 </div>
               </div>
             </Reveal>
@@ -43,7 +45,7 @@ export function LandingFlow() {
         </div>
 
         <Reveal className="mt-16">
-          <p className="max-w-2xl border-l-2 pl-4 text-sm italic leading-relaxed" style={{ borderColor: "var(--color-gold)", color: "var(--a-text-dark-sub)" }}>
+          <p className="max-w-2xl border-l-2 border-[var(--color-gold)] pl-4 text-sm italic leading-relaxed text-[var(--color-ink-muted)]">
             The rails existed — we built the driver. Arbiter settles on payment infrastructure
             this repo already runs in production: the v2.2 CCTPv2 gateway and v3 agentic
             nanopayments over x402. Judgment is the new part; movement of money was proven first.
