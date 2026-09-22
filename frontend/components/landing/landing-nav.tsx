@@ -13,38 +13,46 @@ const LINKS = [
 ];
 
 const LINK_CLASS =
-  "text-sm text-[var(--color-ink-muted)] transition-colors hover:text-[var(--color-accent)]";
+  "text-sm transition-colors hover:text-[var(--a-acc)]";
 
 export function LandingNav() {
   return (
-    <header className="sticky top-4 z-50 mx-auto w-[min(100%-2rem,64rem)] rounded-3xl border border-black/5 bg-white/70 px-4 py-2.5 shadow-[0_8px_30px_rgba(10,21,18,0.08)] backdrop-blur-xl sm:rounded-full">
+    <header className="sticky top-4 z-50 mx-auto w-[min(100%-2rem,64rem)] border bg-[var(--a-bg-header)] px-4 py-2.5 shadow-[0_8px_30px_rgba(10,21,18,0.08)] backdrop-blur-xl rounded-full"
+      style={{ borderColor: "var(--a-border-dark)" }}
+    >
       <div className="flex items-center justify-between">
-      <a href="#top" className="flex items-center gap-2 transition-opacity hover:opacity-70">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-surface-dark)]">
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-            <path d="M8 1.5 14 5v6l-6 3.5L2 11V5l6-3.5Z" stroke="var(--color-accent-bright)" strokeWidth="1.2" />
-            <path d="M8 5.5 11 7.2v3.1L8 12l-3-1.7V7.2L8 5.5Z" fill="var(--color-accent)" opacity="0.85" />
-          </svg>
-        </span>
-        <span className="font-[family-name:var(--font-heading)] text-sm font-semibold text-[var(--color-ink)]">
-          Arbiter <span className="text-[var(--color-ink-muted)] font-normal">/ AIG v4</span>
-        </span>
+      <a href="#top" className="flex items-center gap-3 transition-opacity hover:opacity-70">
+        <div
+          className="a-cut-sm grid h-[34px] w-[34px] flex-none place-items-center font-[family-name:var(--font-heading)] text-[15px] font-black"
+          style={{ background: "var(--a-acc)", color: "var(--a-on-acc)" }}
+          aria-hidden="true"
+        >
+          A
+        </div>
+        <div className="flex items-baseline gap-2">
+          <span className="font-[family-name:var(--font-heading)] text-[20px] font-black tracking-[0.2em]" style={{ color: "var(--a-text-light-brand)" }}>
+            ARBITER
+          </span>
+          <span className="hidden text-sm font-normal sm:block" style={{ color: "var(--a-text-light-tab)" }}>
+            / AIG v4
+          </span>
+        </div>
       </a>
-      <nav className="hidden items-center gap-6 sm:flex">
+      <nav className="hidden items-center gap-6 sm:flex" style={{ color: "var(--a-text-light-tab)" }}>
         {LINKS.map((l) => (
           <a key={l.href} href={l.href} className={LINK_CLASS}>
             {l.label}
           </a>
         ))}
       </nav>
-      <a href="/arbiter" className="rounded-full bg-[var(--color-surface-dark)] px-4 py-1.5 text-sm font-medium text-[var(--color-on-dark)] transition-transform hover:-translate-y-0.5">
+      <a href="/arbiter" className="a-cut-sm px-4 py-1.5 text-[13px] font-bold uppercase tracking-[0.1em] transition-transform hover:-translate-y-0.5" style={{ background: "var(--a-acc)", color: "var(--a-on-acc)" }}>
         Open app
       </a>
       </div>
 
       {/* Mobile row. Scrolls sideways rather than wrapping, so the pill keeps one
           predictable height as the sticky bar. */}
-      <nav className="mt-2 flex items-center gap-5 overflow-x-auto border-t border-black/5 pt-2 [scrollbar-width:none] sm:hidden">
+      <nav className="mt-2 flex items-center gap-5 overflow-x-auto border-t pt-2 [scrollbar-width:none] sm:hidden" style={{ borderColor: "var(--a-line-dim)", color: "var(--a-text-light-tab)" }}>
         {LINKS.map((l) => (
           <a key={l.href} href={l.href} className={`${LINK_CLASS} whitespace-nowrap`}>
             {l.label}

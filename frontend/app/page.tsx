@@ -12,7 +12,7 @@ import { LandingFooter } from "@/components/landing/landing-footer";
 
 export default function LandingPage() {
   return (
-    <div className="font-[family-name:var(--font-body)]">
+    <div className="arbiter-ui font-[family-name:var(--font-body)]">
       <LandingNav />
       <LandingHero />
       <LandingProblem />

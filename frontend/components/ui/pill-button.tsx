@@ -15,45 +15,34 @@ type PillButtonProps =
   | (PillButtonBaseProps & { href?: undefined } & ButtonHTMLAttributes<HTMLButtonElement>);
 
 const base =
-  "group inline-flex items-center gap-3 rounded-full text-sm font-medium transition-all duration-200 " +
-  "hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0";
+  "a-cut-sm inline-flex items-center gap-2 border font-[family-name:var(--font-display)] font-extrabold uppercase tracking-[0.11em] transition-colors px-[18px] py-2.5 text-[11px] text-center";
 
 const variants = {
-  primary: "bg-[var(--color-surface-dark)] text-[var(--color-on-dark)] pl-5 pr-1.5 py-1.5",
+  primary: "bg-[var(--a-acc)] border-[var(--a-acc)] text-[var(--a-on-acc)] hover:opacity-90",
   secondary:
-    "border border-[var(--color-accent)]/40 text-[var(--color-accent)] px-5 py-2 hover:border-[var(--color-accent)]",
-  // Trên obsidian, --color-accent (#de1e14) là đỏ sẫm trên nền gần đen — tối và khó
-  // đọc. Nền tối dùng ember, giống cách khối safety xử lý chữ nhấn của nó.
+    "bg-[rgba(255,255,255,.05)] border-[var(--a-line-hard)] text-[var(--a-text-dark-h1)] hover:bg-[rgba(255,255,255,.1)]",
   "secondary-on-dark":
-    "border border-[var(--color-accent-bright)]/40 text-[var(--color-accent-bright)] px-5 py-2 hover:border-[var(--color-accent-bright)]",
+    "bg-[rgba(255,255,255,.05)] border-[var(--a-line-hard)] text-[var(--a-text-dark-h1)] hover:bg-[rgba(255,255,255,.1)]",
 };
 
 export function PillButton({ children, variant = "primary", className = "", ...props }: PillButtonProps) {
   const classes = `${base} ${variants[variant]} ${className}`;
-  const arrowChip = variant === "primary" && (
-    <span
-      className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-surface-dark)]
-                 transition-transform duration-200 group-hover:translate-x-0.5"
-    >
-      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-        <path d="M2 7h9M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    </span>
-  );
 
   if ("href" in props && props.href) {
     const { href, ...rest } = props as AnchorHTMLAttributes<HTMLAnchorElement> & { href: string };
     return (
-      <a href={href} className={classes} {...rest}>
-        {children}
-        {arrowChip}
-      </a>
+      <span className="a-focus-host inline-flex">
+        <a href={href} className={classes} {...rest}>
+          {children}
+        </a>
+      </span>
     );
   }
   return (
-    <button className={classes} {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}>
-      {children}
-      {arrowChip}
-    </button>
+    <span className="a-focus-host inline-flex">
+      <button className={classes} {...(props as ButtonHTMLAttributes<HTMLButtonElement>)}>
+        {children}
+      </button>
+    </span>
   );
 }

@@ -24,9 +24,10 @@ export interface ThresholdBarProps {
 export function ThresholdBar({ label, value, threshold, color, tone = "dark" }: ThresholdBarProps) {
   const clear = value >= threshold;
   const onDark = tone === "dark";
-  const muted = onDark ? "var(--color-on-dark-muted)" : "var(--color-ink-muted)";
-  const strong = onDark ? "var(--color-on-dark)" : "var(--color-ink)";
-  const track = onDark ? "bg-white/10" : "bg-[var(--color-ink)]/10";
+  const muted = onDark ? "var(--a-text-dark-label)" : "var(--color-ink-muted)";
+  const strong = onDark ? "var(--a-text-dark-h1)" : "var(--color-ink)";
+  const track = onDark ? "var(--a-line-dim)" : "var(--color-border-light)";
+  const trackBg = onDark ? "bg-[var(--a-line-dim)]" : "bg-[var(--color-ink)]/10";
   const verdict = clear ? "clears the gate" : "below the gate";
 
   return (
@@ -43,7 +44,7 @@ export function ThresholdBar({ label, value, threshold, color, tone = "dark" }: 
       <div
         role="img"
         aria-label={`${label} ${value}, gate ${threshold}, ${verdict}`}
-        className={`relative mt-1.5 h-1.5 w-full rounded-full ${track}`}
+        className={`relative mt-1.5 h-1.5 w-full rounded-full ${trackBg}`}
       >
         <div
           // Width animates so a verdict arriving live can be watched climbing to its gate

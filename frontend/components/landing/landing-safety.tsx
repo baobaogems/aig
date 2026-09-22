@@ -16,11 +16,11 @@ const PILLARS = [
 
 export function LandingSafety() {
   return (
-    <section id="safety" className="bg-[var(--color-surface-dark)] py-24">
+    <section id="safety" className="border-t py-24" style={{ background: "var(--a-bg-dark)", borderColor: "var(--a-border-dark)" }}>
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <EyebrowLabel onDark>safety design</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
+          <EyebrowLabel>safety design</EyebrowLabel>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight sm:text-4xl" style={{ color: "var(--a-text-dark-h1)" }}>
             An AI with budget authority needs brakes before it needs autonomy.
           </h2>
         </Reveal>
@@ -28,17 +28,17 @@ export function LandingSafety() {
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PILLARS.map((p) => (
             <Reveal key={p.title}>
-              <GlassPanel tone="dark" className="h-full p-6">
-                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-on-dark)]">{p.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-on-dark-muted)]">{p.body}</p>
+              <GlassPanel className="h-full p-6">
+                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>{p.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>{p.body}</p>
               </GlassPanel>
             </Reveal>
           ))}
         </div>
 
         <Reveal className="mt-12">
-          <p className="max-w-2xl text-sm leading-relaxed text-[var(--color-on-dark-muted)]">
-            Design language: <span className="text-[var(--color-accent-bright)]">transparent and accountable</span>{" "}
+          <p className="max-w-2xl text-sm leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>
+            Design language: <span style={{ color: "var(--a-acc)" }}>transparent and accountable</span>{" "}
             — on-chain verdict hash and a public override rate — never &quot;trustless&quot;. The
             arbiter wallet is operated by the server; the pilot is deliberately auth-less and
             custodial, and we say so.

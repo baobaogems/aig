@@ -21,11 +21,11 @@ const POINTS = [
 
 export function LandingProblem() {
   return (
-    <section id="problem" className="bg-[var(--color-surface-light)] py-24">
+    <section id="problem" className="py-24" style={{ background: "var(--a-bg-dark)" }}>
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
           <EyebrowLabel>the problem</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-ink)] sm:text-4xl">
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight sm:text-4xl" style={{ color: "var(--a-text-dark-h1)" }}>
             Someone has to decide if the work earned the money — today that&apos;s a guess.
           </h2>
         </Reveal>
@@ -33,10 +33,10 @@ export function LandingProblem() {
           {POINTS.map((p, i) => (
             <Reveal key={p.title} className={i === 1 ? "sm:translate-y-4" : undefined}>
               <GlassPanel tone="light" className="h-full p-6">
-                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
+                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold" style={{ color: "var(--a-text-dark-h1)" }}>
                   {p.title}
                 </h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{p.body}</p>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>{p.body}</p>
               </GlassPanel>
             </Reveal>
           ))}
