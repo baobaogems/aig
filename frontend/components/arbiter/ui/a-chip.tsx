@@ -35,9 +35,9 @@ export function AChip({ tone, variant, children }: { tone?: ChipTone; variant?: 
             color: "var(--a-acc)",
           }
         : {
-            borderColor: `rgba(${RGB[tone]},.30)`,
-            background: `rgba(${RGB[tone]},.09)`,
-            color: `var(${VAR[tone]})`,
+            borderColor: `rgba(${RGB[t as Exclude<ChipTone, "neutral" | "acc">]},.30)`,
+            background: `rgba(${RGB[t as Exclude<ChipTone, "neutral" | "acc">]},.09)`,
+            color: `var(${VAR[t as Exclude<ChipTone, "neutral" | "acc">]})`,
           };
 
   return (
