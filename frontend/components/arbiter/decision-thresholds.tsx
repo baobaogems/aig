@@ -16,7 +16,7 @@ const T = TIER_THRESHOLDS;
 export function DecisionThresholds() {
   return (
     <div>
-      <p className="text-[12px] leading-relaxed text-[var(--a-subtle)] m-0">
+      <p className="text-[12px] leading-relaxed m-0" style={{ color: "var(--a-text-dark-sub)" }}>
         The Arbiter proposes a score and confidence level. The decision of where funds go is fully
         deterministic by code, not the model — the same verdict always yields the same result.
       </p>
@@ -65,18 +65,17 @@ function Row({
   accent?: boolean;
 }) {
   return (
-    <div className="border-b pb-3 last:border-0" style={{ borderColor: "var(--a-line-dim)" }}>
+    <div className="border-b pb-3 last:border-0" style={{ borderColor: "var(--a-border-dark)" }}>
       <dt className="flex flex-wrap items-baseline gap-2 m-0">
-        <span className="text-[13px] font-bold text-[var(--a-text)]">{label}</span>
+        <span className="text-[13px] font-bold" style={{ color: "var(--a-text-dark-h1)" }}>{label}</span>
         <span
-          className={`a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[11px] ${
-            accent ? "text-[#00e05a]" : "text-[var(--a-subtle)]"
-          }`}
+          className="a-tnum font-[family-name:var(--font-jetbrains-mono)] text-[11px]"
+          style={{ color: accent ? "var(--a-ok)" : "var(--a-text-dark-label)" }}
         >
           {value}
         </span>
       </dt>
-      <dd className="mt-1 text-[12px] m-0 leading-relaxed text-[var(--a-subtle)]">{note}</dd>
+      <dd className="mt-1 text-[12px] m-0 leading-relaxed" style={{ color: "var(--a-text-dark-sub)" }}>{note}</dd>
     </div>
   );
 }

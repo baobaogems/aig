@@ -22,15 +22,10 @@ export function AMoney({
   return (
     <div
       className="a-cut-sm flex items-center gap-2.5 border px-3 py-2.5"
-      style={
-        dim
-          ? { borderColor: "var(--a-line-dim)", background: "rgba(17,17,17,.035)" }
-          : {
-              borderColor: "rgba(var(--a-acc-rgb),.28)",
-              background:
-                "linear-gradient(180deg, rgba(var(--a-acc-rgb),.09), rgba(var(--a-acc-rgb),.02))",
-            }
-      }
+      style={{
+        borderColor: dim ? "var(--a-border-dark)" : "rgba(var(--a-acc-rgb),.28)",
+        background: "var(--a-box-dark)",
+      }}
     >
       <span
         className="grid h-[26px] w-[26px] flex-none place-items-center rounded-full border text-xs"

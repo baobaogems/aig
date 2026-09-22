@@ -23,11 +23,12 @@ const VAR: Record<Exclude<ChipTone, "neutral" | "acc">, string> = {
   info: "--a-info",
 };
 
-export function AChip({ tone = "neutral", children }: { tone?: ChipTone; children: ReactNode }) {
+export function AChip({ tone, variant, children }: { tone?: ChipTone; variant?: string; children: ReactNode }) {
+  const t = tone || (variant === "accent" ? "acc" : "neutral");
   const style =
-    tone === "neutral"
-      ? { borderColor: "rgba(17,17,17,.13)", background: "rgba(17,17,17,.045)", color: "var(--a-muted)" }
-      : tone === "acc"
+    t === "neutral"
+      ? { borderColor: "var(--a-border-dark)", background: "var(--a-card-dark)", color: "var(--a-text-dark-label)" }
+      : t === "acc"
         ? {
             borderColor: "rgba(var(--a-acc-rgb),.34)",
             background: "rgba(var(--a-acc-rgb),.07)",

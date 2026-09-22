@@ -131,9 +131,12 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
   return (
     <section className="grid gap-4">
-      <div className="rounded-[var(--radius-card)] border border-[var(--color-border-light)] bg-white/50 px-5 py-4">
+      <div 
+        className="rounded-[var(--radius-card)] border px-5 py-4"
+        style={{ background: "var(--a-card-dark)", borderColor: "var(--a-border-dark)" }}
+      >
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <h2 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">
+          <h2 className="font-[family-name:var(--font-display)] text-base font-semibold text-[var(--a-text-dark-h1)]">
             {heading}
           </h2>
           <WalletConnectButton onSession={setSession} />
@@ -146,7 +149,7 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
           {isWorker && submitWindow?.allowed && (
             <>
               {submitWindow.isRetry && (
-                <p className="mb-3 text-sm leading-relaxed text-[var(--color-ink-muted)]">
+                <p className="mb-3 text-sm leading-relaxed text-[var(--a-text-dark-sub)]">
                   Previous attempt failed. Read the grading below to see which criteria missed, fix them and
                   resubmit — the rubric does not change, so targeted fixes will pass.
                 </p>
@@ -164,20 +167,20 @@ export function BountyActionPanel({ bountyId, state }: { bountyId: string; state
 
           {/* Grading in flight, or waiting on someone. The reason comes from the same rule. */}
           {isWorker && submitWindow && !submitWindow.allowed && (
-            <p className="text-sm leading-relaxed text-[var(--color-ink-muted)]">{submitWindow.reason}</p>
+            <p className="text-sm leading-relaxed text-[var(--a-text-dark-sub)]">{submitWindow.reason}</p>
           )}
 
           {!isWorker && isClaimable(state) &&
             (session ? (
               <ClaimButton bountyId={bountyId} onClaimed={load} />
             ) : (
-              <p className="text-sm text-[var(--color-ink-muted)]">
+              <p className="text-sm text-[var(--a-text-dark-sub)]">
                 Connect wallet to accept. Reading the task and grading rubric does not require login.
               </p>
             ))}
 
           {!isParty && !isClaimable(state) && (
-            <p className="text-sm text-[var(--color-ink-muted)]">
+            <p className="text-sm text-[var(--a-text-dark-sub)]">
               {state === "in-progress" && "Someone has accepted this bounty."}
               {state === "submitted" && "Submission received, waiting for grading."}
               {state === "expired" && "Expired — no longer claimable. Poster can reclaim funds."}

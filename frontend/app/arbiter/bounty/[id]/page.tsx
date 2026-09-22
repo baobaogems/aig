@@ -67,21 +67,27 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
       <ArbiterNav current="market" walletSlot={<span />} pendingDecisions={null} />
       <main className="bg-grain relative z-[1] min-h-screen px-4 pb-16 pt-12">
         <div className="mx-auto grid max-w-[1120px] gap-6">
-          <Link href="/arbiter" className="text-[12px] font-bold uppercase tracking-widest text-[var(--a-subtle)] hover:text-[var(--a-text)]">
-            ← Về chợ việc
+          <Link
+            href="/arbiter"
+            className="text-[12px] font-bold uppercase tracking-widest transition-colors hover:opacity-100 opacity-70"
+            style={{ color: "var(--a-text-dark-label)" }}
+          >
+            ← Back to market
           </Link>
 
           <header>
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className="a-eyebrow m-0">{shortCode(bounty.id)}</span>
+              <span className="font-[family-name:var(--font-jetbrains-mono)] text-[11px] uppercase tracking-widest font-bold m-0" style={{ color: "var(--a-text-dark-h1)" }}>
+                {shortCode(bounty.id)}
+              </span>
               <AChip tone={closed ? "neutral" : "acc"}>{STATE_LABEL[state]}</AChip>
             </div>
 
             <div className="mt-3 max-w-xs">
               <AMoney amountUsdc={bounty.amount_usdc} label="IN ESCROW" dim={closed} />
             </div>
-            <p className="mt-2 text-xs text-[var(--a-subtle)]">
-              khoá trên Arc testnet · {timeLeft(bounty.deadline, now)}
+            <p className="mt-2 text-xs" style={{ color: "var(--a-text-dark-sub)" }}>
+              locked on Arc testnet · {timeLeft(bounty.deadline, now)}
             </p>
           </header>
 
@@ -96,7 +102,7 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
           </dl>
 
           <Section title="Task">
-            <p className="whitespace-pre-wrap text-[14px] leading-relaxed text-[var(--a-text)] m-0">
+            <p className="whitespace-pre-wrap text-[14px] leading-relaxed m-0" style={{ color: "var(--a-text-dark-h1)" }}>
               {bounty.brief.replace("cho 1 bài văn 500 chữ miêu tả tiềm năng của nền kinh tế AI agent mà Arc đã khởi xướng", "Write a 500-word essay describing the potential of the AI agent economy initiated by Arc")}
             </p>
           </Section>
@@ -112,12 +118,15 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
           {submission && (
             <Section title="Submission">
               {isParty ? (
-                <div className="a-cut-sm max-h-72 overflow-y-auto whitespace-pre-wrap border border-[var(--a-line-dim)] bg-white/60 p-4 text-[13px] leading-relaxed text-[var(--a-text)]">
+                <div
+                  className="a-cut-sm max-h-72 overflow-y-auto whitespace-pre-wrap border p-4 text-[13px] leading-relaxed"
+                  style={{ background: "var(--a-box-dark)", borderColor: "var(--a-border-dark)", color: "var(--a-text-dark-h1)" }}
+                >
                   {submission.content_snapshot}
                 </div>
               ) : (
-                <p className="text-[12px] text-[var(--a-subtle)]">
-                  Đã có bài nộp. Nội dung chỉ người đăng và người làm đọc được.
+                <p className="text-[12px]" style={{ color: "var(--a-text-dark-sub)" }}>
+                  Submission received. Content is visible only to the poster and worker.
                 </p>
               )}
             </Section>
@@ -132,18 +141,35 @@ export default async function BountyDetailPage({ params }: { params: Promise<{ i
 
 function Stat({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
-    <div className="a-card flex flex-col p-4 border border-[var(--a-line-dim)] bg-white/60">
-      <dt className="font-[family-name:var(--font-jetbrains-mono)] text-[9px] uppercase tracking-[0.1em] text-[var(--a-subtle)]">{label}</dt>
-      <dd className="mt-1 text-[13px] font-bold text-[var(--a-text)]">{value}</dd>
-      {note && <dd className="mt-0.5 text-[11px] text-[var(--a-muted)]">{note}</dd>}
+    <div
+      className="a-card flex flex-col p-4 border"
+      style={{ background: "var(--a-card-dark)", borderColor: "var(--a-border-dark)" }}
+    >
+      <dt className="font-[family-name:var(--font-jetbrains-mono)] text-[9px] uppercase tracking-[0.1em]" style={{ color: "var(--a-text-dark-label)" }}>
+        {label}
+      </dt>
+      <dd className="mt-1 text-[13px] font-bold" style={{ color: "var(--a-text-dark-h1)" }}>
+        {value}
+      </dd>
+      {note && (
+        <dd className="mt-0.5 text-[11px]" style={{ color: "var(--a-text-dark-label)" }}>
+          {note}
+        </dd>
+      )}
     </div>
   );
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="a-card p-5 border border-[var(--a-line-dim)] bg-white/50">
-      <h2 className="font-[family-name:var(--font-display)] text-[14px] font-bold tracking-[0.05em] uppercase text-[var(--a-text)] m-0 mb-4">
+    <section
+      className="a-card p-5 border"
+      style={{ background: "var(--a-card-dark)", borderColor: "var(--a-border-dark)" }}
+    >
+      <h2
+        className="font-[family-name:var(--font-display)] text-[14px] font-bold tracking-[0.05em] uppercase m-0 mb-4"
+        style={{ color: "var(--a-text-dark-label)" }}
+      >
         {title}
       </h2>
       <div>{children}</div>
