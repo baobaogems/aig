@@ -18,14 +18,14 @@ const LINKS = [
 
 export function LandingFooter() {
   return (
-    <footer className="bg-[var(--color-surface-dark-2)] pb-10 pt-20">
+    <footer className="bg-[var(--color-surface-panel)] pb-10 pt-20">
       <div className="mx-auto max-w-6xl px-6">
-        <div className="flex flex-wrap items-end gap-x-10 gap-y-8 border-b border-white/10 pb-14">
+        <div className="flex flex-wrap items-end gap-x-10 gap-y-8 border-b border-[var(--color-border-light)] pb-14">
           {SITEMAP.map((item) => (
             <a key={item.label} href={item.href} className={`group relative pl-5 ${item.offset}`}>
               <span className="absolute left-0 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full border border-[var(--color-accent)] bg-transparent" />
               <span className="absolute left-2 top-1/2 h-px w-3 -translate-y-1/2 bg-[var(--color-accent)]/40" />
-              <span className="text-sm text-[var(--color-on-dark-muted)] transition-colors group-hover:text-[var(--color-accent-bright)]">
+              <span className="text-sm text-[var(--color-ink-muted)] transition-colors group-hover:text-[var(--color-accent)]">
                 {item.label}
               </span>
             </a>
@@ -34,10 +34,10 @@ export function LandingFooter() {
 
         <div className="mt-12 flex flex-col justify-between gap-8 lg:flex-row lg:items-end">
           <div>
-            <p className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-on-dark)] sm:text-3xl">
+            <p className="font-[family-name:var(--font-heading)] text-2xl font-semibold text-[var(--color-ink)] sm:text-3xl">
               Arbiter Invisible Gateway
             </p>
-            <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-on-dark-muted)]">
+            <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--color-ink-muted)]">
               Testnet only. No real money. Transparent and accountable — every verdict hash is on-chain.
             </p>
           </div>
@@ -48,7 +48,7 @@ export function LandingFooter() {
                 href={l.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-full border border-white/15 px-4 py-1.5 text-xs text-[var(--color-on-dark-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent-bright)]"
+                className="rounded-full border border-[var(--color-border-light)] px-4 py-1.5 text-xs text-[var(--color-ink-muted)] transition-colors hover:border-[var(--color-accent)] hover:text-[var(--color-accent)]"
               >
                 {l.label}
               </a>
@@ -56,7 +56,7 @@ export function LandingFooter() {
           </div>
         </div>
 
-        <p className="mt-14 text-xs text-white/30">AIG v4 — built for the Encode hackathon submission, Aug 2026.</p>
+        <p className="mt-14 text-xs text-[var(--color-ink-muted)]">AIG v4 — built for the Encode hackathon submission, Aug 2026.</p>
       </div>
     </footer>
   );

@@ -1,5 +1,7 @@
-// landing-safety.tsx — reskin: dark near-black section for the safety pillars.
-// White text, cyan secondary/accents — the "deep near-black data area" half of the duality.
+// landing-safety.tsx — các trụ an toàn, trên NỀN SÁNG.
+//
+// Trước 22/09/2026 khối này là mảng obsidian gần đen. Đã chuyển sang nền sáng để landing và
+// màn Arbiter dùng chung một ngôn ngữ bề mặt — xem docs/journals/260922-*.md.
 
 import { EyebrowLabel } from "@/components/ui/eyebrow-label";
 import { GlassPanel } from "@/components/ui/glass-panel";
@@ -16,11 +18,11 @@ const PILLARS = [
 
 export function LandingSafety() {
   return (
-    <section id="safety" className="bg-[var(--color-surface-dark)] py-24">
+    <section id="safety" className="bg-[var(--color-surface-light)] py-24">
       <div className="mx-auto max-w-6xl px-6">
         <Reveal>
-          <EyebrowLabel onDark>safety design</EyebrowLabel>
-          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-on-dark)] sm:text-4xl">
+          <EyebrowLabel>safety design</EyebrowLabel>
+          <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-heading)] text-3xl font-semibold leading-tight text-[var(--color-ink)] sm:text-4xl">
             An AI with budget authority needs brakes before it needs autonomy.
           </h2>
         </Reveal>
@@ -28,17 +30,17 @@ export function LandingSafety() {
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {PILLARS.map((p) => (
             <Reveal key={p.title}>
-              <GlassPanel tone="dark" className="h-full p-6">
-                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-on-dark)]">{p.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-[var(--color-on-dark-muted)]">{p.body}</p>
+              <GlassPanel tone="light" className="h-full p-6">
+                <h3 className="font-[family-name:var(--font-heading)] text-base font-semibold text-[var(--color-ink)]">{p.title}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-[var(--color-ink-muted)]">{p.body}</p>
               </GlassPanel>
             </Reveal>
           ))}
         </div>
 
         <Reveal className="mt-12">
-          <p className="max-w-2xl text-sm leading-relaxed text-[var(--color-on-dark-muted)]">
-            Design language: <span className="text-[var(--color-accent-bright)]">transparent and accountable</span>{" "}
+          <p className="max-w-2xl text-sm leading-relaxed text-[var(--color-ink-muted)]">
+            Design language: <span className="text-[var(--color-accent)]">transparent and accountable</span>{" "}
             — on-chain verdict hash and a public override rate — never &quot;trustless&quot;. The
             arbiter wallet is operated by the server; the pilot is deliberately auth-less and
             custodial, and we say so.

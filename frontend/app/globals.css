@@ -11,8 +11,10 @@
      Brand accent + dark surfaces derive from the marketplace.delorean.com
      extraction (see the website-clone repo's docs/research/DESIGN_TOKENS.md).
      Names stay semantic on purpose: no component references a brand. */
-  --color-accent: #de1e14; /* redshift — primary action, active state */
-  --color-accent-bright: #ff6d05; /* ember — hover / progress fill */
+  --color-accent: #c41e3a; /* CÙNG giá trị với --a-acc của màn Arbiter (chốt 22/09/2026):
+                              một hành động chính chỉ được có MỘT màu trên cả hai bề mặt */
+  --color-accent-bright: #a31830; /* = --a-acc-2. Trước là cam #ff6d05, chỉ đọc được trên
+                                    nền obsidian; nền sáng thì nó tụt dưới AA và chửi nhau với đỏ */
   --color-surface-light: #f4f6f6;
   --color-surface-light-2: #d8e6ec;
   --color-surface-dark: #19181c; /* obsidian — dark sections */
