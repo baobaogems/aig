@@ -90,7 +90,7 @@ export function TrackRecordBand({
         style={{ borderColor: "var(--a-line-hard)", background: "rgba(var(--a-acc-rgb),.055)" }}
       >
         <div className="font-[family-name:var(--font-jetbrains-mono)] text-[9px] uppercase tracking-[0.15em]" style={{ color: "var(--a-muted)" }}>
-          TOTAL IN ESCROW
+          OPEN FOR CLAIM
         </div>
         <div className="a-tnum mt-2 font-[family-name:var(--font-jetbrains-mono)] text-[30px] font-extrabold leading-none" style={{ color: "var(--a-acc)" }}>
           {escrowUsdc}
