@@ -51,7 +51,9 @@ export function TrackRecordBand({
           <span className="a-tnum font-[family-name:var(--font-jetbrains-mono)]">
             {r.totalVerdicts}
           </span>{" "}
-          rulings recorded on-chain.{" "}
+          rulings recorded.{" "}
+          <span className="a-tnum font-[family-name:var(--font-jetbrains-mono)]">{r.paidOut}</span>{" "}
+          paid out on-chain.{" "}
           <span style={{ color: "var(--a-acc)" }}>{r.overturned} overturned by the poster.</span>
         </p>
 

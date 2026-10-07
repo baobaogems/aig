@@ -19,6 +19,8 @@ export interface TrackRecordLane {
 
 export interface TrackRecord {
   totalVerdicts: number;
+  /** Verdicts with a real payout tx. The lanes below count decisions, not money. */
+  paidOut: number;
   /** Dạng phân số khi mẫu số nhỏ: "1 of 1", không phải "100.0%". */
   overturned: string;
   lanes: TrackRecordLane[];
@@ -35,6 +37,7 @@ export function deriveTrackRecord(stats: AgentStats): TrackRecord {
 
   return {
     totalVerdicts: stats.total_verdicts,
+    paidOut: stats.paid_out,
     // Mẫu số là những phán quyết trọng tài ĐÃ DỨT KHOÁT và người đăng đã trả lời.
     // Một ESCALATE không có lập trường nào để lật, nên không thuộc vế nào.
     overturned: formatOverrideRate({
@@ -43,9 +46,9 @@ export function deriveTrackRecord(stats: AgentStats): TrackRecord {
       decisiveReviewed: stats.decisive_reviewed,
     }),
     lanes: [
-      { key: "auto", count: stats.t1_auto_release, label: "auto-paid", cssVar: "--a-ok" },
+      { key: "auto", count: stats.t1_auto_release, label: "rated pass", cssVar: "--a-ok" },
       { key: "failed", count: failed, label: "graded, not passed", cssVar: "--a-warn" },
-      { key: "human", count: stats.human_reviewed, label: "released to poster", cssVar: "--a-info" },
+      { key: "human", count: stats.human_reviewed, label: "sent to poster", cssVar: "--a-info" },
       { key: "refused", count: stats.refused, label: "grading declined", cssVar: "--a-line-dim" },
     ],
   };

@@ -74,6 +74,8 @@ export interface EscalationRow {
 export interface AgentStats {
   total_verdicts: number;
   t1_auto_release: number;
+  /** Verdicts whose escrow actually paid out — counted from release_tx, never from the decision. */
+  paid_out: number;
   refused: number;
   /** Verdicts the arbiter escalated. Recomputed — see getAgentStats. */
   human_reviewed: number;
@@ -343,7 +345,7 @@ export async function getAgentStats(): Promise<AgentStats> {
   const { data, error } = await db().from("agent_stats").select().single();
   const view = must(data, error, "agent_stats") as AgentStats;
 
-  const { data: verdicts, error: ve } = await db().from("verdicts").select("id,decision");
+  const { data: verdicts, error: ve } = await db().from("verdicts").select("id,decision,release_tx");
   if (ve) throw new Error(`agent_stats verdicts: ${ve.message}`);
   const { data: escalations, error: ee } = await db().from("escalations").select("verdict_id,poster_action");
   if (ee) throw new Error(`agent_stats escalations: ${ee.message}`);
@@ -360,6 +362,7 @@ export async function getAgentStats(): Promise<AgentStats> {
 
   return {
     ...view,
+    paid_out: (verdicts ?? []).filter((v) => v.release_tx).length,
     human_reviewed: stats.escalatedToHuman,
     overridden: stats.overturned,
     decisive_reviewed: stats.decisiveReviewed,

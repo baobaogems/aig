@@ -8,6 +8,7 @@ import { countPendingDecisions, deriveTrackRecord } from "./track-record";
 const LIVE: AgentStats = {
   total_verdicts: 13,
   t1_auto_release: 4,
+  paid_out: 3, // 3 tx trả tiền có trên arcscan tới hết 21/09: 0x3ac6…, 0x09b4…, 0x5b98…
   refused: 0,
   human_reviewed: 4,
   overridden: 1,
@@ -38,6 +39,12 @@ describe("deriveTrackRecord", () => {
   it("ô tính bù không bao giờ âm khi view trả số không nhất quán", () => {
     const skewed: AgentStats = { ...LIVE, t1_auto_release: 99 };
     expect(lane(deriveTrackRecord(skewed), "failed")).toBe(0);
+  });
+
+  it("số đã trả lấy từ tx, không lấy từ quyết định RELEASE", () => {
+    const r = deriveTrackRecord({ ...LIVE, t1_auto_release: 4, paid_out: 2 });
+    expect(r.paidOut).toBe(2);
+    expect(r.lanes.find((l) => l.key === "auto")!.label).not.toMatch(/paid/i);
   });
 
   it("mẫu số nhỏ hiện phân số, không hiện phần trăm", () => {
