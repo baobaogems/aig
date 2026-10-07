@@ -11,7 +11,7 @@ describe("orbitron-no-vietnamese", () => {
     // readdirSync with recursive: true requires Node 20+, which is standard now
     const allFiles = readdirSync(process.cwd(), { recursive: true }) as string[];
     const files = allFiles.filter(f => f.endsWith(".tsx") && !f.includes("node_modules"));
-    let failures: string[] = [];
+    const failures: string[] = [];
 
     for (const file of files) {
       const src = readFileSync(join(process.cwd(), file), "utf8");

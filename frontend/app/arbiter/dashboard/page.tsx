@@ -10,10 +10,11 @@ import { DecisionCard } from "@/components/arbiter/dashboard/decision-card";
 import { CompactRow } from "@/components/arbiter/dashboard/compact-row";
 import { getPosterLane, getWorkerLane } from "@/lib/arbiter/dashboard-lanes";
 import type { SettlementVerdict } from "@/components/arbiter/settlement-panel";
+import type { BountyRow } from "@/lib/arbiter/store";
 
 export default function DashboardPage() {
   const [session, setSession] = useState<string | null>(null);
-  const [bounties, setBounties] = useState<any[]>([]);
+  const [bounties, setBounties] = useState<BountyRow[]>([]);
   const [verdicts, setVerdicts] = useState<Record<string, SettlementVerdict>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -28,14 +29,14 @@ export default function DashboardPage() {
       const j = await res.json();
       if (!res.ok) throw new Error(j.error);
       
-      const related = j.bounties.filter((b: any) => 
+      const related = (j.bounties as BountyRow[]).filter((b) => 
         (b.poster_id && b.poster_id.toLowerCase() === session.toLowerCase()) || 
         (b.worker_id && b.worker_id.toLowerCase() === session.toLowerCase())
       );
 
       // fetch verdicts for JUDGED bounties
       const dict: Record<string, SettlementVerdict> = {};
-      await Promise.all(related.map(async (b: any) => {
+      await Promise.all(related.map(async (b) => {
         if (b.status === "JUDGED" || b.status === "RELEASED" || b.status === "REFUNDED" || b.status === "REFUSED") {
           const detailRes = await fetch(`/api/bounty?id=${b.id}`);
           if (detailRes.ok) {
@@ -65,8 +66,8 @@ export default function DashboardPage() {
     let pAct = 0;
     let cAct = 0;
     
-    const pLanes: Record<string, any[]> = { needs_decision: [], in_progress: [], settled: [] };
-    const wLanes: Record<string, any[]> = { needs_submission: [], waiting: [], results: [] };
+    const pLanes: Record<string, BountyRow[]> = { needs_decision: [], in_progress: [], settled: [] };
+    const wLanes: Record<string, BountyRow[]> = { needs_submission: [], waiting: [], results: [] };
 
     if (!session) return { postedActionCount: 0, claimedActionCount: 0, posterLanes: pLanes, workerLanes: wLanes };
     const me = session.toLowerCase();
