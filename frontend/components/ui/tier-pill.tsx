@@ -12,7 +12,9 @@ const TIER_BY_DECISION: Record<string, "T1" | "T2" | "T3"> = {
 // arbiter judged itself unable to score this at all, FAIL means it scored it and the work
 // did not clear the bar. Printing "refused / failed" for both told the reader neither.
 const DECISION_LABEL: Record<string, string> = {
-  RELEASE: "T1 · released on its own",
+  // v3: a T1 verdict moves no money — it opens the poster's objection window. Saying it
+  // "released on its own" was true in the August pilot and false ever since.
+  RELEASE: "T1 · cleared both gates",
   ESCALATE: "T2 · sent to the poster",
   FAIL: "T3 · scored, did not pass",
   REFUSE: "T3 · declined to judge",

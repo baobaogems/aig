@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { TierPill } from "@/components/ui/tier-pill";
 import { ThresholdBar } from "@/components/ui/threshold-bar";
 import { TIER_THRESHOLDS } from "@/lib/arbiter/tiers";
+import { OBJECTION_WINDOW_MS, T2_DECISION_WINDOW_MS } from "@/lib/arbiter/settlement-clock";
 
 const EXPLORER_TX = "https://testnet.arcscan.app/tx/";
 // route.ts: maxDuration 60 — "one grade call (~15-25s) + optional on-chain release (~20s)".
@@ -24,6 +25,28 @@ const SLOW_AFTER_SECONDS = 45;
 const TIER_COLOR: Record<string, string> = {
   RELEASE: "var(--color-tier-t1)", ESCALATE: "var(--color-tier-t2)",
   FAIL: "var(--color-tier-t3)", REFUSE: "var(--color-tier-t3)",
+};
+
+const HOURS = (ms: number) => Math.round(ms / 3_600_000);
+
+/**
+ * What the verdict means for the money, chosen by DECISION — not by bounty status. Since v3,
+ * /api/judge only ever reports JUDGED or REFUSED (a verdict moves no money), so the old
+ * status === "RELEASED" check never matched and a T1 fell through to the ESCALATE sentence.
+ * Worded for whoever is watching (usually the worker who just submitted), not for "you".
+ */
+const OUTCOME: Record<string, string> = {
+  RELEASE:
+    `Both gates cleared, so the arbiter recommends paying in full. No money has moved yet: the poster has ` +
+    `${HOURS(OBJECTION_WINDOW_MS)} hours to object, at a price. If they don't, the worker is paid in full.`,
+  ESCALATE:
+    `It was not confident enough to decide alone, so the poster decides: approve, or reject at a price set ` +
+    `by the score. If the poster doesn't answer within ${HOURS(T2_DECISION_WINDOW_MS)} hours, the worker is paid in full.`,
+  FAIL:
+    "It is confident this did not meet the rubric, so no settlement starts and no money moves. The worker can " +
+    "fix the missed criteria and resubmit before the deadline.",
+  REFUSE:
+    "The arbiter declined to judge this one at all, so no money moved. The worker can resubmit before the deadline.",
 };
 
 export interface JudgeVerdict {
@@ -138,13 +161,8 @@ export function JudgingProgress({ stage }: { stage: JudgeStage }) {
 
       {settled && (
         <p className="mt-3 text-sm leading-relaxed text-[var(--a-text)]">
-          {stage.status === "RELEASED"
-            ? "Both gates cleared. The USDC has been released to the worker."
-            : stage.status === "REFUSED"
-            ? "The arbiter declined to judge this one at all, so no money moved."
-            : verdict?.decision === "FAIL"
-            ? "It is confident this did not meet the rubric. It still cannot withhold or reclaim on its own, so the call is yours below."
-            : "It was not confident enough to decide alone, so it stopped and asked you below."}
+          {OUTCOME[stage.status === "REFUSED" ? "REFUSE" : (verdict?.decision ?? "")] ??
+            "The verdict is recorded. Reload the page to see what happens next."}
         </p>
       )}
 
