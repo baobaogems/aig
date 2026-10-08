@@ -69,7 +69,7 @@ export function useSettlement(bountyId: string, onChanged: () => Promise<void> |
         functionName: "timeoutRelease",
         args: [keccak256(toBytes(bountyId))],
       });
-      await waitForTransactionReceipt(config, { hash: tx });
+      await waitForTransactionReceipt(config, { hash: tx, chainId: ARC_CHAIN_ID });
       await fetch("/api/settlement/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },

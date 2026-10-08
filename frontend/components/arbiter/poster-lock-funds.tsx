@@ -79,7 +79,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
           args: [escrowAddressClient(), amount],
         });
         setApproveTx(tx);
-        await waitForTransactionReceipt(config, { hash: tx });
+        await waitForTransactionReceipt(config, { hash: tx, chainId: ARC_CHAIN_ID });
       }
 
       // Step 2 — lock. worker=0x0 means "open to whoever claims it".
@@ -97,7 +97,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
         ],
       });
       setCreateTx(tx2);
-      await waitForTransactionReceipt(config, { hash: tx2 });
+      await waitForTransactionReceipt(config, { hash: tx2, chainId: ARC_CHAIN_ID });
 
       // Step 3 — the server verifies against the chain. Our word is not enough.
       setStep("confirming");

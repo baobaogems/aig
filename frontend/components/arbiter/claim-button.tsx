@@ -42,7 +42,7 @@ export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaim
         functionName: "claim",
         args: [keccak256(toBytes(bountyId))],
       });
-      await waitForTransactionReceipt(config, { hash: tx });
+      await waitForTransactionReceipt(config, { hash: tx, chainId: ARC_CHAIN_ID });
 
       setState("confirming");
       const res = await fetch(`/api/bounty/${bountyId}/confirm-claim`, {
