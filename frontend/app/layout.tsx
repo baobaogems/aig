@@ -4,8 +4,10 @@
 // Providers live in a separate client component to avoid hydration issues
 // =============================================================================
 
+import type { Metadata } from "next";
 import { JetBrains_Mono, Manrope, Inter, Orbitron } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_TITLE, SITE_URL } from "@/lib/site-metadata";
 import "./globals.css";
 
 const jetbrainsMono = JetBrains_Mono({
@@ -39,6 +41,16 @@ const orbitron = Orbitron({
   variable: "--font-display",
   display: "swap",
 });
+
+// Link-preview metadata. og:image / twitter:image come from the opengraph-image.tsx and
+// twitter-image.tsx files next to this layout, so they are not repeated here.
+export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: { type: "website", siteName: SITE_NAME, title: SITE_TITLE, description: SITE_DESCRIPTION, url: "/" },
+  twitter: { card: "summary_large_image", title: SITE_TITLE, description: SITE_DESCRIPTION },
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
