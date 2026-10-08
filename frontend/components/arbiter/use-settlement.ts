@@ -4,10 +4,13 @@ import { waitForTransactionReceipt } from "wagmi/actions";
 import { keccak256, toBytes } from "viem";
 import { arbiterEscrowAbi } from "@/lib/escrow-abi";
 import { escrowAddressClient } from "@/lib/arc-addresses-client";
+import { useEnsureArcChain } from "@/components/arbiter/use-ensure-arc-chain";
+import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
 
 export function useSettlement(bountyId: string, onChanged: () => Promise<void> | void) {
   const config = useConfig();
   const { writeContractAsync } = useWriteContract();
+  const ensureArc = useEnsureArcChain();
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
@@ -58,7 +61,9 @@ export function useSettlement(bountyId: string, onChanged: () => Promise<void> |
     setBusy(true);
     setError("");
     try {
+      await ensureArc();
       const tx = await writeContractAsync({
+        chainId: ARC_CHAIN_ID, // belt: viem refuses to sign if the wallet is still elsewhere
         address: escrowAddressClient(),
         abi: arbiterEscrowAbi,
         functionName: "timeoutRelease",
@@ -77,7 +82,7 @@ export function useSettlement(bountyId: string, onChanged: () => Promise<void> |
     } finally {
       setBusy(false);
     }
-  }, [writeContractAsync, config, bountyId, onChanged]);
+  }, [writeContractAsync, ensureArc, config, bountyId, onChanged]);
 
   return {
     busy,

@@ -22,6 +22,8 @@ import { PillButton } from "@/components/ui/pill-button";
 import { arbiterEscrowAbi, erc20ApproveAbi } from "@/lib/escrow-abi";
 import { escrowAddressClient, usdcAddressClient, usdcUnits } from "@/lib/arc-addresses-client";
 import { ARBITER_PRIMARY_BUTTON, ARBITER_SECONDARY_BUTTON } from "./ui/arbiter-button-classes";
+import { useEnsureArcChain } from "@/components/arbiter/use-ensure-arc-chain";
+import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
 
 const ZERO = "0x0000000000000000000000000000000000000000" as const;
 
@@ -44,6 +46,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
   const { address } = useAccount();
   const config = useConfig();
   const { writeContractAsync } = useWriteContract();
+  const ensureArc = useEnsureArcChain();
 
   const [step, setStep] = useState<Step>("idle");
   const [approveTx, setApproveTx] = useState<string>();
@@ -63,11 +66,13 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
   async function run() {
     setError("");
     try {
+      await ensureArc();
       // Step 1 — approve, but only if the existing allowance is short. Re-approving an
       // already-sufficient allowance costs gas and one more wallet prompt for nothing.
       if ((allowance as bigint | undefined ?? 0n) < amount) {
         setStep("approving");
         const tx = await writeContractAsync({
+          chainId: ARC_CHAIN_ID, // belt: viem refuses to sign if the wallet is still elsewhere
           address: usdcAddressClient(),
           abi: erc20ApproveAbi,
           functionName: "approve",
@@ -80,6 +85,7 @@ export function PosterLockFunds({ lock, onDone }: { lock: LockParams; onDone: ()
       // Step 2 — lock. worker=0x0 means "open to whoever claims it".
       setStep("creating");
       const tx2 = await writeContractAsync({
+          chainId: ARC_CHAIN_ID, // belt: viem refuses to sign if the wallet is still elsewhere
         address: escrowAddressClient(),
         abi: arbiterEscrowAbi,
         functionName: "createBounty",

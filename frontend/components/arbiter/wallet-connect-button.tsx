@@ -12,7 +12,7 @@
 // =============================================================================
 
 import { useCallback, useEffect, useState } from "react";
-import { useAccount, useChainId, useConnect, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { PillButton } from "@/components/ui/pill-button";
 import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
@@ -23,8 +23,8 @@ export function shortAddress(a: string) {
 }
 
 export function WalletConnectButton({ onSession }: { onSession?: (address: string | null) => void }) {
-  const { address, isConnected } = useAccount();
-  const chainId = useChainId();
+  // The wallet's real chain. useChainId() never reports chains missing from the wagmi config.
+  const { address, isConnected, chainId, chain } = useAccount();
   const { connect, isPending: connecting } = useConnect();
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: switching } = useSwitchChain();
@@ -115,10 +115,16 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
           </PillButton>
         )}
 
+        {isConnected && (
+          <span className="font-mono text-xs" style={{ color: wrongChain ? "var(--a-bad)" : "var(--a-muted)" }}>
+            {chain?.name ?? `Unsupported network (chain ID ${chainId})`}
+          </span>
+        )}
+
         {wrongChain && (
           <PillButton
             variant="secondary"
-            onClick={() => switchChain({ chainId: ARC_CHAIN_ID })}
+            onClick={() => switchChain({ chainId: ARC_CHAIN_ID }, { onError: (e) => setError(e.message) })}
             disabled={switching}
           >
             {switching ? "Switching network..." : "Switch to Arc testnet"}
@@ -142,8 +148,8 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
       </div>
 
       {wrongChain && (
-        <p className="text-xs text-[var(--a-muted)]">
-          Ví đang ở mạng khác. Arbiter chỉ chạy trên Arc testnet.
+        <p className="text-xs font-bold text-[var(--a-bad)]">
+          Wrong network. Arbiter only runs on Arc Testnet — switch before signing anything.
         </p>
       )}
       {error && <p className="text-xs text-[var(--a-bad)]">{error}</p>}

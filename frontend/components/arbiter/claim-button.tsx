@@ -18,12 +18,15 @@ import { keccak256, toBytes } from "viem";
 import { PillButton } from "@/components/ui/pill-button";
 import { arbiterEscrowAbi } from "@/lib/escrow-abi";
 import { escrowAddressClient } from "@/lib/arc-addresses-client";
+import { useEnsureArcChain } from "@/components/arbiter/use-ensure-arc-chain";
+import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
 
 type State = "idle" | "signing" | "confirming" | "taken";
 
 export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaimed: () => void }) {
   const config = useConfig();
   const { writeContractAsync } = useWriteContract();
+  const ensureArc = useEnsureArcChain();
   const [state, setState] = useState<State>("idle");
   const [note, setNote] = useState("");
 
@@ -31,7 +34,9 @@ export function ClaimButton({ bountyId, onClaimed }: { bountyId: string; onClaim
     setNote("");
     try {
       setState("signing");
+      await ensureArc();
       const tx = await writeContractAsync({
+        chainId: ARC_CHAIN_ID, // belt: viem refuses to sign if the wallet is still elsewhere
         address: escrowAddressClient(),
         abi: arbiterEscrowAbi,
         functionName: "claim",

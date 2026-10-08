@@ -30,6 +30,9 @@ export function arcChain() {
     name: "Arc Testnet",
     nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
     rpcUrls: { default: { http: [ARC_RPC] } },
+    // Same explorer the app links to (references/arc-llms.txt:119). Sent to the wallet when it
+    // has to add Arc testnet for the first time.
+    blockExplorers: { default: { name: "Arcscan", url: "https://testnet.arcscan.app" } },
     testnet: true,
   });
 }
