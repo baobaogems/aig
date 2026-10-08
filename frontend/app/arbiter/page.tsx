@@ -137,9 +137,15 @@ export default function ArbiterPage() {
       <main className="bg-grain relative z-[1] min-h-screen px-4 pb-20 pt-12">
         <div className="mx-auto grid max-w-[1120px] gap-14">
           <div>
-            <p className="max-w-2xl text-[12.5px] leading-relaxed" style={{ color: "var(--a-muted)" }}>
-              Posters lock USDC into escrow on the Arc testnet. An AI arbiter grades submissions against a
-              frozen rubric, and funds flow automatically when the score passes — all verdicts are hashed
+            <h1 className="m-0 font-[family-name:var(--font-display)] text-[28px] font-black leading-tight tracking-[0.02em]">
+              AI-JUDGED USDC BOUNTIES ON ARC
+            </h1>
+            {/* v3 (lib/arbiter/run.ts): a verdict moves no money. It only starts the clock. */}
+            <p className="mt-3 max-w-2xl text-[12.5px] leading-relaxed" style={{ color: "var(--a-muted)" }}>
+              Posters lock USDC into escrow on the Arc testnet. An AI arbiter grades each submission against
+              a frozen rubric, but a verdict moves no money by itself: a plausible one opens a fixed window in
+              which the poster approves, or rejects at a price set by the score. If the poster stays silent
+              until the window closes, the worker can be paid in full. Every payout carries the verdict hash
               on-chain.
             </p>
           </div>
