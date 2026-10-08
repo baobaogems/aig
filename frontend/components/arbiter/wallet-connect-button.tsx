@@ -15,6 +15,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAccount, useConnect, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
 import { injected } from "wagmi/connectors";
 import { PillButton } from "@/components/ui/pill-button";
+import { ARBITER_PRIMARY_BUTTON } from "./ui/arbiter-button-classes";
 import { ARC_CHAIN_ID } from "@/lib/arc-chain-client";
 import { buildSiweMessage } from "@/lib/auth/siwe-message";
 
@@ -122,8 +123,10 @@ export function WalletConnectButton({ onSession }: { onSession?: (address: strin
         )}
 
         {wrongChain && (
+          // Solid fill: the thin outline read as a label, not as the one thing to press next.
           <PillButton
-            variant="secondary"
+            variant="primary"
+            className={ARBITER_PRIMARY_BUTTON}
             onClick={() => switchChain({ chainId: ARC_CHAIN_ID }, { onError: (e) => setError(e.message) })}
             disabled={switching}
           >
