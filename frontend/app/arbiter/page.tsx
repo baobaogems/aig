@@ -172,6 +172,19 @@ export default function ArbiterPage() {
                 <AButton variant="solid" onClick={() => setDrawer("create")}>+ Post bounty</AButton>
               </div>
             </div>
+            <p className="m-0 text-[12px]" style={{ color: "var(--a-muted)" }}>
+              On Arc, USDC pays for the bounty <b>and</b> for gas — with no testnet USDC you cannot
+              post, claim or sign anything.{" "}
+              <a
+                href="https://faucet.circle.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-bold underline"
+                style={{ color: "var(--a-acc)" }}
+              >
+                Get free testnet USDC (Circle faucet, choose Arc Testnet) ↗
+              </a>
+            </p>
 
             <MarketFilter
               status={statusFilter}
