@@ -15,6 +15,7 @@
 // Field names in the request body are untouched.
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { PillButton } from "@/components/ui/pill-button";
 import { FormField, FIELD_INPUT_CLASS, fieldBorder } from "@/components/ui/form-field";
 import { PosterLockFunds, type LockParams } from "@/components/arbiter/poster-lock-funds";
@@ -26,6 +27,7 @@ interface RubricItem { item_id: string; criterion: string; weight: number }
 type Errors = Partial<Record<"brief" | "amount" | "deadline", string>>;
 
 export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
+  const router = useRouter();
   const [brief, setBrief] = useState("");
   const [amount, setAmount] = useState("5");
   // Seven days out, formatted for <input type="datetime-local"> (which wants local time with
@@ -157,6 +159,10 @@ export function PosterBountyForm({ onChanged }: { onChanged: () => void }) {
                   setDraft(null);
                   setLock(null);
                   onChanged();
+                  // onDone fires only after the lock tx receipt AND /confirm-lock (which reads
+                  // the chain) succeeded. Leaving the board unmounts the drawer, so the form
+                  // can no longer offer "create" again for a bounty that already exists.
+                  router.push("/arbiter/dashboard");
                 }}
               />
             ) : (
