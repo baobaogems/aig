@@ -204,25 +204,25 @@ export default function ArbiterPage() {
             )}
           </section>
         </div>
-
-        <Drawer
-          open={drawer === "create"}
-          onClose={() => setDrawer(null)}
-          title="Post new bounty"
-          description="Describe the task in plain text. The arbiter extracts a rubric from this; you review and freeze it before locking funds."
-        >
-          <PosterBountyForm onChanged={refresh} />
-        </Drawer>
-
-        <Drawer
-          open={drawer === "submit"}
-          onClose={() => setDrawer(null)}
-          title="Submit work"
-          description="Content is frozen upon submission. Later edits to the source will not be considered."
-        >
-          <WorkerSubmitForm onChanged={refresh} />
-        </Drawer>
       </main>
+
+      <Drawer
+        open={drawer === "create"}
+        onClose={() => setDrawer(null)}
+        title="Post new bounty"
+        description="Describe the task in plain text. The arbiter extracts a rubric from this; you review and freeze it before locking funds."
+      >
+        <PosterBountyForm onChanged={refresh} />
+      </Drawer>
+
+      <Drawer
+        open={drawer === "submit"}
+        onClose={() => setDrawer(null)}
+        title="Submit work"
+        description="Content is frozen upon submission. Later edits to the source will not be considered."
+      >
+        <WorkerSubmitForm onChanged={refresh} />
+      </Drawer>
     </div>
   );
 }
