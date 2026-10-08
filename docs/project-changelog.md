@@ -2,6 +2,33 @@
 
 All significant changes, features, and fixes documented here.
 
+## [Unreleased — Link previews, and an intro that matches v3] — 2026-10-08
+
+### Fixed
+
+- **The /arbiter intro promised automatic payment.** It said "funds flow automatically when the
+  score passes — all verdicts are hashed on-chain". Neither half is true under v3: a verdict moves
+  no money, it only opens a window in which the poster approves or rejects at a price, and only a
+  payout carries a verdict hash on-chain. A FAIL or REFUSE verdict never touches the chain.
+- **Shared links showed as a bare URL.** No `<title>`, no description, no Open Graph or Twitter
+  tags, and /arbiter had no `<h1>`.
+
+### Added
+
+- Metadata for `/` and `/arbiter`: title, description, `og:*`, `twitter:card=summary_large_image`.
+  The copy lives in `frontend/lib/site-metadata.ts` and contains no figures, because chat apps
+  cache a preview for weeks.
+- A generated 1200×630 preview image (`app/opengraph-image.tsx`, `next/og`) in the brand colours.
+  Like the copy, it contains no figures.
+- One `<h1>` on /arbiter. The landing page already had one, in the hero.
+- Optional env `NEXT_PUBLIC_SITE_URL` (default `https://myarbiter.xyz`) for absolute image URLs.
+
+### Note
+
+A child layout that sets `openGraph` replaces the parent's object entirely, including the
+inherited image. That is why `app/arbiter/` carries its own re-exported `opengraph-image` and
+`twitter-image`.
+
 ## [v5.0 — The default now favours the person who already handed something over] — 2026-09-21
 
 ### The hole this closes

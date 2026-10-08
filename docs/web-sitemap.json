@@ -72,6 +72,13 @@
         "file": "frontend/app/pay/[id]/page.tsx",
         "render": "dynamic, client component",
         "purpose": "Customer payment page (v2 CCTP rail). Customer signs USDC.approve + TokenMessengerV2.depositForBurn on Ethereum Sepolia; server bridges and mints on Arc."
+      },
+      {
+        "path": "/opengraph-image, /twitter-image, /arbiter/opengraph-image, /arbiter/twitter-image",
+        "file": "frontend/app/opengraph-image.tsx (+ 3 file re-export cùng ảnh)",
+        "render": "static, next/og ImageResponse, PNG 1200x630",
+        "purpose": "Ảnh link preview (Telegram, X, Slack). Không chứa số liệu vì app chat cache preview hàng tuần. Bản trong app/arbiter/ tồn tại vì openGraph của app/arbiter/layout.tsx thay nguyên object của cha và làm mất og:image.",
+        "addedAt": "2026-10-08"
       }
     ],
     "api": [
@@ -429,6 +436,12 @@
         "code": "components/providers.tsx",
         "vercelProduction": false,
         "DRIFT": "Vercel has ETHEREUM_SEPOLIA_RPC_URL (no NEXT_PUBLIC_ prefix). A non-prefixed var is never exposed to the browser, so the client is running on whatever default providers.tsx falls back to. Either rename on Vercel or change the code."
+      },
+      {
+        "name": "NEXT_PUBLIC_SITE_URL",
+        "code": "lib/site-metadata.ts (metadataBase → URL tuyệt đối của og:image)",
+        "vercelProduction": false,
+        "note": "Tuỳ chọn. Không đặt thì dùng https://myarbiter.xyz. Đặt khi dựng ở domain khác, nếu không og:image sẽ trỏ về myarbiter.xyz. Thêm 08/10/2026; vercelProduction=false là CHƯA XÁC MINH (đo: vercel env ls production)."
       }
     ],
     "deadOnVercel": {
