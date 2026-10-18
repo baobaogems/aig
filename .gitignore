@@ -31,6 +31,8 @@ claudekit-marketing
 AGENTS.md
 PRD final.md
 PRD*.md
+# whole folder: PRD*.md alone misses lowercase prd-*.md when core.ignorecase=false
+docs/prd/
 
 # Internal planning & process (local only — not product)
 plans/
