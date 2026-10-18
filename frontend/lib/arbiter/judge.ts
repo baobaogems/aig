@@ -6,6 +6,7 @@ import { z } from "zod";
 import { callJson, MODEL, PROMPT_VERSION } from "./client";
 import { GRADE_SYSTEM, gradeUser } from "./prompts/grade-v2";
 import type { RubricItem } from "./rubric";
+import { applyEvidenceRules } from "./evidence-verbatim-check";
 import { decideTier, applySpendCap, applySplitProfileCap, type SpendCaps } from "./tiers";
 import { parseVerdict, verdictHash, type Verdict } from "./verdict-schema";
 
@@ -66,14 +67,18 @@ export async function gradeSubmission(input: JudgeInput): Promise<JudgeResult> {
   }
   const g = parsed.data;
 
-  // Effective scores: the anti-vibes rule zeroes any item that cited no evidence. Everything
-  // downstream — the weighted total AND the split-profile cap — reads these, never the raw
-  // numbers the model claimed.
-  const effective = g.rubric_scores.map((s) => ({
-    ...s,
-    score: s.evidence.length > 0 ? s.score : 0,
-    evidence: s.evidence.length > 0 ? s.evidence : ["(no evidence cited — scored 0)"],
-  }));
+  // Effective scores: quotes not found verbatim in the deliverable are dropped first, then the
+  // anti-vibes rule zeroes any item left with no evidence. Everything downstream — the
+  // weighted total AND the split-profile cap — reads these, never the raw numbers the model claimed.
+  const { effective, drops } = applyEvidenceRules(g.rubric_scores, input.deliverable);
+  if (drops.length > 0) {
+    // Kept out of the verdict (and so out of the on-chain hash); logged so each drop can be checked by hand.
+    console.warn("[judge] evidence dropped (not verbatim)", {
+      bountyId: input.bountyId,
+      submissionId: input.submissionId,
+      drops,
+    });
+  }
 
   // Deterministic weighted total (0–100).
   const total = Math.round(effective.reduce((acc, s) => acc + s.score * s.weight, 0) / 100);
