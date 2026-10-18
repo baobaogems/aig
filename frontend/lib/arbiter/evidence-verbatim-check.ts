@@ -5,8 +5,29 @@
 // deliverable proves nothing, so it is dropped here and judge.ts's existing "no evidence → 0"
 // rule takes over. Pure, deterministic, no I/O.
 
-/** Fragments shorter than this are found almost anywhere, so they cannot prove a match. */
+/**
+ * Fragments shorter than this are found almost anywhere, so they cannot prove a match.
+ * Applies to every alphabetic or syllabic script — Latin, Vietnamese, and also Japanese kana
+ * and Korean Hangul: each of those characters is a sound, closer to a letter than to a word,
+ * so a short run of them matches by chance just as easily.
+ */
 export const MIN_FRAGMENT_CHARS = 10;
+
+/**
+ * Lower floor for fragments containing Chinese characters (Han). Each Han character carries a
+ * whole word or morpheme, so 4 of them are already a specific phrase, and a full line of a
+ * lyric is often 7–8 characters. At 10, real quotes such as "天邊的雲一望無際" were rejected.
+ */
+export const MIN_FRAGMENT_CHARS_HAN = 4;
+
+// CJK Unified Ideographs (U+4E00–U+9FFF) and Extension A (U+3400–U+4DBF). Kana and Hangul are
+// deliberately excluded — they keep MIN_FRAGMENT_CHARS.
+const HAN = /[㐀-䶿一-鿿]/;
+
+/** The minimum length a fragment must reach to count as checkable evidence. */
+export function minFragmentChars(fragment: string): number {
+  return HAN.test(fragment) ? MIN_FRAGMENT_CHARS_HAN : MIN_FRAGMENT_CHARS;
+}
 
 export interface DroppedQuote {
   quote: string;
@@ -44,9 +65,9 @@ export function splitQuoteFragments(quote: string): string[] {
 }
 
 /**
- * Keep the quotes whose every checkable fragment (>= MIN_FRAGMENT_CHARS) is a substring of
- * the deliverable. A quote with any fragment missing is dropped whole; so is a quote with no
- * fragment long enough to check.
+ * Keep the quotes whose every checkable fragment (long enough per minFragmentChars) is a
+ * substring of the deliverable. A quote with any fragment missing is dropped whole; so is a
+ * quote with no fragment long enough to check.
  */
 export function checkEvidenceVerbatim(evidence: string[], deliverable: string): EvidenceCheckResult {
   const body = normalizeForMatch(deliverable);
@@ -54,9 +75,12 @@ export function checkEvidenceVerbatim(evidence: string[], deliverable: string): 
   const dropped: DroppedQuote[] = [];
 
   for (const quote of evidence) {
-    const checkable = splitQuoteFragments(quote).filter((f) => f.length >= MIN_FRAGMENT_CHARS);
+    const checkable = splitQuoteFragments(quote).filter((f) => f.length >= minFragmentChars(f));
     if (checkable.length === 0) {
-      dropped.push({ quote, reason: `no fragment of at least ${MIN_FRAGMENT_CHARS} characters to verify` });
+      dropped.push({
+        quote,
+        reason: `no fragment long enough to verify (${MIN_FRAGMENT_CHARS} characters, ${MIN_FRAGMENT_CHARS_HAN} if Chinese)`,
+      });
       continue;
     }
     const missing = checkable.find((f) => !body.includes(f));

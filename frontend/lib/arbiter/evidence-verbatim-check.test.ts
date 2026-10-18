@@ -77,6 +77,42 @@ describe("checkEvidenceVerbatim", () => {
   });
 });
 
+describe("minimum fragment length by script", () => {
+  // Every short quote below IS in the deliverable: the only question is whether it is long
+  // enough to count as proof.
+  const BODY_MIXED = [
+    "天邊的雲一望無際", "命中註定不能靠近", "作曲：伊子木木",
+    "Cảm ơn. Het. JKLNOP", "ありがとう", "감사합니다",
+  ].join("\n");
+
+  it("keeps the real Chinese quotes from verdict aaab80f4 (4-character floor for Han)", () => {
+    // Observed 18/10/2026: all four were rejected under the 10-character floor although
+    // each is in the deliverable word for word.
+    const quotes = ["天邊的雲一望無際", "命中註定不能靠近", "作曲：伊子木木", "命中註定不能靠近"];
+    const r = checkEvidenceVerbatim(quotes, BODY_MIXED);
+    expect(r.kept).toEqual(quotes);
+    expect(r.dropped).toHaveLength(0);
+  });
+
+  it("still drops the short Latin/Vietnamese quotes (10-character floor)", () => {
+    const r = checkEvidenceVerbatim(["Cảm ơn.", "Het.", "JKLNOP"], BODY_MIXED);
+    expect(r.kept).toHaveLength(0);
+    expect(r.dropped).toHaveLength(3);
+  });
+
+  it("drops a 3-character Han fragment", () => {
+    expect(checkEvidenceVerbatim(["天邊的"], BODY_MIXED).kept).toHaveLength(0);
+  });
+
+  it("drops a 4-character kana fragment (kana keeps the 10-character floor)", () => {
+    expect(checkEvidenceVerbatim(["ありがと"], BODY_MIXED).kept).toHaveLength(0);
+  });
+
+  it("drops a 4-character Hangul fragment (Hangul keeps the 10-character floor)", () => {
+    expect(checkEvidenceVerbatim(["감사합니"], BODY_MIXED).kept).toHaveLength(0);
+  });
+});
+
 describe("normalizeForMatch", () => {
   it("collapses whitespace runs and lowercases", () => {
     expect(normalizeForMatch("  Ví\n\tCỦA   khách ")).toBe(" ví của khách ");
